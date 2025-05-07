@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "oceanpropinfsatimg"
+version = "0.1.0"
+description = "Utilizing Deep Learning Techniques to Infer Interior Ocean Properties from Satellite Imagery"
+authors = ["skostousov <93064193+skostousov@users.noreply.github.com>"]
+readme = "README.md"
+package-mode = false
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pandas = "^2.2.3"
+matplotlib = "^3.10.1"
+seaborn = "^0.13.2"
+torch = {version = "^2.7.0+cu118", source = "pytorch"}
+torchvision = {version = "^0.22.0+cu118", source = "pytorch"}
+torchaudio = {version = "^2.7.0+cu118", source = "pytorch"}
+kagglehub = "^0.3.12"
+
+[[tool.poetry.source]]
+name = "pytorch"
+url = "https://download.pytorch.org/whl/cu118"
+priority = "supplemental"
+
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.5"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
