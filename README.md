@@ -8,5 +8,4 @@ To install dependencies and enter poetry environment, run
 poetry install
 poetry shell
 ```
-To download the data, run
-
+Please update the config file with your own username in order to download data from https://data.marine.copernicus.eu/ (from which all data in this repository is sourced from)
