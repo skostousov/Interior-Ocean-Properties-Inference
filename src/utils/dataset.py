@@ -18,10 +18,10 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
     end_datetime = f"{end_day[0]}-{end_day[1]}-{end_day[2]}:T00:00:00"
 
     copernicusmarine.subset(
-    dataset_id="cmems_mod_glo_phy_anfc_0.083deg_P1D-m",
+    dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",
     username=username,
-    dataset_version="202406",
-    variables=["ist", "mlotst", "pbo", "siage", "sialb", "siconc", "sisnthick", "sithick", "sivelo", "sob", "tob", "usi", "vsi", "zos"],
+    dataset_version="202311",
+    variables=["bottomT", "mlotst", "siconc", "sithick", "so", "thetao", "uo", "usi", "vo", "vsi", "zos"],
     minimum_longitude=min(longitude),
     maximum_longitude=max(longitude),
     minimum_latitude=min(latitude),
@@ -46,7 +46,7 @@ class GLORYSDS(TorchDataset):
         self.target_transform = target_transform
         self.annotations_map = self.data_variables.pop("mlotst")
         for key, value in self.data_variables.items():
-            self.data_variables[key] = np.expand_dims(value, 1)
+            if len (self.data_variables[key].shape) != 4: self.data_variables[key] = np.expand_dims(value, 1)
         self.feature_map = np.concatenate(list(self.data_variables.values()), axis=1)
 
         self.grid_size = grid_size
