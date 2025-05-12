@@ -14,10 +14,6 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
         output_dir (str): directory to download data to
         start_day (tuple): (year: int, month: int, day: int)
     """
-    minimum_longitude = longitude[0]
-    maximum_longitude = longitude[1]
-    minimum_latitude = latitude[0]
-    maximum_latitude = latitude[1]
     start_datetime = f"{start_day[0]}-{start_day[1]}-{start_day[2]}:T00:00:00"
     end_datetime = f"{end_day[0]}-{end_day[1]}-{end_day[2]}:T00:00:00"
 
@@ -26,10 +22,10 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
     username=username,
     dataset_version="202406",
     variables=["ist", "mlotst", "pbo", "siage", "sialb", "siconc", "sisnthick", "sithick", "sivelo", "sob", "tob", "usi", "vsi", "zos"],
-    minimum_longitude=minimum_longitude,
-    maximum_longitude=maximum_longitude,
-    minimum_latitude=minimum_latitude,
-    maximum_latitude=maximum_latitude,
+    minimum_longitude=min(longitude),
+    maximum_longitude=max(longitude),
+    minimum_latitude=min(latitude),
+    maximum_latitude=max(latitude),
     output_directory= output_dir,
     start_datetime=start_datetime,
     end_datetime=end_datetime,
