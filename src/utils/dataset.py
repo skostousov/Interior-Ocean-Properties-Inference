@@ -67,6 +67,9 @@ class GLORYSDS(TorchDataset):
         self.all_indices = []
         for region_indices in self.indices_regionified.values():
             self.all_indices.extend(region_indices)
+        self.index_region = []
+        for key, value in self.indices_regionified.items():
+            self.index_region.extend([key for i in range(len(value))])
 
     def __len__(self):
         return len(self.all_indices)
