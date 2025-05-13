@@ -2,7 +2,7 @@ from torchvision import transforms, utils
 import torch
 
 class RescaledRotationTransform(object):
-    def __init__(self, degree_range = (-180, 180), scaling_interval = (0, 2)):
+    def __init__(self, degree_range = 180, scaling_interval = (0.001, 2)):
         self.degrees = degree_range
         self.scale = scaling_interval
         self.transform = transforms.RandomAffine(self.degrees, scale=self.scale)
