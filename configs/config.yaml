@@ -1,3 +1,6 @@
 data_dir_relative_to_project_root: data
 copernicusmarine: 
   USERNAME: skostousov
+
+epochs: 10
+batch_size: 10
