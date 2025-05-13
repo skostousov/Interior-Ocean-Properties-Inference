@@ -4,7 +4,11 @@ version = "0.1.0"
 description = "Utilizing Deep Learning Techniques to Infer Interior Ocean Properties from Satellite Imagery"
 authors = ["skostousov <93064193+skostousov@users.noreply.github.com>"]
 readme = "README.md"
-package-mode = false
+
+packages = [
+    { include = "utils", from = "src"},
+    { include = "models", from = "src"}
+]
 
 [tool.poetry.dependencies]
 python = "^3.11"
@@ -18,6 +22,8 @@ kagglehub = "^0.3.12"
 netcdf4 = "^1.7.2"
 pyyaml = "^6.0.2"
 copernicusmarine = "^2.1.0"
+scikit-learn = "^1.6.1"
+hydra-core = "^1.3.2"
 
 [[tool.poetry.source]]
 name = "pytorch"
