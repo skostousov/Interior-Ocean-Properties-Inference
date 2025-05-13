@@ -36,14 +36,13 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
 )
 
 class GLORYSDS(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, target_transform=None, grid_size = 40):
+    def __init__(self, dataset_dir, transform = None, grid_size = 40):
         self.data = NETCDF4Dataset(dataset_dir)
         self.data_variables = {k:v[:] for (k, v) in self.data.variables.items()}
         for key, _ in self.data.dimensions.items():
             if key in self.data_variables.keys():
                 del self.data_variables[key]
         self.transform = transform
-        self.target_transform = target_transform
         self.annotations_map = self.data_variables.pop("mlotst")
         for key, value in self.data_variables.items():
             if len (self.data_variables[key].shape) != 4: self.data_variables[key] = np.expand_dims(value, 1)
@@ -62,6 +61,8 @@ class GLORYSDS(TorchDataset):
         coordinates = self.indices[idx]
         image = self.feature_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
         label = self.annotations_map[..., coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
+        if self.transform:
+            image, label = self.transform(image, label)
         return image, label
 
 if __name__ == "__main__":

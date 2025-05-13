@@ -71,11 +71,12 @@ class UpSample(nn.Module):
                                mode = 'bilinear', align_corners=False)
         x = torch.cat([x1, x2], 1)
         return self.conv(x)
-    
+
 if __name__ == "__main__":
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
     print(f"Using {device} device")
     model = UNet(13, 1).to(device)
+
     input = torch.rand(1, 13, 20, 20).to(device)
     output = model(input)
     print(output.shape)
