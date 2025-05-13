@@ -50,15 +50,28 @@ class GLORYSDS(TorchDataset):
 
         self.grid_size = grid_size
         self.offset_size = 2
-        self.indices = [
+        self.images_in_region_one_axis = 2
+        self.region_size = grid_size + self.offset_size*(self.images_in_region_one_axis-1)
+        self.regions = [
             (i, j)
-            for i in range(0, self.annotations_map.shape[1], self.offset_size)
-            for j in range(0, self.annotations_map.shape[2], self.offset_size)
+            for i in range(0, self.annotations_map.shape[1], self.region_size)
+            for j in range(0, self.annotations_map.shape[2], self.region_size)
         ]
+        self.indices_regionified = {}
+        for region in self.regions:
+            self.indices_regionified[region] = [
+                (i, j) 
+                for i in range(region[0], region[0]+self.region_size, self.offset_size)
+                for j in range(region[1], region[1]+self.region_size, self.offset_size)
+                ]
+        self.all_indices = []
+        for region_indices in self.indices_regionified.values():
+            self.all_indices.extend(region_indices)
+
     def __len__(self):
-        return len(self.indices)
+        return len(self.all_indices)
     def __getitem__(self, idx):
-        coordinates = self.indices[idx]
+        coordinates = self.all_indices[idx]
         image = self.feature_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
         label = self.annotations_map[..., coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
         if self.transform:
@@ -73,7 +86,7 @@ if __name__ == "__main__":
         config_file = yaml.safe_load(config_file)
     ds_dir = (repo_root / config_file["data_dir_relative_to_project_root"]/ds_name).resolve()
     ds = GLORYSDS(ds_dir, grid_size=20)
-    print(ds.indices)
+    print(ds.indices_regionified)
     sample_image, sample_label = ds[1]
     print(f"{sample_image.shape}, {sample_label.shape}")
         
