@@ -36,7 +36,7 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
 )
 
 class GLORYSDS(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, target_transform=None, grid_size = 10):
+    def __init__(self, dataset_dir, transform = None, target_transform=None, grid_size = 40):
         self.data = NETCDF4Dataset(dataset_dir)
         self.data_variables = {k:v[:] for (k, v) in self.data.variables.items()}
         for key, _ in self.data.dimensions.items():
@@ -50,10 +50,11 @@ class GLORYSDS(TorchDataset):
         self.feature_map = np.concatenate(list(self.data_variables.values()), axis=1)
 
         self.grid_size = grid_size
+        self.offset_size = 2
         self.indices = [
             (i, j)
-            for i in range(0, self.annotations_map.shape[1], self.grid_size)
-            for j in range(0, self.annotations_map.shape[2], self.grid_size)
+            for i in range(0, self.annotations_map.shape[1], self.offset_size)
+            for j in range(0, self.annotations_map.shape[2], self.offset_size)
         ]
     def __len__(self):
         return len(self.indices)
