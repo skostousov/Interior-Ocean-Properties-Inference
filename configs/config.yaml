@@ -1,6 +1,8 @@
 data_dir_relative_to_project_root: data
+model_save_dest: saved_models
 copernicusmarine: 
   USERNAME: skostousov
 
-epochs: 10
-batch_size: 10
+epochs: 100
+batch_size: 20
+days: False
