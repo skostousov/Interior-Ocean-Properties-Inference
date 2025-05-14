@@ -72,11 +72,22 @@ class UpSample(nn.Module):
         x = torch.cat([x1, x2], 1)
         return self.conv(x)
 
-if __name__ == "__main__":
+if __name__ == "__main__":  
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
     print(f"Using {device} device")
     model = UNet(13, 1).to(device)
 
-    input = torch.rand(1, 13, 20, 20).to(device)
-    output = model(input)
-    print(output.shape)
+    # input = torch.rand(1, 13, 20, 20).to(device)
+    # output = model(input)
+    # print(output.shape)
+
+    from utils.dataset import GLORYSDS
+    from utils.config import DATA_DIR
+    from utils.transforms import ToTensor, RescaledRotationTransform, Compose
+    filename = "cmems_mod_glo_phy_anfc_0.083deg_P1D-m_multi-vars_164.33W-122.08W_35.58N-62.75N_2025-05-01-2025-05-04.nc"
+    transform = Compose([ToTensor(), RescaledRotationTransform()])
+    ds = GLORYSDS(DATA_DIR/filename, transform=transform)
+    image, label = ds[0]
+    new_input = image.to(device)
+    output = model(new_input)
+    print(f"model output shape: {output.shape}, label shape: {label.shape}")

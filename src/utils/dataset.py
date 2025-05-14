@@ -77,6 +77,7 @@ class GLORYSDS(TorchDataset):
         coordinates = self.all_indices[idx]
         image = self.feature_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
         label = self.annotations_map[..., coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
+        label = np.expand_dims(label, axis=1)
         if self.transform:
             image, label = self.transform(image, label)
         return image, label
