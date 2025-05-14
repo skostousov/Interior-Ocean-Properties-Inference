@@ -12,7 +12,7 @@ Please update the config file with your own username in order to download data f
 
 ### TODO List:
 1. Fix train_no_val so that the model actually trains and converges to some solution
-2. Test script + visualization of results
+2. Create test script + visualization of results
 3. Organize config file
 4. Allow the model to train on several days at once, and figure out how to approach this
 5. Make sure grids in regions dont overflow on to other regions
