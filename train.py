@@ -5,21 +5,24 @@ from torchvision.transforms import Compose
 from torch.utils.data import Subset, DataLoader
 from sklearn.model_selection import GroupShuffleSplit, StratifiedGroupKFold
 from utils.dataset import GLORYSDS
+from utils import splitter.NestedSplitter
 from utils.transforms import RescaledRotationTransform, ToTensor
 from utils.config import DATA_DIR, RAW_CONFIG
 from torch.optim import Adam
 
 cfg = RAW_CONFIG
 
-def train_test_split(dataset, test_frac=0.2, seed=42):
-    groups = dataset.index_region
-    indexes = list(range(len(dataset)))
-    gss = GroupShuffleSplit(test_size=test_frac, random_state=seed)
-    train_idx, test_idx = next(gss.split(indexes, groups=groups))
-    return(
-        Subset(dataset, train_idx),
-        Subset(dataset, test_idx)
-    )
+# def train_test_split(dataset, test_frac=0.2, seed=42):
+#     groups = dataset.index_region
+#     indexes = list(range(len(dataset)))
+#     gss = GroupShuffleSplit(n_splits=1, test_size=test_frac, random_state=seed)
+#     train_idx, test_idx = next(gss.split(indexes, groups=groups))
+#     return (
+#         Subset(dataset, train_idx),
+#         Subset(dataset, test_idx)
+#     )
+
+splitter = NestedSplitter(outer_splits=1, inner_splits=1)
 
 def train_one_epoch(model, train_dataloader, optimizer, loss_fn, device):
     running_loss = 0
@@ -46,8 +49,6 @@ print(f"Using {device} device")
 data_aug = Compose([ToTensor(), RescaledRotationTransform()])
 ds_path = DATA_DIR/"cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
 data = GLORYSDS(ds_path, data_aug)
-train_ds, test_ds = train_test_split(data)
-print(len(train_ds), len(test_ds))
 
 
 batch_size = RAW_CONFIG["batch_size"]
@@ -56,33 +57,36 @@ epochs = RAW_CONFIG["epochs"]
 model = UNet(data[0][0].shape[1], data[0][1].shape[1])
 optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 
+
+
 train_dataloader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
 
+
 for epoch in range(epochs):
-    print('Epoch {}:'.format(epoch + 1))
-    model.train(True)
-    avg_loss = train_one_epoch(model, train_dataloader, optimizer, loss_fn, device)
-    running_val_loss = 0
-    model.eval()
-    with torch.no_grad():
-        for i, (val_images, val_labels) in enumerate(val_dataloader):
-            val_images, val_labels = val_images.to(device), val_labels.to(device)
-            val_outputs = model(val_images)
-            val_loss = loss_fn(val_outputs, val_labels)
-            running_val_loss += val_loss
-    avg_val_loss = running_val_loss / (i + 1)
-    print("Loss train {} validation {}".format(avg_loss, avg_val_loss))
+        print('Epoch {}:'.format(epoch + 1))
+        model.train(True)
+        avg_loss = train_one_epoch(model, train_dataloader, optimizer, loss_fn, device)
+        running_val_loss = 0
+        model.eval()
+        with torch.no_grad():
+            for i, (val_images, val_labels) in enumerate(val_dataloader):
+                val_images, val_labels = val_images.to(device), val_labels.to(device)
+                val_outputs = model(val_images)
+                val_loss = loss_fn(val_outputs, val_labels)
+                running_val_loss += val_loss
+        avg_val_loss = running_val_loss / (i + 1)
+        print("Loss train {} validation {}".format(avg_loss, avg_val_loss))
 
-    # torch.save({
-    #     'epoch': epoch,
-    #     'model_state_dict': model.state_dict()
-    #     'optimizer_state_dict': optimizer.state_dict()
-    #     'loss'
-    # })
+        # torch.save({
+        #     'epoch': epoch,
+        #     'model_state_dict': model.state_dict()
+        #     'optimizer_state_dict': optimizer.state_dict()
+        #     'loss'
+        # })
 
-    if avg_val_loss < best_vloss:
-        best_vloss = avg_val_loss
-        model_path = 'model_{}_{}'.format(timestamp, epoch+1)
+        if avg_val_loss < best_vloss:
+            best_vloss = avg_val_loss
+            model_path = 'model_{}_{}'.format(timestamp, epoch+1)
 
 
 
