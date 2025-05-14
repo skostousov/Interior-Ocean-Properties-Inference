@@ -4,6 +4,7 @@ import numpy as np
 from pathlib import Path
 import yaml
 import copernicusmarine
+from utils.config import RAW_CONFIG
 
 def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: tuple, longitude: tuple, latitude: tuple):
     """
@@ -36,7 +37,8 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
 )
 
 class GLORYSDS(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, grid_size = 40):
+    def __init__(self, dataset_dir, transform = None, grid_size = 40, days = True):
+        self.days = days
         self.data = NETCDF4Dataset(dataset_dir)
         self.data_variables = {k:v[:] for (k, v) in self.data.variables.items()}
         for key, _ in self.data.dimensions.items():
@@ -58,28 +60,63 @@ class GLORYSDS(TorchDataset):
             for j in range(0, self.annotations_map.shape[2], self.region_size)
         ]
         self.indices_regionified = {}
+        #RECHECK LATER
         for region in self.regions:
             self.indices_regionified[region] = [
                 (i, j) 
-                for i in range(region[0], region[0]+self.region_size, self.offset_size)
-                for j in range(region[1], region[1]+self.region_size, self.offset_size)
+                for i in range(region[0], region[0]+self.region_size-self.grid_size, self.offset_size)
+                for j in range(region[1], region[1]+self.region_size-self.grid_size, self.offset_size)
                 ]
         self.all_indices = []
         for region_indices in self.indices_regionified.values():
             self.all_indices.extend(region_indices)
         self.index_region = []
-        for key, value in self.indices_regionified.items():
-            self.index_region.extend([key for i in range(len(value))])
+        for j, value in enumerate(self.indices_regionified.values()):
+            self.index_region.extend([j for i in range(len(value))])
 
     def __len__(self):
         return len(self.all_indices)
     def __getitem__(self, idx):
+        if idx >= len(self.all_indices):
+            raise IndexError(f"Index {idx} out of range for dataset of size {len(self.all_indices)}")
         coordinates = self.all_indices[idx]
+
+        max_x = min(coordinates[0] + self.grid_size, self.annotations_map.shape[1])
+        max_y = min(coordinates[1] + self.grid_size, self.annotations_map.shape[2])
+
+
         image = self.feature_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
         label = self.annotations_map[..., coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
+        if max_x <= coordinates[0] or max_y <= coordinates[1]:
+            # Create zeros arrays with correct shapes
+            padded_image = np.zeros((self.feature_map.shape[0], self.feature_map.shape[1], self.grid_size, self.grid_size))
+            padded_label = np.zeros((self.annotations_map.shape[0], self.grid_size, self.grid_size))
+            image = padded_image
+            label = padded_label
+        else:
+            # Normal case - extract valid slices
+            image = self.feature_map[:, :, coordinates[0]:max_x, coordinates[1]:max_y]
+            label = self.annotations_map[..., coordinates[0]:max_x, coordinates[1]:max_y]
+        
+            # Pad if needed
+            if max_x - coordinates[0] < self.grid_size or max_y - coordinates[1] < self.grid_size:
+                padded_image = np.zeros((image.shape[0], image.shape[1], self.grid_size, self.grid_size))
+                padded_label = np.zeros((label.shape[0], self.grid_size, self.grid_size))
+                padded_image[:, :, :(max_x-coordinates[0]), :(max_y-coordinates[1])] = image
+                padded_label[:, :(max_x-coordinates[0]), :(max_y-coordinates[1])] = label
+                
+                image = padded_image
+                label = padded_label
+        
         label = np.expand_dims(label, axis=1)
         if self.transform:
             image, label = self.transform(image, label)
+        if not self.days:
+            image = np.squeeze(image[0:1], axis=0)
+            label = np.squeeze(label[0:1], axis=0)
+
+        image = image.astype(np.float32)
+        label = label.astype(np.float32)
         return image, label
 
 if __name__ == "__main__":
