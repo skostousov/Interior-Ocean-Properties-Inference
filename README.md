@@ -32,4 +32,4 @@ Please update the config file with your own username in order to download data f
 
 1. Implement RobustScaler
 2. Zoom @ 11
-3. Continue with 1st, 12th, and 13th task of odo list
+3. Continue with 1st, 12th, and 13th task of todo list
