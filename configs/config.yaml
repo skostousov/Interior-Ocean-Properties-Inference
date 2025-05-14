@@ -3,6 +3,8 @@ model_save_dest: saved_models
 copernicusmarine: 
   USERNAME: skostousov
 
-epochs: 100
-batch_size: 20
+epochs: 5
+batch_size: 10
 days: False
+
+features: [bottomT, so, thetao, uo, vo, zos]
