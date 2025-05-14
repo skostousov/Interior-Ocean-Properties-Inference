@@ -11,7 +11,8 @@ poetry shell
 Please update the config file with your own username in order to download data from https://data.marine.copernicus.eu/ (from which all data in this repository is sourced from)
 
 ### TODO List:
-1. Fix train_no_val so that the model actually trains and converges to some solution
+
+1. **Fix train_no_val so that the model actually trains and converges to some solution**
 2. Create test script + visualization of results
 3. Organize config file
 4. Allow the model to train on several days at once, and figure out how to approach this
@@ -22,4 +23,7 @@ Please update the config file with your own username in order to download data f
 9. Implement model saving and loading
 10. Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
 11. Fix loss and accuracy output metrics
-12. Normalize inputs
+12. **Normalize inputs**
+13. **Implement Early Stopping**
+
+**BOLD** denotes tasks to be prioritized
