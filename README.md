@@ -10,30 +10,30 @@ poetry shell
 ```
 Please update the config file with your own username in order to download data from https://data.marine.copernicus.eu/ (from which all data in this repository is sourced from)
 
-### TODO List:
+## TODO List:
 
-1. ~~Fix train_no_val so that the model actually trains and converges to some solution~~
-2. **Create test script + visualization of results**
-3. Organize config file
-4. Allow the model to train on several days at once, and figure out how to approach this
-5. **Make sure grids in regions dont overflow on to other regions**
-6. **Review padding logic and hadnling of edge cases**
-7. Make training script functional with transforms
-8. Allow for usage of splitter
-9. Implement model saving and loading
-10. Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
-11. **Fix loss and accuracy output metrics**
-12. ~~Normalize inputs~~
-13. Implement Early Stopping
+- ~~Fix train_no_val so that the model actually trains and converges to some solution~~ (15/05/2025)
+- **Create test script + visualization of results**
+- Organize config file
+- Allow the model to train on several days at once, and figure out how to approach this
+- **Make sure grids in regions dont overflow on to other regions**
+- **Review padding logic and handling of edge cases**
+- Make training script functional with transforms
+- Allow for usage of splitter
+- Implement model saving and loading
+- Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
+- ~~Fix loss and accuracy output metrics~~ (15/05/2025)
+- ~~Normalize inputs~~ (15/05/2025)
+- Implement Early Stopping
 
 **BOLD** denotes tasks to be prioritized
 
-### 15/05/2025
+## 15/05/2025
 
 1. ~~Implement RobustScaler~~
 2. ~~Zoom @ 11~~
 3. ~~Continue with 1st, 12th,~~ and 13th task of todo list
 
-    #### Log:
-    - Implemented Robust Scaler
-    - Removed variables concerning ice from feature map: vsi, usi, sithick, siconc
+#### Log:
+- Implemented Robust Scaler
+- Removed variables concerning ice from feature map: *vsi*, *usi*, *sithick*, *siconc*
