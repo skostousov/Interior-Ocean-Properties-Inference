@@ -25,6 +25,7 @@ Please update the config file with your own username in order to download data f
 - ~~Fix loss and accuracy output metrics~~ (15/05/2025)
 - ~~Normalize inputs~~ (15/05/2025)
 - Implement Early Stopping
+- ~~Automatically remove all regions with no ocean~~ (15/05/25)
 
 **BOLD** denotes tasks to be prioritized
 
@@ -37,3 +38,4 @@ Please update the config file with your own username in order to download data f
 #### Log:
 - Implemented Robust Scaler
 - Removed variables concerning ice from feature map: *vsi*, *usi*, *sithick*, *siconc*
+- Modified data loader to remove features with no ocean

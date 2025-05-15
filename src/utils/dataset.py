@@ -79,12 +79,13 @@ class GLORYSDS(TorchDataset):
 
         self.grid_size = grid_size
         self.offset_size = 2
-        self.images_in_region_one_axis = 2
+        self.images_in_region_one_axis = 3
         self.region_size = grid_size + self.offset_size*(self.images_in_region_one_axis-1)
         self.regions = [
             (i, j)
             for i in range(0, self.annotations_map.shape[1], self.region_size)
             for j in range(0, self.annotations_map.shape[2], self.region_size)
+            if not self.just_land(self.feature_map[:, :, i:i+self.region_size, j:j+self.region_size])
         ]
         self.indices_regionified = {}
         for region in self.regions:
@@ -110,7 +111,14 @@ class GLORYSDS(TorchDataset):
         normal_tensor = flattened_tensor.reshape(W, H, C).transpose(2, 0, 1)
         return normal_tensor
 
-
+    def just_land(self, data):
+        result = (data == 0)
+        percent_true = 100 * result.sum() / result.size
+        if result.size == 0 or result.sum() == 0:
+            land = True
+        else:
+            land = bool(result.all())
+        return land
 
     def __len__(self):
         return len(self.all_indices)
