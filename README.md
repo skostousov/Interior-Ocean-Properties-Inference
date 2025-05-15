@@ -28,8 +28,11 @@ Please update the config file with your own username in order to download data f
 
 **BOLD** denotes tasks to be prioritized
 
-### For 15/05/2025
+### 15/05/2025
 
-1. Implement RobustScaler
-2. Zoom @ 11
+1. ~~Implement RobustScaler~~
+2. ~~Zoom @ 11~~
 3. Continue with 1st, 12th, and 13th task of todo list
+
+##### Log:
+Removing variables concerning ice from feature map: vsi, usi, sithick, siconc
