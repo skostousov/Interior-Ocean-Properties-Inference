@@ -39,3 +39,4 @@ Please update the config file with your own username in order to download data f
 - Implemented Robust Scaler
 - Removed variables concerning ice from feature map: *vsi*, *usi*, *sithick*, *siconc*
 - Modified data loader to remove features with no ocean
+- Fixed grid generator to avoid regional overlap when partitioning image
