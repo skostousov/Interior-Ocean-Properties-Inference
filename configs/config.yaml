@@ -3,8 +3,8 @@ model_save_dest: saved_models
 copernicusmarine: 
   USERNAME: skostousov
 
-epochs: 2
-batch_size: 20
+epochs: 10
+batch_size: 10
 days: False
 
 features: [bottomT, so, thetao, uo, vo, zos, mlotst]
