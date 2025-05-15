@@ -5,7 +5,7 @@ from pathlib import Path
 import yaml
 import copernicusmarine
 from utils.config import RAW_CONFIG, DATA_DIR
-from sklearn.prepocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler
 
 def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: tuple, longitude: tuple, latitude: tuple):
     """
@@ -54,22 +54,26 @@ class GLORYSDS(TorchDataset):
         self.feature_map = np.concatenate(list(self.data_variables.values()), axis=1)
         
         self.normalize = normalize
-        self.feature_stats = {}
-        self.label_stats = {}
 
         if normalize:
-            # for i in range(self.feature_map.shape[1]):
-            #     channel = self.feature_map[:, i, :, :]
-            #     self.feature_stats[i] = {
-            #         'mean': float(np.mean(channel)),
-            #         'std': float(np.std(channel) + 1e-8)
-            #     }
-            # self.label_stats = {
-            #     'mean': float(np.mean(self.annotations_map)),
-            #     'std': float(np.std(self.annotations_map) + 1e-8)
-            # }
-            self.scaler = RobustScaler()
-            
+            self.feature_scalers = {}
+            self.annotation_scalers = {}
+            self.num_days = self.feature_map.shape[0]
+            self.annotations_map_expanded = np.expand_dims(self.annotations_map, axis=1)
+            for i in range(self.num_days):
+                self.feature_scalers[f"day {i}"] = RobustScaler()
+            for j in range(self.num_days):
+                self.annotation_scalers[f"day {j}"] = RobustScaler()
+            for i in range(self.num_days):
+                print(self.feature_map.shape, self.annotations_map.shape, self.annotations_map_expanded.shape)
+                full_sat_img = self.feature_map[i]
+                full_sat_lbl = self.annotations_map_expanded[i]
+                print(full_sat_img.shape, full_sat_lbl.shape)
+                full_sat_img, _ = self._convert_to_scaler_fmt(full_sat_img)
+                full_sat_lbl, _ = self._convert_to_scaler_fmt(full_sat_lbl)
+                print(full_sat_img.shape, full_sat_lbl.shape)
+                self.feature_scalers[f"day {i}"].fit(full_sat_img)
+                self.annotation_scalers[f"day {i}"].fit(full_sat_lbl)
 
         self.grid_size = grid_size
         self.offset_size = 2
@@ -93,6 +97,18 @@ class GLORYSDS(TorchDataset):
         self.index_region = []
         for j, value in enumerate(self.indices_regionified.values()):
             self.index_region.extend([j for i in range(len(value))])
+    def _convert_to_scaler_fmt(self, tensor):
+        #takes in shape (C, W H)
+        C, W, H = tensor.shape
+        reversed_tensor = np.transpose(tensor, (1, 2, 0))
+        flattened_tensor = reversed_tensor.reshape(-1, C)
+        return flattened_tensor, (C, W, H)
+    def _convert_to_normal_fmt(self, flattened_tensor, shape):
+        C, W, H = shape
+        normal_tensor = flattened_tensor.reshape(W, H, C).transpose(2, 0, 1)
+        return normal_tensor
+
+
 
     def __len__(self):
         return len(self.all_indices)
@@ -124,14 +140,29 @@ class GLORYSDS(TorchDataset):
                 image = padded_image
                 label = padded_label
         
-        if self.normalize:
-            for i in range(image.shape[1]):
-                mean = self.feature_stats[i]['mean']
-                std = self.feature_stats[i]['std']
-                image[:, i, :, :] = (image[:, i, :, :] - mean) / std
-            label = (label - self.label_stats['mean']) / self.label_stats['std']
-
         label = np.expand_dims(label, axis=1)
+
+        if self.normalize:
+            scaled_imgs = []
+            scaled_lbls = []
+            for i in range(self.num_days):
+                imgtobescaled = image[i]
+                imgtobescaled, original_img_shape = self._convert_to_scaler_fmt(imgtobescaled)
+                scaled_img = self.feature_scalers[f"day {i}"].transform(imgtobescaled)
+                normal_scaled_img = self._convert_to_normal_fmt(scaled_img, original_img_shape)
+                scaled_imgs.append(normal_scaled_img)
+
+                lbltobescaled = label[i]
+                lbltobescaled, original_lbl_shape = self._convert_to_scaler_fmt(lbltobescaled)
+                scaled_lbl = self.annotation_scalers[f"day {i}"].transform(lbltobescaled)
+                normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
+                scaled_lbls.append(normal_scaled_lbl)
+            print(len(scaled_imgs), len(scaled_lbls))
+            print(scaled_imgs[0].shape, scaled_lbls[0].shape)
+            image = np.stack(scaled_imgs, axis=0)
+            label = np.stack(scaled_lbls, axis=0)
+            print(image.shape, label.shape)
+
         if self.transform:
             image, label = self.transform(image, label)
         if not self.days:
@@ -141,18 +172,10 @@ class GLORYSDS(TorchDataset):
         image = image.astype(np.float32)
         label = label.astype(np.float32)
         return image, label
-    
-    def unormalize(self, predictions):
-        if not self.normalize:
-            return predictions
-        mean = self.label_stats['mean']
-        std = self.label_stats['std']
-        return predictions*std + mean
 
 if __name__ == "__main__":
     ds_name = "cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
-    ds = GLORYSDS(DATA_DIR/ds_name, days = False)
+    ds = GLORYSDS(DATA_DIR/ds_name, days = False, normalize=True)
     sample_image, sample_label = ds[1]
     print(f"{sample_image.shape}, {sample_label.shape}")
-    print(ds.data_variables)
         
