@@ -67,13 +67,13 @@ class GLORYSDS(TorchDataset):
             for j in range(self.num_days):
                 self.annotation_scalers[f"day {j}"] = RobustScaler()
             for i in range(self.num_days):
-                print(self.feature_map.shape, self.annotations_map.shape, self.annotations_map_expanded.shape)
+                # print(self.feature_map.shape, self.annotations_map.shape, self.annotations_map_expanded.shape)
                 full_sat_img = self.feature_map[i]
                 full_sat_lbl = self.annotations_map_expanded[i]
-                print(full_sat_img.shape, full_sat_lbl.shape)
+                # print(full_sat_img.shape, full_sat_lbl.shape)
                 full_sat_img, _ = self._convert_to_scaler_fmt(full_sat_img)
                 full_sat_lbl, _ = self._convert_to_scaler_fmt(full_sat_lbl)
-                print(full_sat_img.shape, full_sat_lbl.shape)
+                # print(full_sat_img.shape, full_sat_lbl.shape)
                 self.feature_scalers[f"day {i}"].fit(full_sat_img)
                 self.annotation_scalers[f"day {i}"].fit(full_sat_lbl)
 
@@ -159,11 +159,11 @@ class GLORYSDS(TorchDataset):
                 scaled_lbl = self.annotation_scalers[f"day {i}"].transform(lbltobescaled)
                 normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
                 scaled_lbls.append(normal_scaled_lbl)
-            print(len(scaled_imgs), len(scaled_lbls))
-            print(scaled_imgs[0].shape, scaled_lbls[0].shape)
+            # print(len(scaled_imgs), len(scaled_lbls))
+            # print(scaled_imgs[0].shape, scaled_lbls[0].shape)
             image = np.stack(scaled_imgs, axis=0)
             label = np.stack(scaled_lbls, axis=0)
-            print(image.shape, label.shape)
+            # print(image.shape, label.shape)
 
         if self.transform:
             image, label = self.transform(image, label)

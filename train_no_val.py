@@ -37,9 +37,8 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         loss = loss_fn(pred, labels)
         loss.backward()
         optimizer.step()
-        if batch % 2 == 0:
+        if batch % 1000 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
-            print(loss)
             print(f"loss: {loss:>7f} [{current:>6d}/{size:>5d}]")
 
 def test_loop(test_dataloader, model, loss_fn, device):
@@ -66,7 +65,6 @@ data_aug = Compose([ToTensor(), RescaledRotationTransform()])
 ds_path = DATA_DIR/"cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
 # data = GLORYSDS(ds_path, data_aug, days = False)
 data = GLORYSDS(ds_path, days = False, normalize=True)
-print(data.feature_stats, data.label_stats)
 
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
