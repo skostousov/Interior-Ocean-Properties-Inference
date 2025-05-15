@@ -9,3 +9,10 @@ with open(_REPO_ROOT/"configs"/"config.yaml", "r") as f:
 DATA_DIR = (_REPO_ROOT / RAW_CONFIG["data_dir_relative_to_project_root"]).resolve()
 SAVED_MODELS_DIR = (_REPO_ROOT / RAW_CONFIG["model_save_dest"]).resolve()
 FEATURES = RAW_CONFIG["features"]
+EARLY_STOP = RAW_CONFIG['early_stopping_thresh']
+
+def fetch_datasets():
+    pass
+
+if __name__=="__main__":
+    print(FEATURES)

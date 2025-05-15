@@ -1,19 +1,19 @@
 from sklearn.model_selection import GroupShuffleSplit, GroupKFold
 from torch.utils.data import Subset
 
-def simple_train_test_split(dataset, test_frac=0.2, seed=42):
+def simple_train_val_split(dataset, val_frac=0.2, seed=42):
      groups = dataset.index_region
      print(len(groups))
      print(len(dataset))
      indexes = list(range(len(dataset)))
-     gss = GroupShuffleSplit(n_splits=1, test_size=test_frac, random_state=seed)
-     train_idx, test_idx = next(gss.split(indexes, groups=groups))
-     print(f"Max train_idx: {max(train_idx)}, Max test_idx: {max(test_idx)}, Dataset size: {len(dataset)}")
+     gss = GroupShuffleSplit(n_splits=1, test_size=val_frac, random_state=seed)
+     train_idx, val_idx = next(gss.split(indexes, groups=groups))
+     print(f"Max train_idx: {max(train_idx)}, Max val_idx: {max(val_idx)}, Dataset size: {len(dataset)}")
      assert max(train_idx) < len(dataset), f"Max train_idx ({max(train_idx)}) >= dataset size ({len(dataset)})"
-     assert max(test_idx) < len(dataset), f"Max test_idx ({max(test_idx)}) >= dataset size ({len(dataset)})"
+     assert max(val_idx) < len(dataset), f"Max val_idx ({max(val_idx)}) >= dataset size ({len(dataset)})"
      return (
          Subset(dataset, train_idx),
-         Subset(dataset, test_idx)
+         Subset(dataset, val_idx)
      )
 
 class NestedSplitter:

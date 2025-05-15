@@ -16,19 +16,24 @@ def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: 
         output_dir (str): directory to download data to
         start_day (tuple): (year: int, month: int, day: int)
     """
-    start_datetime = f"{start_day[0]}-{start_day[1]}-{start_day[2]}:T00:00:00"
-    end_datetime = f"{end_day[0]}-{end_day[1]}-{end_day[2]}:T00:00:00"
+    start_date = f"{start_day[0]}-{start_day[1]:02d}-{start_day[2]:02d}"
+    end_date = f"{end_day[0]}-{end_day[1]:02d}-{end_day[2]:02d}"
+
+    start_datetime = f"{start_date}T00:00:00"
+    end_datetime = f"{end_date}T00:00:00" 
+
 
     copernicusmarine.subset(
     dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",
     username=username,
     dataset_version="202311",
-    variables=["bottomT", "mlotst", "siconc", "sithick", "so", "thetao", "uo", "usi", "vo", "vsi", "zos"],
+    variables=FEATURES,
     minimum_longitude=min(longitude),
     maximum_longitude=max(longitude),
     minimum_latitude=min(latitude),
     maximum_latitude=max(latitude),
-    output_directory= output_dir,
+    output_directory = output_dir,
+    output_filename= f"lat:{min(latitude):.0f}-{max(latitude):.0f}_long:{min(longitude):.0f}-{max(longitude):.0f}_date:{start_date}-{end_date}",
     start_datetime=start_datetime,
     end_datetime=end_datetime,
     minimum_depth=0.49402499198913574,

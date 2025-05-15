@@ -17,14 +17,14 @@ Please update the config file with your own username in order to download data f
 - Organize config file
 - Allow the model to train on several days at once, and figure out how to approach this
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
-- **Review padding logic and handling of edge cases**
+- Review padding logic and handling of edge cases
 - ~~Make training script functional with transforms~~ (15/05/2025)
 - Allow for usage of splitter
 - Implement model saving and loading
 - Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
 - ~~Fix loss and accuracy output metrics~~ (15/05/2025)
 - ~~Normalize inputs~~ (15/05/2025)
-- Implement Early Stopping
+- ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
 
 **BOLD** denotes tasks to be prioritized
@@ -41,3 +41,4 @@ Please update the config file with your own username in order to download data f
 - Modified data loader to remove features with no ocean
 - Fixed grid generator to avoid regional overlap when partitioning image
 - Fixed transforms
+- Implemented model saving and early stopping
