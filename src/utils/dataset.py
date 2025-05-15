@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 import copernicusmarine
 from utils.config import RAW_CONFIG, DATA_DIR
+from sklearn.prepocessing import RobustScaler
 
 def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: tuple, longitude: tuple, latitude: tuple):
     """
@@ -57,16 +58,18 @@ class GLORYSDS(TorchDataset):
         self.label_stats = {}
 
         if normalize:
-            for i in range(self.feature_map.shape[1]):
-                channel = self.feature_map[:, i, :, :]
-                self.feature_stats[i] = {
-                    'mean': float(np.mean(channel)),
-                    'std': float(np.std(channel) + 1e-8)
-                }
-            self.label_stats = {
-                'mean': float(np.mean(self.annotations_map)),
-                'std': float(np.std(self.annotations_map) + 1e-8)
-            }
+            # for i in range(self.feature_map.shape[1]):
+            #     channel = self.feature_map[:, i, :, :]
+            #     self.feature_stats[i] = {
+            #         'mean': float(np.mean(channel)),
+            #         'std': float(np.std(channel) + 1e-8)
+            #     }
+            # self.label_stats = {
+            #     'mean': float(np.mean(self.annotations_map)),
+            #     'std': float(np.std(self.annotations_map) + 1e-8)
+            # }
+            self.scaler = RobustScaler()
+            
 
         self.grid_size = grid_size
         self.offset_size = 2
