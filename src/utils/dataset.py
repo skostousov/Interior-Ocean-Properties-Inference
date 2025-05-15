@@ -79,7 +79,7 @@ class GLORYSDS(TorchDataset):
 
         self.grid_size = grid_size
         self.offset_size = 2
-        self.images_in_region_one_axis = 3
+        self.images_in_region_one_axis = 4
         self.region_size = grid_size + self.offset_size*(self.images_in_region_one_axis-1)
         self.regions = [
             (i, j)
@@ -91,8 +91,8 @@ class GLORYSDS(TorchDataset):
         for region in self.regions:
             self.indices_regionified[region] = [
                 (i, j) 
-                for i in range(region[0], region[0]+self.region_size, self.offset_size)
-                for j in range(region[1], region[1]+self.region_size, self.offset_size)
+                for i in range(region[0], region[0]+self.region_size - self.grid_size, self.offset_size)
+                for j in range(region[1], region[1]+self.region_size - self.grid_size, self.offset_size)
                 ]
         self.all_indices = []
         for region_indices in self.indices_regionified.values():

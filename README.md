@@ -16,7 +16,7 @@ Please update the config file with your own username in order to download data f
 - **Create test script + visualization of results**
 - Organize config file
 - Allow the model to train on several days at once, and figure out how to approach this
-- **Make sure grids in regions dont overflow on to other regions**
+- ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
 - **Review padding logic and handling of edge cases**
 - Make training script functional with transforms
 - Allow for usage of splitter
