@@ -9,23 +9,9 @@ from utils.transforms import RescaledRotationTransform, ToTensor, Compose
 from utils.config import DATA_DIR, RAW_CONFIG, SAVED_MODELS_DIR
 from torch.optim import Adam
 import time
+from utils.splitter import simple_train_test_split
 
 cfg = RAW_CONFIG
-
-def train_test_split(dataset, test_frac=0.2, seed=42):
-     groups = dataset.index_region
-     print(len(groups))
-     print(len(dataset))
-     indexes = list(range(len(dataset)))
-     gss = GroupShuffleSplit(n_splits=1, test_size=test_frac, random_state=seed)
-     train_idx, test_idx = next(gss.split(indexes, groups=groups))
-     print(f"Max train_idx: {max(train_idx)}, Max test_idx: {max(test_idx)}, Dataset size: {len(dataset)}")
-     assert max(train_idx) < len(dataset), f"Max train_idx ({max(train_idx)}) >= dataset size ({len(dataset)})"
-     assert max(test_idx) < len(dataset), f"Max test_idx ({max(test_idx)}) >= dataset size ({len(dataset)})"
-     return (
-         Subset(dataset, train_idx),
-         Subset(dataset, test_idx)
-     )
 
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
     size = len(train_dataloader.dataset)
@@ -37,13 +23,12 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         loss = loss_fn(pred, labels)
         loss.backward()
         optimizer.step()
-        if batch % 1000 == 0:
+        if batch % 50 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
             print(f"loss: {loss:>7f} [{current:>6d}/{size:>5d}]")
 
 def test_loop(test_dataloader, model, loss_fn, device):
     model.eval()
-    size=len(test_dataloader.dataset)
     num_batches = len(test_dataloader)
     test_loss = 0
     with torch.no_grad():
@@ -61,8 +46,8 @@ print(f"Using {device} device")
 
 data_aug = Compose([ToTensor(), RescaledRotationTransform()])
 ds_path = DATA_DIR/"cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
-# data = GLORYSDS(ds_path, data_aug, days = False)
-data = GLORYSDS(ds_path, days = False, normalize=True)
+data = GLORYSDS(ds_path, data_aug, days = False)
+# data = GLORYSDS(ds_path, days = False, normalize=True)
 
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
@@ -72,7 +57,7 @@ model = model.to(device)
 optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 loss_fn = nn.MSELoss()
 
-train_data, test_data = train_test_split(data)
+train_data, test_data = simple_train_test_split(data)
 print(f"Train dataset size: {len(train_data)}, Test dataset size: {len(test_data)}")
 print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Test dataset shape: img: {test_data[0][0].shape}, lbl: {test_data[0][1].shape}")
 

@@ -175,6 +175,7 @@ class GLORYSDS(TorchDataset):
 
         if self.transform:
             image, label = self.transform(image, label)
+            
         if not self.days:
             image = np.squeeze(image[0:1], axis=0)
             label = np.squeeze(label[0:1], axis=0)

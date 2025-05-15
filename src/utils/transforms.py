@@ -2,7 +2,7 @@ from torchvision import transforms, utils
 import torch
 
 class RescaledRotationTransform(object):
-    def __init__(self, degree_range = 180, scaling_interval = (0.001, 2)):
+    def __init__(self, degree_range = 180, scaling_interval = (1, 2)):
         self.degrees = degree_range
         self.scale = scaling_interval
         self.transform = transforms.RandomAffine(self.degrees, scale=self.scale)
@@ -24,4 +24,8 @@ class Compose(object):
     def __call__(self, image, label):
         for transform in self.transforms:
             image, label = transform(image, label)
+        if torch.is_tensor(image):
+            image = image.numpy()
+        if torch.is_tensor(label):
+            label = label.numpy()
         return image, label
