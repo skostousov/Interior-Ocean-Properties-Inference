@@ -7,4 +7,4 @@ epochs: 5
 batch_size: 10
 days: False
 
-features: [bottomT, so, thetao, uo, vo, zos]
+features: [bottomT, so, thetao, uo, vo, zos, mlotst]

@@ -4,7 +4,7 @@ import numpy as np
 from pathlib import Path
 import yaml
 import copernicusmarine
-from utils.config import RAW_CONFIG, DATA_DIR
+from utils.config import RAW_CONFIG, DATA_DIR, FEATURES
 from sklearn.preprocessing import RobustScaler
 
 def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: tuple, longitude: tuple, latitude: tuple):
@@ -41,10 +41,12 @@ class GLORYSDS(TorchDataset):
     def __init__(self, dataset_dir, transform = None, grid_size = 40, days = True, normalize = True):
         self.days = days
         self.data = NETCDF4Dataset(dataset_dir)
-        self.data_variables = {k:v[:] for (k, v) in self.data.variables.items()}
+        self.data_variables = {k:v[:] for (k, v) in self.data.variables.items() if k in FEATURES}
         for key, _ in self.data.dimensions.items():
             if key in self.data_variables.keys():
                 del self.data_variables[key]
+
+        
 
         self.transform = transform
         self.annotations_map = self.data_variables.pop("mlotst")
