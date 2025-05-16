@@ -15,7 +15,7 @@ Please update the config file with your own username in order to download data f
 - ~~Fix train_no_val so that the model actually trains and converges to some solution~~ (15/05/2025)
 - ~~Create test script + visualization of results~~ (16/05/2025)
 - **Organize config file**
-- Allow the model to train on several days at once, and figure out how to approach this
+- Allow the model to train on several days at once, and figure out how to approach this -possible solution: add several days to one region
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
 - Review padding logic and handling of edge cases
 - ~~Make training script functional with transforms~~ (15/05/2025)
@@ -55,4 +55,11 @@ Please update the config file with your own username in order to download data f
 #### Log:
 - implemented train-test split (including unique test subset class), although model fails to converge even remotely for the 1993 dataset (2021 is fine)!!!!
 - MSE Loss is almost zero but mixed layer depth estimation is pretty dismal. MSE might be an unsuitable loss function. As well, the unnormalizer is currently non-functional.
-- Upon further investigation, and after trying HuberLoss(penalizes rapid changes), it seems that the network is collapsing to a uniform classifier. Time to read some papers.
+- Upon further investigation, and after trying HuberLoss (penalizes rapid changes), it seems that the network is collapsing to a uniform classifier (upon further review, seems that mse is best option and not sure problem lies in it. might need more training data). Time to read some papers.
+    - possible solution: use se attenion blocks to weight channels
+
+## 20/05/2025
+
+1. Deal with problem in 2021 vs 1993 dataset
+2. Tackle problem of days to expand training set
+3. make unnormalizer functional
