@@ -42,3 +42,9 @@ Please update the config file with your own username in order to download data f
 - Fixed grid generator to avoid regional overlap when partitioning image
 - Fixed transforms
 - Implemented model saving and early stopping
+
+## 16/05/2025
+
+1. Implement train-test split within dataset.py
+2. Create test script + visualization of results
+3. 
