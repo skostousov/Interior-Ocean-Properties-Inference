@@ -55,8 +55,12 @@ epochs = RAW_CONFIG["epochs"]
 
 model = UNet(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
-optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
-loss_fn = nn.MSELoss()
+optimizer = Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
+
+
+# loss_fn = nn.MSELoss()
+loss_fn = nn.HuberLoss()
+
 
 train_idx, val_idx, _ = train_val_test_split(data, seed=42, test_indices_path=Path("test_indices/1st_test_stratification.pt"))
 train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)

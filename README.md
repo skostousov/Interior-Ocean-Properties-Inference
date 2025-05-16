@@ -55,3 +55,4 @@ Please update the config file with your own username in order to download data f
 #### Log:
 - implemented train-test split (including unique test subset class), although model fails to converge even remotely for the 1993 dataset (2021 is fine)!!!!
 - MSE Loss is almost zero but mixed layer depth estimation is pretty dismal. MSE might be an unsuitable loss function. As well, the unnormalizer is currently non-functional.
+- Upon further investigation, and after trying HuberLoss(penalizes rapid changes), it seems that the network is collapsing to a uniform classifier. Time to read some papers.

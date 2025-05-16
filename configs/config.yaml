@@ -3,8 +3,8 @@ model_save_dest: saved_models
 copernicusmarine: 
   USERNAME: skostousov
 
-epochs: 50
-batch_size: 10
+epochs: 100
+batch_size: 20
 days: False
 early_stopping_thresh: 5
 
