@@ -1,4 +1,5 @@
 from torch.utils.data import Dataset as TorchDataset
+from torch.utils.data import Subset
 from netCDF4 import Dataset as NETCDF4Dataset
 import numpy as np
 from pathlib import Path
@@ -8,7 +9,7 @@ from utils.config import RAW_CONFIG, DATA_DIR, FEATURES
 from sklearn.preprocessing import RobustScaler
 
 class GLORYSDS(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, grid_size = 40, days = True, normalize = True, test_ratio = 0.2, test = False):
+    def __init__(self, dataset_dir, transform = None, grid_size = 40, days = True, normalize = True):
         self.include_several_days = days
         self.transform = transform
         self.normalize = normalize
@@ -55,8 +56,8 @@ class GLORYSDS(TorchDataset):
         self.region_size = grid_size + self.offset_size*(self.images_in_region_one_axis-1)
         self.regions = [
             (i, j)
-            for i in range(0, self.annotations_map.shape[1], self.region_size)
-            for j in range(0, self.annotations_map.shape[2], self.region_size)
+            for i in range(0, self.annotations_map.shape[-2], self.region_size)
+            for j in range(0, self.annotations_map.shape[-1], self.region_size)
             if not self._just_land(self.feature_map[:, :, i:i+self.region_size, j:j+self.region_size])
         ]
         self.indices_regionified = {}
@@ -92,8 +93,8 @@ class GLORYSDS(TorchDataset):
         return land
     
     def _pad(self, coordinates, image, label):
-        max_x = min(coordinates[0] + self.grid_size, self.annotations_map.shape[1])
-        max_y = min(coordinates[1] + self.grid_size, self.annotations_map.shape[2])
+        max_x = min(coordinates[0] + self.grid_size, self.annotations_map.shape[-2])
+        max_y = min(coordinates[1] + self.grid_size, self.annotations_map.shape[-1])
         if max_x <= coordinates[0] or max_y <= coordinates[1]:
             padded_image = np.zeros((self.feature_map.shape[0], self.feature_map.shape[1], self.grid_size, self.grid_size))
             padded_label = np.zeros((self.annotations_map.shape[0], self.annotations_map.shape[1], self.grid_size, self.grid_size))
@@ -153,6 +154,19 @@ class GLORYSDS(TorchDataset):
         image = image.astype(np.float32)
         label = label.astype(np.float32)
         return image, label
+    
+class TestSubset(Subset):
+    def __getitem__(self, idx):
+        if self.dataset.transform:
+            original_idx = self.indices[idx]
+            original_transform = self.dataset.transform
+            self.dataset.transform = None
+            item = self.dataset[original_idx]
+            self.dataset.transform = original_transform
+            return item
+        else:
+            return super().__getitem__(self, idx)
+
 
 if __name__ == "__main__":
     ds_name = "lat:30-60_long:-190--120_date:1993-10-11-1993-10-12.nc"

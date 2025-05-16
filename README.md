@@ -19,13 +19,14 @@ Please update the config file with your own username in order to download data f
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
 - Review padding logic and handling of edge cases
 - ~~Make training script functional with transforms~~ (15/05/2025)
-- Allow for usage of splitter
+- ~~Allow for usage of splitter~~ (16/05/2025)
 - Implement model saving and loading
 - Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
 - ~~Fix loss and accuracy output metrics~~ (15/05/2025)
 - ~~Normalize inputs~~ (15/05/2025)
 - ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
+- **Figure out difference in 1993 and 2021 dataset**
 
 **BOLD** denotes tasks to be prioritized
 
@@ -45,8 +46,8 @@ Please update the config file with your own username in order to download data f
 
 ## 16/05/2025
 
-1. Implement train-test split within dataset.py
+1. ~~Implement train-test split within dataset.py~~
 2. Create test script + visualization of results
 
 #### Log:
-- 
+- implemented train-test split, although model fails to converge even remotely for the 1993 dataset (2021 is fine)!!!!

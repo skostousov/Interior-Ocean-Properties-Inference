@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from pathlib import Path
 import os
 from models.Unet import UNet
 from torch.utils.data import Subset, DataLoader
@@ -9,7 +10,7 @@ from utils.transforms import RescaledRotationTransform, ToTensor, Compose
 from utils.config import DATA_DIR, RAW_CONFIG, SAVED_MODELS_DIR, EARLY_STOP
 from torch.optim import Adam
 import time
-from utils.splitter import simple_train_val_split
+from utils.splitter import simple_train_val_split, train_val_test_split
 
 cfg = RAW_CONFIG
 
@@ -45,9 +46,9 @@ device = torch.accelerator.current_accelerator().type if torch.accelerator.is_av
 print(f"Using {device} device")
 
 data_aug = Compose([ToTensor(), RescaledRotationTransform()])
+# ds_path = DATA_DIR/"lat:30-60_long:-190--120_date:1993-10-11-1993-10-12.nc"
 ds_path = DATA_DIR/"cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
-data = GLORYSDS(ds_path, data_aug, days = False)
-# data = GLORYSDS(ds_path, days = False, normalize=True)
+data = GLORYSDS(ds_path, data_aug, days = False, normalize=True)
 
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
@@ -57,7 +58,11 @@ model = model.to(device)
 optimizer = Adam(model.parameters(), lr=1e-3, weight_decay=1e-5)
 loss_fn = nn.MSELoss()
 
-train_data, val_data = simple_train_val_split(data)
+train_idx, val_idx, _ = train_val_test_split(data, seed=42, test_indices_path=Path("test_indices/1st_test_stratification.pt"))
+train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
+
+# train_data, val_data = simple_train_val_split(data)
+
 print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
 print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Val dataset shape: img: {val_data[0][0].shape}, lbl: {val_data[0][1].shape}")
 
