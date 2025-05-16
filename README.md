@@ -47,4 +47,6 @@ Please update the config file with your own username in order to download data f
 
 1. Implement train-test split within dataset.py
 2. Create test script + visualization of results
-3. 
+
+#### Log:
+- 
