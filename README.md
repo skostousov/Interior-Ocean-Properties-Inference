@@ -13,7 +13,7 @@ Please update the config file with your own username in order to download data f
 ## TODO List:
 
 - ~~Fix train_no_val so that the model actually trains and converges to some solution~~ (15/05/2025)
-- **Create test script + visualization of results**
+- ~~Create test script + visualization of results~~ (16/05/2025)
 - Organize config file
 - Allow the model to train on several days at once, and figure out how to approach this
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
@@ -27,6 +27,7 @@ Please update the config file with your own username in order to download data f
 - ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
 - **Figure out difference in 1993 and 2021 dataset**
+- **Find better loss function**
 
 **BOLD** denotes tasks to be prioritized
 
@@ -47,7 +48,8 @@ Please update the config file with your own username in order to download data f
 ## 16/05/2025
 
 1. ~~Implement train-test split within dataset.py~~
-2. Create test script + visualization of results
+2. ~~Create test script + visualization of results~~
 
 #### Log:
 - implemented train-test split, although model fails to converge even remotely for the 1993 dataset (2021 is fine)!!!!
+- MSE Loss is almost zero but mixed layer depth estimation is pretty dismal. MSE might be an unsuitable loss function.

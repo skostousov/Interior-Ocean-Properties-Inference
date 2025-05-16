@@ -24,7 +24,7 @@ def train_val_test_split(dataset, val_frac=0.15, test_frac=0.15, seed=42, test_i
     all_indices = list(range(len(dataset)))
 
     if test_indices_path and os.path.exists(test_indices_path):
-        test_idx = torch.load(test_indices_path)
+        test_idx = torch.load(test_indices_path, weights_only=False)
         print(f"Loaded existing test indices from {test_indices_path}, test size: {len(test_idx)}")
         
         train_val_mask = np.ones(len(dataset), dtype=bool)
@@ -83,6 +83,6 @@ class NestedSplitter:
         return self
     
 def test_indices(test_indices_path):
-    test_idx = torch.load(test_indices_path)
+    test_idx = torch.load(test_indices_path, weights_only=False)
     print(f"Loaded existing test indices from {test_indices_path}, test size: {len(test_idx)}")
     return test_idx

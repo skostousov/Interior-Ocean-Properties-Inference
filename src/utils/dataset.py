@@ -91,7 +91,15 @@ class GLORYSDS(TorchDataset):
         else:
             land = bool(result.all())
         return land
-    
+    def unnormalize(self, annotation, day):
+        ##takes as input dataset of size (1, 1, long, lat)
+        scaler = self.annotation_scalers[f"day {day}"]
+        scaled_fmt, original_shape = self._convert_to_scaler_fmt(annotation[0])
+        unnormalized = scaler.inverse_transform(scaled_fmt)
+        reshaped = self._convert_to_normal_fmt(unnormalized, original_shape)
+        reshaped_expanded = np.expand_dims(reshaped, axis=0)
+        return reshaped_expanded
+
     def _pad(self, coordinates, image, label):
         max_x = min(coordinates[0] + self.grid_size, self.annotations_map.shape[-2])
         max_y = min(coordinates[1] + self.grid_size, self.annotations_map.shape[-1])
