@@ -12,6 +12,8 @@ from utils.config import DATA_DIR, RAW_CONFIG, SAVED_MODELS_DIR, EARLY_STOP
 from torch.optim import Adam
 import time
 from utils.splitter import simple_train_val_split, train_val_test_split
+from models.simple_CNN import PixelWiseRegressor
+from models.CNN_EBAM import CNN_EBAM
 
 cfg = RAW_CONFIG
 
@@ -55,13 +57,13 @@ data = GLORYSDS2(ds_path, data_aug, normalize=True)
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
 
-model = UNet(data[0][0].shape[0], data[0][1].shape[0])
+# model = UNet(data[0][0].shape[0], data[0][1].shape[0])
+model = PixelWiseRegressor(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
 optimizer = Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 
-# loss_fn = nn.MSELoss()
-loss_fn = nn.HuberLoss()
+loss_fn = nn.MSELoss()
 
 
 train_idx, val_idx, _ = train_val_test_split(data, seed=42, test_indices_path=Path(cfg["test_indices"]))
@@ -99,6 +101,6 @@ for epoch in range(0, epochs):
         if epoch - best_epoch >= EARLY_STOP:
              print(f"Early stopping on epoch {epoch}")
              break
-        
+print(f"Best loss: {best_loss}")
 
 

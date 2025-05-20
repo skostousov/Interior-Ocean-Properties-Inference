@@ -6,7 +6,8 @@ from pathlib import Path
 import yaml
 import copernicusmarine
 from utils.config import RAW_CONFIG, DATA_DIR, FEATURES
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, MinMaxScaler
+import torch
 
 class GLORYSDS2(TorchDataset):
     def __init__(self, dataset_dir, transform = None, grid_size = 40, normalize = True):
@@ -39,8 +40,7 @@ class GLORYSDS2(TorchDataset):
             self.annotation_scalers = {}
             for i in range(self.num_days):
                 self.feature_scalers[f"day {i}"] = RobustScaler()
-            for j in range(self.num_days):
-                self.annotation_scalers[f"day {j}"] = RobustScaler()
+                self.annotation_scalers[f"day {i}"] = RobustScaler()
             for i in range(self.num_days):
                 full_day_img = self.feature_map[i]
                 full_day_lbl = self.annotations_map[i]
@@ -154,17 +154,29 @@ class GLORYSDS2(TorchDataset):
         return image, label
     
 class TestSubset(Subset):
+    def __init__(self, dataset, indices, days=False):
+        super().__init__(dataset, indices)
+        self.days = days
     def __getitem__(self, idx):
+        original_idx = self.indices[idx]
+        # Get the day information from the original dataset
+        coordinates = self.dataset.all_indices[original_idx]
+        day = coordinates[0]  # This is the day
+        
         if self.dataset.transform:
-            original_idx = self.indices[idx]
             original_transform = self.dataset.transform
             self.dataset.transform = None
-            item = self.dataset[original_idx]
+            image, label = self.dataset[original_idx]
             self.dataset.transform = original_transform
-            return item
         else:
-            return super().__getitem__(self, idx)
-
+            image, label = self.dataset[original_idx]
+        if self.days:
+            result = (image, label, torch.tensor(day, dtype=torch.int64))
+            assert len(result) == 3, f"Got {len(result)} pieces at idx={idx}"
+            return result
+        else:
+            result = (image, label)
+            return result
 
 if __name__ == "__main__":
     ds_name = RAW_CONFIG["datafile"]

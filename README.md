@@ -27,7 +27,6 @@ Please update the config file with your own username in order to download data f
 - ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
 - **Figure out difference in 1993 and 2021 dataset**
-- **Find better loss function**
 - **Make Unnormalizer functional**
 - **Make test dataset return entire regions instead of mini grids used for training**
 
@@ -66,3 +65,6 @@ Please update the config file with your own username in order to download data f
 
 #### Log:
 - created new dataset class in dataset2.py which allows model to train on several days, thereby expanding training set.
+- tried adding channel dropout to improve generalization but this fails miserably
+- currently Unet achieves loss: 0.000045, Simple CNN loss: 0.000025 (almost HALF)
+- spending most of the time debugging dataloader. trying to return day as well in order to unnormalize but doing so rather unsuccessfully

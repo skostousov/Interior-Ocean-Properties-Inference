@@ -1,7 +1,13 @@
+defaults: 
+  - mode: default_2021
+
+
+
+
 data_dir_relative_to_project_root: data
-datafile: "1993-10-11-1993-10-12.nc"
+datafile: "2021-06-25-2021-06-30.nc"
 model_save_dest: saved_models
-test_indices: test_indices/1993_test_stratification.pt
+test_indices: test_indices/2021_test_stratification.pt
 
 copernicusmarine: 
   USERNAME: skostousov

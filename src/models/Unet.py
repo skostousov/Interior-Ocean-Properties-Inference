@@ -2,20 +2,21 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
+
 class UNet(nn.Module):
     def __init__(self, in_channels, out_channels=1):
         super().__init__()
-        self.down1 = SkipAndDownSample(in_channels, 64)
-        self.down2 = SkipAndDownSample(64, 128)
-        self.down3 = SkipAndDownSample(128, 256)
-        self.down4 = SkipAndDownSample(256, 512)
+        self.down1 = SkipAndDownSample(in_channels, 64, )
+        self.down2 = SkipAndDownSample(64, 128, )
+        self.down3 = SkipAndDownSample(128, 256, )
+        self.down4 = SkipAndDownSample(256, 512, )
 
-        self.bottleneck = ConvReluBlock(512, 1024)
+        self.bottleneck = nn.ConvReluBlock(512, 1024)
 
         self.up_1 = UpSample(1024, 512)
-        self.up_2 = UpSample(512, 256)
-        self.up_3 = UpSample(256, 128)
-        self.up_4 = UpSample(128, 64)
+        self.up_2 = UpSample(512, 256, )
+        self.up_3 = UpSample(256, 128, )
+        self.up_4 = UpSample(128, 64, )
         self.output = OutputConv(64, out_channels)
     def forward(self, x):
         x_down1, x_skip1 = self.down1(x)
@@ -29,6 +30,8 @@ class UNet(nn.Module):
         x_up4 = self.up_4(x_up3, x_skip1)
         x_out = self.output(x_up4)
         return x_out
+    def __repr__(self):
+        return "unet"
 
 class OutputConv(nn.Module):
     def __init__(self, in_channels, out_channels):
