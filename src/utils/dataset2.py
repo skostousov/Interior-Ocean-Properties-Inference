@@ -153,15 +153,14 @@ class GLORYSDS2(TorchDataset):
         label = label.astype(np.float32)
         return image, label
     
-class TestSubset(Subset):
+class TestSubset2(Subset):
     def __init__(self, dataset, indices, days=False):
         super().__init__(dataset, indices)
         self.days = days
     def __getitem__(self, idx):
         original_idx = self.indices[idx]
-        # Get the day information from the original dataset
         coordinates = self.dataset.all_indices[original_idx]
-        day = coordinates[0]  # This is the day
+        day = coordinates[0]
         
         if self.dataset.transform:
             original_transform = self.dataset.transform
@@ -170,6 +169,7 @@ class TestSubset(Subset):
             self.dataset.transform = original_transform
         else:
             image, label = self.dataset[original_idx]
+
         if self.days:
             result = (image, label, torch.tensor(day, dtype=torch.int64))
             assert len(result) == 3, f"Got {len(result)} pieces at idx={idx}"
