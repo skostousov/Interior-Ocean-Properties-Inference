@@ -7,11 +7,11 @@ class RescaledRotationTransform(object):
         self.scale = scaling_interval
         self.transform = transforms.RandomAffine(self.degrees, scale=self.scale)
     def __call__(self, image, label):
-        img_features = image.shape[1]
-        label_features = label.shape[1]
-        concatonated = torch.cat([image, label], axis=1)
+        img_features = image.shape[0]
+        label_features = label.shape[0]
+        concatonated = torch.cat([image, label], axis=0)
         output = self.transform(concatonated)
-        transformed_image, transformed_label = output[:,:img_features], output[:, img_features:label_features+img_features]
+        transformed_image, transformed_label = output[:img_features], output[img_features:label_features+img_features]
         return transformed_image, transformed_label
     
 class ToTensor(object):

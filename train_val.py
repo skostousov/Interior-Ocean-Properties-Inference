@@ -6,6 +6,7 @@ from models.Unet import UNet
 from torch.utils.data import Subset, DataLoader
 from sklearn.model_selection import GroupShuffleSplit, StratifiedGroupKFold
 from utils.dataset import GLORYSDS
+from utils.dataset2 import GLORYSDS2
 from utils.transforms import RescaledRotationTransform, ToTensor, Compose
 from utils.config import DATA_DIR, RAW_CONFIG, SAVED_MODELS_DIR, EARLY_STOP
 from torch.optim import Adam
@@ -47,8 +48,9 @@ print(f"Using {device} device")
 
 data_aug = Compose([ToTensor(), RescaledRotationTransform()])
 # ds_path = DATA_DIR/"lat:30-60_long:-190--120_date:1993-10-11-1993-10-12.nc"
-ds_path = DATA_DIR/"cmems_mod_glo_phy_my_0.083deg_P1D-m_multi-vars_156.00W-121.42W_41.83N-63.08N_0.49m_2021-06-25-2021-06-30.nc"
-data = GLORYSDS(ds_path, data_aug, days = False, normalize=True)
+ds_path = DATA_DIR/cfg["datafile"]
+# data = GLORYSDS(ds_path, data_aug, days = False, normalize=True)
+data = GLORYSDS2(ds_path, data_aug, normalize=True)
 
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
@@ -62,7 +64,7 @@ optimizer = Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 loss_fn = nn.HuberLoss()
 
 
-train_idx, val_idx, _ = train_val_test_split(data, seed=42, test_indices_path=Path("test_indices/1st_test_stratification.pt"))
+train_idx, val_idx, _ = train_val_test_split(data, seed=42, test_indices_path=Path(cfg["test_indices"]))
 train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 
 # train_data, val_data = simple_train_val_split(data)

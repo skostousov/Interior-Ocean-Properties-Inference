@@ -8,41 +8,8 @@ import copernicusmarine
 from utils.config import RAW_CONFIG, DATA_DIR, FEATURES
 from sklearn.preprocessing import RobustScaler
 
-
-def download_dataset(username: str, output_dir: str, start_day: tuple, end_day: tuple, longitude: tuple, latitude: tuple):
-    """
-    Download dataset.
-    Parameters:
-        username (str): username to Copernicus Marine Service account
-        output_dir (str): directory to download data to
-        start_day (tuple): (year: int, month: int, day: int)
-    """
-    start_date = f"{start_day[0]}-{start_day[1]:02d}-{start_day[2]:02d}"
-    end_date = f"{end_day[0]}-{end_day[1]:02d}-{end_day[2]:02d}"
-    start_datetime = f"{start_date}T00:00:00"
-    end_datetime = f"{end_date}T00:00:00" 
-    copernicusmarine.subset(
-    dataset_id="cmems_mod_glo_phy_my_0.083deg_P1D-m",
-    username=username,
-    dataset_version="202311",
-    variables=FEATURES,
-    minimum_longitude=min(longitude),
-    maximum_longitude=max(longitude),
-    minimum_latitude=min(latitude),
-    maximum_latitude=max(latitude),
-    output_directory = output_dir,
-    output_filename= f"lat:{min(latitude):.0f}-{max(latitude):.0f}_long:{min(longitude):.0f}-{max(longitude):.0f}_date:{start_date}-{end_date}",
-    start_datetime=start_datetime,
-    end_datetime=end_datetime,
-    minimum_depth=0.49402499198913574,
-    maximum_depth=0.49402499198913574,
-    coordinates_selection_method="strict-inside",
-    disable_progress_bar=False,
-)
-
-class GLORYSDS(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, grid_size = 40, days = True, normalize = True):
-        self.include_several_days = days
+class GLORYSDS2(TorchDataset):
+    def __init__(self, dataset_dir, transform = None, grid_size = 40, normalize = True):
         self.transform = transform
         self.normalize = normalize
         self.data = NETCDF4Dataset(dataset_dir)
@@ -95,9 +62,10 @@ class GLORYSDS(TorchDataset):
         self.indices_regionified = {}
         for region in self.regions:
             self.indices_regionified[region] = [
-                (i, j) 
+                (day, i, j) 
                 for i in range(region[0], region[0]+self.region_size - self.grid_size, self.offset_size)
                 for j in range(region[1], region[1]+self.region_size - self.grid_size, self.offset_size)
+                for day in range(0, self.num_days)
                 ]
         self.all_indices = []
         for indices_of_region in self.indices_regionified.values():
@@ -133,21 +101,21 @@ class GLORYSDS(TorchDataset):
         return reshaped_expanded
 
     def _pad(self, coordinates, image, label):
-        max_x = min(coordinates[0] + self.grid_size, self.annotations_map.shape[-2])
-        max_y = min(coordinates[1] + self.grid_size, self.annotations_map.shape[-1])
-        if max_x <= coordinates[0] or max_y <= coordinates[1]:
-            padded_image = np.zeros((self.feature_map.shape[0], self.feature_map.shape[1], self.grid_size, self.grid_size))
-            padded_label = np.zeros((self.annotations_map.shape[0], self.annotations_map.shape[1], self.grid_size, self.grid_size))
+        max_x = min(coordinates[1] + self.grid_size, self.annotations_map.shape[-2])
+        max_y = min(coordinates[2] + self.grid_size, self.annotations_map.shape[-1])
+        if max_x <= coordinates[1] or max_y <= coordinates[2]:
+            padded_image = np.zeros((1, self.feature_map.shape[1], self.grid_size, self.grid_size))
+            padded_label = np.zeros((1, self.annotations_map.shape[1], self.grid_size, self.grid_size))
             image = padded_image
             label = padded_label
         else:
-            image = self.feature_map[:, :, coordinates[0]:max_x, coordinates[1]:max_y]
-            label = self.annotations_map[:, :, coordinates[0]:max_x, coordinates[1]:max_y]
-            if max_x - coordinates[0] < self.grid_size or max_y - coordinates[1] < self.grid_size:
-                padded_image = np.zeros((image.shape[0], image.shape[1], self.grid_size, self.grid_size))
-                padded_label = np.zeros((label.shape[0], label.shape[1], self.grid_size, self.grid_size))
-                padded_image[:, :, :(max_x-coordinates[0]), :(max_y-coordinates[1])] = image
-                padded_label[:, :, :(max_x-coordinates[0]), :(max_y-coordinates[1])] = label
+            image = self.feature_map[coordinates[0], :, coordinates[1]:max_x, coordinates[2]:max_y]
+            label = self.annotations_map[coordinates[0], :, coordinates[1]:max_x, coordinates[2]:max_y]
+            if max_x - coordinates[1] < self.grid_size or max_y - coordinates[2] < self.grid_size:
+                padded_image = np.zeros((image.shape[0], self.grid_size, self.grid_size))
+                padded_label = np.zeros((label.shape[0], self.grid_size, self.grid_size))
+                padded_image[:, :(max_x-coordinates[1]), :(max_y-coordinates[2])] = image
+                padded_label[:, :(max_x-coordinates[1]), :(max_y-coordinates[2])] = label
                 image = padded_image
                 label = padded_label
         return image, label
@@ -160,37 +128,23 @@ class GLORYSDS(TorchDataset):
         
         coordinates = self.all_indices[idx]
 
-        image = self.feature_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
-        label = self.annotations_map[:, :, coordinates[0]:coordinates[0]+self.grid_size, coordinates[1]:coordinates[1]+self.grid_size]
-        
+        image = self.feature_map[coordinates[0], :, coordinates[1]:coordinates[1]+self.grid_size, coordinates[2]:coordinates[2]+self.grid_size]
+        label = self.annotations_map[coordinates[0], :, coordinates[1]:coordinates[1]+self.grid_size, coordinates[2]:coordinates[2]+self.grid_size]
+
         image, label = self._pad(coordinates, image, label)
 
         #normalize images and labels
         if self.normalize:
-            scaled_imgs = []
-            scaled_lbls = []
-            for i in range(self.num_days):
-                imgtobescaled = image[i]
-                imgtobescaled, original_img_shape = self._convert_to_scaler_fmt(imgtobescaled)
-                scaled_img = self.feature_scalers[f"day {i}"].transform(imgtobescaled)
-                normal_scaled_img = self._convert_to_normal_fmt(scaled_img, original_img_shape)
-                scaled_imgs.append(normal_scaled_img)
-
-                lbltobescaled = label[i]
-                lbltobescaled, original_lbl_shape = self._convert_to_scaler_fmt(lbltobescaled)
-                scaled_lbl = self.annotation_scalers[f"day {i}"].transform(lbltobescaled)
-                normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
-                scaled_lbls.append(normal_scaled_lbl)
-            image = np.stack(scaled_imgs, axis=0)
-            label = np.stack(scaled_lbls, axis=0)
-
-        print(image.shape, label.shape)
-            
-        if not self.include_several_days:
-            image = np.squeeze(image[0:1], axis=0)
-            label = np.squeeze(label[0:1], axis=0)
-         
-        print(image.shape, label.shape)
+            imgtobescaled = image
+            imgtobescaled, original_img_shape = self._convert_to_scaler_fmt(imgtobescaled)
+            scaled_img = self.feature_scalers[f"day {coordinates[0]}"].transform(imgtobescaled)
+            normal_scaled_img = self._convert_to_normal_fmt(scaled_img, original_img_shape)
+            lbltobescaled = label
+            lbltobescaled, original_lbl_shape = self._convert_to_scaler_fmt(lbltobescaled)
+            scaled_lbl = self.annotation_scalers[f"day {coordinates[0]}"].transform(lbltobescaled)
+            normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
+            image = normal_scaled_img
+            label = normal_scaled_lbl
         
         if self.transform:
             image, label = self.transform(image, label)
@@ -214,8 +168,7 @@ class TestSubset(Subset):
 
 if __name__ == "__main__":
     ds_name = RAW_CONFIG["datafile"]
-    ds = GLORYSDS(DATA_DIR/ds_name, days = False, normalize=True)
+    ds = GLORYSDS2(DATA_DIR/ds_name, normalize=True)
     sample_image, sample_label = ds[1]
     print(f"{sample_image.shape}, {sample_label.shape}")
     print(len(ds))
-        

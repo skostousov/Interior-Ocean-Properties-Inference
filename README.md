@@ -15,13 +15,13 @@ Please update the config file with your own username in order to download data f
 - ~~Fix train_no_val so that the model actually trains and converges to some solution~~ (15/05/2025)
 - ~~Create test script + visualization of results~~ (16/05/2025)
 - **Organize config file**
-- Allow the model to train on several days at once, and figure out how to approach this -possible solution: add several days to one region
+- ~~Allow the model to train on several days at once, and figure out how to approach this -possible solution: add several days to one region~~ (20/05/2025)
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
 - Review padding logic and handling of edge cases
 - ~~Make training script functional with transforms~~ (15/05/2025)
 - ~~Allow for usage of splitter~~ (16/05/2025)
-- Implement model saving and loading
-- Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc.
+- ~~Implement model saving and loading~~ (16/-5/2025)
+- ~~Allow for cross-validation on training and figure out how to implement that, whether or not to retrain model, etc. (Resolved: Unneccessary and of little use)~~
 - ~~Fix loss and accuracy output metrics~~ (15/05/2025)
 - ~~Normalize inputs~~ (15/05/2025)
 - ~~Implement Early Stopping~~
@@ -61,5 +61,8 @@ Please update the config file with your own username in order to download data f
 ## 20/05/2025
 
 1. Deal with problem in 2021 vs 1993 dataset
-2. Tackle problem of days to expand training set
+2. ~~Tackle problem of days to expand training set~~
 3. make unnormalizer functional
+
+#### Log:
+- created new dataset class in dataset2.py which allows model to train on several days, thereby expanding training set.
