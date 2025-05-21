@@ -24,6 +24,7 @@ pyyaml = "^6.0.2"
 copernicusmarine = "^2.1.0"
 scikit-learn = "^1.6.1"
 hydra-core = "^1.3.2"
+einops = "^0.8.1"
 
 [[tool.poetry.source]]
 name = "pytorch"

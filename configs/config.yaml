@@ -5,17 +5,17 @@ defaults:
 
 
 data_dir_relative_to_project_root: data
-datafile: "2021-06-25-2021-06-30.nc"
+datafile: "lat:-20-60_long:-200--100_date:2021-06-14-2021-06-30.nc"
 model_save_dest: saved_models
-test_indices: test_indices/2021_test_stratification.pt
+test_indices: test_indices/2021_test_stratification#2.pt
 
 
 copernicusmarine: 
   USERNAME: skostousov
 
 
-epochs: 100
-batch_size: 20
+epochs: 1000
+batch_size: 10
 days: False
 early_stopping_thresh: 10
 

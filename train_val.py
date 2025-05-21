@@ -13,7 +13,7 @@ from torch.optim import Adam
 import time
 from utils.splitter import simple_train_val_split, train_val_test_split
 from models.simple_CNN import PixelWiseRegressor
-from models.CNN_EBAM import CNN_EBAM
+from models.CNN_EBAM import EBAM_CNN, RAdam
 
 cfg = RAW_CONFIG
 
@@ -58,7 +58,6 @@ batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
 
 model = UNet(data[0][0].shape[0], data[0][1].shape[0])
-# model = PixelWiseRegressor(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
 optimizer = Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
