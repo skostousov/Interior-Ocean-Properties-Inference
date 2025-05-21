@@ -10,7 +10,7 @@ from sklearn.preprocessing import RobustScaler, MinMaxScaler
 import torch
 
 class GLORYSDS2(TorchDataset):
-    def __init__(self, dataset_dir, transform = None, grid_size = 40, normalize = True):
+    def __init__(self, dataset_dir, transform = None, grid_size = 40, normalize = False):
         self.transform = transform
         self.normalize = normalize
         self.data = NETCDF4Dataset(dataset_dir)

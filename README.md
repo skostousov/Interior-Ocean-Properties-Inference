@@ -73,11 +73,12 @@ Please update the config file with your own username in order to download data f
 
 ## 21/05/2025
 
-1. ~~Normalize all days identically,~~ (perhaps also figure out better normalization method)
+1. ~~Normalize all days identically, (perhaps also figure out better normalization method)~~
 2. Organize saved models,
 3. Implement regional evaluation
 4. If time: Organize config file, try EBAM-CNN
 
 #### Log:
 
-- All days now use the same scale, although unnormalization still produces unrealistic results
+- All days now use the same scale, although unnormalization still produces unrealistic results.
+- UPDATE: normalization is now fixed entirely. lots of my confusion was caused by the fact that the default normalization param was set to True.
