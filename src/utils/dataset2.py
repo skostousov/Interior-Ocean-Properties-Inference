@@ -180,8 +180,7 @@ class TestSubset2(Subset):
         super().__init__(dataset, indices)
         self.days = days
     def __getitem__(self, idx):
-        # original_idx = self.indices[idx]
-        original_idx = idx
+        original_idx = self.indices[idx]
         coordinates = self.dataset.all_indices[original_idx]
         day = coordinates[0]
         
@@ -206,8 +205,26 @@ class TestSubset2(Subset):
         if callable(getattr(self.dataset, "__getitems__", None)):
             return self.dataset.__getitems__([self.indices[idx] for idx in indices])  # type: ignore[attr-defined]
         else:
-            return [self.__getitem__(self.indices[idx]) for idx in indices]
+            return [self.__getitem__(idx) for idx in indices]
+    def getregions(self, idx):
+        coordinates = self.dataset.all_indices[idx]
+        for region, indeces in self.dataset.indices_regionified.items():
+            if coordinates in indeces:
+                image = self.dataset.feature_map[coordinates[0], :, region[0]:region[0]+self.dataset.region_size, region[1]:region[1]+self.dataset.region_size]
+                label = self.dataset.annotations_map[coordinates[0], :, region[0]:region[0]+self.dataset.region_size, region[1]:region[1]+self.dataset.region_size]
+                if self.dataset.normalize:
+                    image, shape = self.dataset._convert_to_scaler_fmt(image)
+                    image = self.dataset.feature_scaler.transform(image)
+                    image = self.dataset._convert_to_normal_fmt(image, shape)
+                    label, shape = self.dataset._convert_to_scaler_fmt(label)
+                    label = self.dataset.annotation_scaler.transform(label)
+                    label = self.dataset._convert_to_normal_fmt(label, shape)
 
+                image = image.astype(np.float32)
+                label = label.astype(np.float32)
+                return image, label
+        raise ValueError(f"Index {idx} not found in any region")
+    
 if __name__ == "__main__":
     ds_name = RAW_CONFIG["datafile"]
     ds = GLORYSDS2(DATA_DIR/ds_name, normalize=True)

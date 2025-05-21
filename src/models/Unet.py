@@ -11,7 +11,7 @@ class UNet(nn.Module):
         self.down3 = SkipAndDownSample(128, 256, )
         self.down4 = SkipAndDownSample(256, 512, )
 
-        self.bottleneck = nn.ConvReluBlock(512, 1024)
+        self.bottleneck = ConvReluBlock(512, 1024)
 
         self.up_1 = UpSample(1024, 512)
         self.up_2 = UpSample(512, 256, )

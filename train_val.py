@@ -57,8 +57,8 @@ data = GLORYSDS2(ds_path, data_aug, normalize=True)
 batch_size = RAW_CONFIG["batch_size"]
 epochs = RAW_CONFIG["epochs"]
 
-# model = UNet(data[0][0].shape[0], data[0][1].shape[0])
-model = PixelWiseRegressor(data[0][0].shape[0], data[0][1].shape[0])
+model = UNet(data[0][0].shape[0], data[0][1].shape[0])
+# model = PixelWiseRegressor(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
 optimizer = Adam(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
@@ -92,7 +92,7 @@ for epoch in range(0, epochs):
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
-            save_dir = SAVED_MODELS_DIR / f'training_start_time: {start_timestamp}'
+            save_dir = SAVED_MODELS_DIR / f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg["datafile"]} strat: {cfg["test_indices"].split("/")[-1]}'
             os.makedirs(save_dir, exist_ok=True)
             model_state_path = save_dir / 'best_model_state'
             model_path = save_dir / 'best_model'

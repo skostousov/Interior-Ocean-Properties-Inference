@@ -82,3 +82,6 @@ Please update the config file with your own username in order to download data f
 
 - All days now use the same scale, although unnormalization still produces unrealistic results.
 - UPDATE: normalization is now fixed entirely. lots of my confusion was caused by the fact that the default normalization param was set to True.
+- Run diff models again to get proper results with normalization functioning. Val Loss:
+    - PixelWiseRegressor: 4.8e-05
+    - Unet: 2.4e-05

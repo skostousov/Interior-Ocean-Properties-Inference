@@ -9,6 +9,7 @@ datafile: "2021-06-25-2021-06-30.nc"
 model_save_dest: saved_models
 test_indices: test_indices/2021_test_stratification.pt
 
+
 copernicusmarine: 
   USERNAME: skostousov
 
