@@ -28,7 +28,7 @@ Please update the config file with your own username in order to download data f
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
 - **Figure out difference in 1993 and 2021 dataset**
 - ~~Make Unnormalizer functional~~ (20/05/2025)
-- **Make test dataset return entire regions instead of mini grids used for training**
+- ~~Make test dataset return entire regions instead of mini grids used for training~~ (21/05/2025)
 - ~~Normalize all days identically~~ (21/05/2025)
 
 **BOLD** denotes tasks to be prioritized
@@ -74,8 +74,8 @@ Please update the config file with your own username in order to download data f
 ## 21/05/2025
 
 1. ~~Normalize all days identically, (perhaps also figure out better normalization method)~~
-2. Organize saved models,
-3. Implement regional evaluation
+2. ~~Organize saved models~~ (more specific file names are now generated)
+3. ~~Implement regional evaluation~~
 4. If time: Organize config file, try EBAM-CNN
 
 #### Log:
@@ -85,3 +85,4 @@ Please update the config file with your own username in order to download data f
 - Run diff models again to get proper results with normalization functioning. Val Loss:
     - PixelWiseRegressor: 4.8e-05
     - Unet: 2.4e-05
+- Implemented regional evaluation
