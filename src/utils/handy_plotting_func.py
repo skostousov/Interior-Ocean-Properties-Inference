@@ -1,8 +1,10 @@
 import numpy as np
 
-def plot_var(axis, fig, var, var_name):
+def plot_var(axis, fig, var, var_name, max=None):
     vmin = 0
     vmax = np.max(var)
+    if max:
+        vmax=max
     axis.set_xlabel("Longitude")
     axis.set_ylabel("Latitude")
     im = axis.imshow(var, origin='lower', aspect='auto', cmap='viridis', vmin=vmin, vmax=vmax)

@@ -35,19 +35,34 @@ class GLORYSDS2(TorchDataset):
         self.num_days = self.feature_map.shape[0]
 
         #fit scalers
+        # if normalize:
+        #     self.feature_scalers = {}
+        #     self.annotation_scalers = {}
+        #     for i in range(self.num_days):
+        #         self.feature_scalers[f"day {i}"] = RobustScaler()
+        #         self.annotation_scalers[f"day {i}"] = RobustScaler()
+        #     for i in range(self.num_days):
+        #         full_day_img = self.feature_map[i]
+        #         full_day_lbl = self.annotations_map[i]
+        #         full_day_img, _ = self._convert_to_scaler_fmt(full_day_img)
+        #         full_day_lbl, _ = self._convert_to_scaler_fmt(full_day_lbl)
+        #         self.feature_scalers[f"day {i}"].fit(full_day_img)
+        #         self.annotation_scalers[f"day {i}"].fit(full_day_lbl)
         if normalize:
-            self.feature_scalers = {}
-            self.annotation_scalers = {}
-            for i in range(self.num_days):
-                self.feature_scalers[f"day {i}"] = RobustScaler()
-                self.annotation_scalers[f"day {i}"] = RobustScaler()
+            self.feature_scaler = RobustScaler()
+            self.annotation_scaler = RobustScaler()
+            feature_blocks, anno_blocks = [], []
             for i in range(self.num_days):
                 full_day_img = self.feature_map[i]
                 full_day_lbl = self.annotations_map[i]
                 full_day_img, _ = self._convert_to_scaler_fmt(full_day_img)
                 full_day_lbl, _ = self._convert_to_scaler_fmt(full_day_lbl)
-                self.feature_scalers[f"day {i}"].fit(full_day_img)
-                self.annotation_scalers[f"day {i}"].fit(full_day_lbl)
+                feature_blocks.append(full_day_img)
+                anno_blocks.append(full_day_lbl)
+            feature_blocks = np.concatenate(feature_blocks, axis=0)
+            anno_blocks = np.concatenate(anno_blocks, axis=0)
+            self.feature_scaler.fit(feature_blocks)
+            self.annotation_scaler.fit(anno_blocks)
 
         self.grid_size = grid_size
         self.offset_size = 2
@@ -91,11 +106,10 @@ class GLORYSDS2(TorchDataset):
         else:
             land = bool(result.all())
         return land
-    def unnormalize(self, annotation, day):
+    def unnormalize_annot(self, annotation):
         ##takes as input dataset of size (1, 1, long, lat)
-        scaler = self.annotation_scalers[f"day {day}"]
         scaled_fmt, original_shape = self._convert_to_scaler_fmt(annotation[0])
-        unnormalized = scaler.inverse_transform(scaled_fmt)
+        unnormalized = self.annotation_scaler.inverse_transform(scaled_fmt)
         reshaped = self._convert_to_normal_fmt(unnormalized, original_shape)
         reshaped_expanded = np.expand_dims(reshaped, axis=0)
         return reshaped_expanded
@@ -135,17 +149,24 @@ class GLORYSDS2(TorchDataset):
         image, label = self._pad(coordinates, image, label)
 
         #normalize images and labels
+        # if self.normalize:
+        #     imgtobescaled = image
+        #     imgtobescaled, original_img_shape = self._convert_to_scaler_fmt(imgtobescaled)
+        #     scaled_img = self.feature_scalers[f"day {coordinates[0]}"].transform(imgtobescaled)
+        #     normal_scaled_img = self._convert_to_normal_fmt(scaled_img, original_img_shape)
+        #     lbltobescaled = label
+        #     lbltobescaled, original_lbl_shape = self._convert_to_scaler_fmt(lbltobescaled)
+        #     scaled_lbl = self.annotation_scalers[f"day {coordinates[0]}"].transform(lbltobescaled)
+        #     normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
+        #     image = normal_scaled_img
+        #     label = normal_scaled_lbl
         if self.normalize:
-            imgtobescaled = image
-            imgtobescaled, original_img_shape = self._convert_to_scaler_fmt(imgtobescaled)
-            scaled_img = self.feature_scalers[f"day {coordinates[0]}"].transform(imgtobescaled)
-            normal_scaled_img = self._convert_to_normal_fmt(scaled_img, original_img_shape)
-            lbltobescaled = label
-            lbltobescaled, original_lbl_shape = self._convert_to_scaler_fmt(lbltobescaled)
-            scaled_lbl = self.annotation_scalers[f"day {coordinates[0]}"].transform(lbltobescaled)
-            normal_scaled_lbl = self._convert_to_normal_fmt(scaled_lbl, original_lbl_shape)
-            image = normal_scaled_img
-            label = normal_scaled_lbl
+            image, shape = self._convert_to_scaler_fmt(image)
+            image = self.feature_scaler.transform(image)
+            image = self._convert_to_normal_fmt(image, shape)
+            label, shape = self._convert_to_scaler_fmt(label)
+            label = self.annotation_scaler.transform(label)
+            label = self._convert_to_normal_fmt(label, shape)
         
         if self.transform:
             image, label = self.transform(image, label)
@@ -193,3 +214,5 @@ if __name__ == "__main__":
     sample_image, sample_label = ds[1]
     print(f"{sample_image.shape}, {sample_label.shape}")
     print(len(ds))
+    sample_label = ds.unnormalize_annot(np.expand_dims(sample_label, 0))
+    print(sample_label.shape)
