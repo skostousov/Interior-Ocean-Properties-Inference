@@ -122,6 +122,7 @@ class GLORYSDS2(TorchDataset):
     
     def __len__(self):
         return len(self.all_indices)
+    
     def __getitem__(self, idx):
         if idx >= len(self.all_indices):
             raise IndexError(f"Index {idx} out of range for dataset of size {len(self.all_indices)}")
@@ -158,7 +159,8 @@ class TestSubset2(Subset):
         super().__init__(dataset, indices)
         self.days = days
     def __getitem__(self, idx):
-        original_idx = self.indices[idx]
+        # original_idx = self.indices[idx]
+        original_idx = idx
         coordinates = self.dataset.all_indices[original_idx]
         day = coordinates[0]
         
@@ -177,6 +179,13 @@ class TestSubset2(Subset):
         else:
             result = (image, label)
             return result
+    def __getitems__(self, indices: list[int]):
+        # add batched sampling support when parent dataset supports it.
+        # see torch.utils.data._utils.fetch._MapDatasetFetcher
+        if callable(getattr(self.dataset, "__getitems__", None)):
+            return self.dataset.__getitems__([self.indices[idx] for idx in indices])  # type: ignore[attr-defined]
+        else:
+            return [self.__getitem__(self.indices[idx]) for idx in indices]
 
 if __name__ == "__main__":
     ds_name = RAW_CONFIG["datafile"]

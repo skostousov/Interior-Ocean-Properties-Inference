@@ -27,8 +27,9 @@ Please update the config file with your own username in order to download data f
 - ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
 - **Figure out difference in 1993 and 2021 dataset**
-- **Make Unnormalizer functional**
+- ~~Make Unnormalizer functional~~ (20/05/2025)
 - **Make test dataset return entire regions instead of mini grids used for training**
+- **Normalize all days identically**
 
 **BOLD** denotes tasks to be prioritized
 
@@ -59,12 +60,23 @@ Please update the config file with your own username in order to download data f
 
 ## 20/05/2025
 
-1. Deal with problem in 2021 vs 1993 dataset
+1. Deal with problem in 2021 vs 1993 dataset (EDIT: will save this for later)
 2. ~~Tackle problem of days to expand training set~~
-3. make unnormalizer functional
+3. ~~make unnormalizer functional~~
 
 #### Log:
 - created new dataset class in dataset2.py which allows model to train on several days, thereby expanding training set.
 - tried adding channel dropout to improve generalization but this fails miserably
 - currently Unet achieves loss: 0.000045, Simple CNN loss: 0.000025 (almost HALF)
 - spending most of the time debugging dataloader. trying to return day as well in order to unnormalize but doing so rather unsuccessfully
+- FINALLY implemented (with some help) the capability to unnormalize during inference
+
+## 21/05/2025
+
+1. Normalize all days identically, (perhaps also figure out better normalization method)
+2. Organize saved models
+3. Implement regional evaluation
+4. Organize config file if time
+
+#### Log:
+
