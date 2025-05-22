@@ -66,7 +66,7 @@ class GLORYSDS2(TorchDataset):
 
         self.grid_size = grid_size
         self.offset_size = 2
-        self.images_in_region_one_axis = 4
+        self.images_in_region_one_axis = 10
         self.region_size = grid_size + self.offset_size*(self.images_in_region_one_axis-1)
         self.regions = [
             (i, j)
@@ -118,8 +118,8 @@ class GLORYSDS2(TorchDataset):
         max_x = min(coordinates[1] + self.grid_size, self.annotations_map.shape[-2])
         max_y = min(coordinates[2] + self.grid_size, self.annotations_map.shape[-1])
         if max_x <= coordinates[1] or max_y <= coordinates[2]:
-            padded_image = np.zeros((1, self.feature_map.shape[1], self.grid_size, self.grid_size))
-            padded_label = np.zeros((1, self.annotations_map.shape[1], self.grid_size, self.grid_size))
+            padded_image = np.zeros((self.feature_map.shape[1], self.grid_size, self.grid_size))
+            padded_label = np.zeros((self.annotations_map.shape[1], self.grid_size, self.grid_size))
             image = padded_image
             label = padded_label
         else:
@@ -145,9 +145,7 @@ class GLORYSDS2(TorchDataset):
 
         image = self.feature_map[coordinates[0], :, coordinates[1]:coordinates[1]+self.grid_size, coordinates[2]:coordinates[2]+self.grid_size]
         label = self.annotations_map[coordinates[0], :, coordinates[1]:coordinates[1]+self.grid_size, coordinates[2]:coordinates[2]+self.grid_size]
-
         image, label = self._pad(coordinates, image, label)
-
         #normalize images and labels
         # if self.normalize:
         #     imgtobescaled = image

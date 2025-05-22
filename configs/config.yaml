@@ -7,7 +7,7 @@ defaults:
 data_dir_relative_to_project_root: data
 datafile: "1993-10-11-1993-10-12.nc"
 model_save_dest: saved_models
-test_indices: test_indices/1993_test_stratification_small.pt
+test_indices: test_indices/1993_test_stratification_larger_regions(10_img).pt
 
 
 copernicusmarine: 
