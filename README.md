@@ -91,9 +91,11 @@ Please update the config file with your own username in order to download data f
 ## 22/05/2025
 
 1. ~~Figure out diff in 1993 2021 datasets~~
-2. Try larger regions
+2. ~~Try larger regions~~
 
 #### Log:
 - Model trained had pretty poor loss (~0.3 when normalized) and regions i was able to test on had MLD predicted way out of scope
 - Seems 1993 dataset has more variation in MLD which explains higher loss
 - After increasing region size, loss on 1993 dataset: 0.4, although it seems that now the dataset is too small as only two regions in test set
+- After reading paper on thermocline depth, implementin new dataloader which functions the same way
+- struggling with implmenting normalization so that it is done on the train idx only and then saving mean and std to later apply on test 

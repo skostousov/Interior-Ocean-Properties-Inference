@@ -20,3 +20,26 @@ days: False
 early_stopping_thresh: 10
 
 features: [bottomT, so, thetao, uo, vo, zos, mlotst]
+
+monthly:
+  training:
+    epochs: 10
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_monthly_models
+    mode: small
+  features: [bottomT, so, thetao, uo, vo, zos, mlotst]
+  output_dir: monthly
+  latitude_range: [31, 61]
+  longitude_range: [-160, -120]
+  grid_size: 21 #so one side of the grid is 10*1/12 degrees
+  large:
+    start_date: 1993-01-01
+    end_date: 2021-06-01
+    output_file: monthly_1993-2021.nc
+  small:
+    start_date: 1993-01-01
+    end_date: 1994-01-01
+    output_file: small_sample_1993-1994.nc
+    test_indices: test_indices/small/num_1.pt
+    stats: stats/small/num_1.pt
