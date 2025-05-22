@@ -26,7 +26,7 @@ Please update the config file with your own username in order to download data f
 - ~~Normalize inputs~~ (15/05/2025)
 - ~~Implement Early Stopping~~
 - ~~Automatically remove all regions with no ocean~~ (15/05/25)
-- **Figure out difference in 1993 and 2021 dataset**
+- ~~Figure out difference in 1993 and 2021 dataset~~ (22/05/2025)
 - ~~Make Unnormalizer functional~~ (20/05/2025)
 - ~~Make test dataset return entire regions instead of mini grids used for training~~ (21/05/2025)
 - ~~Normalize all days identically~~ (21/05/2025)
@@ -76,7 +76,7 @@ Please update the config file with your own username in order to download data f
 1. ~~Normalize all days identically, (perhaps also figure out better normalization method)~~
 2. ~~Organize saved models~~ (more specific file names are now generated)
 3. ~~Implement regional evaluation~~
-4. If time: Organize config file, try EBAM-CNN
+4. If time: Organize config file
 
 #### Log:
 
@@ -86,3 +86,13 @@ Please update the config file with your own username in order to download data f
     - PixelWiseRegressor: 4.8e-05
     - Unet: 2.4e-05
 - Implemented regional evaluation
+- Leaving model to train overnight on large dataset (I postulate that small dataset may be main problem)
+
+## 22/05/2025
+
+1. ~~Figure out diff in 1993 2021 datasets~~
+2. Try larger regions
+
+#### Log:
+- Model trained had pretty poor loss (~0.3 when normalized) and regions i was able to test on had MLD predicted way out of scope
+- Seems 1993 dataset has more variation in MLD which explains higher loss
