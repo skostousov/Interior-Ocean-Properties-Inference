@@ -111,10 +111,15 @@ Please update the config file with your own username in order to download data f
 - Ran training on basic CNN as a sanity check and alhtough it performs veryy poorly, seems to be learning
 - Added SE blocks to every CONVRELU block in model and trained on 10 epochs. currenty evaluating
 - Created DA-CNN from MLD bay of bengal paper and waiting to evaluate it.
-- PLAN FOR WEEKEND:
+
+## PLAN FOR WEEKEND:
     - Train for 50 epochs ordinary UNET
     - Evaluate ordinary UNET
     - Train for 50 epochs UNET with SE
     - Evaluate UNET with SE
     - Train for 50 epochs DA-CNN
     - Evaluate DA-CNN
+
+## 26/05/2025
+
+1. Create nice plottings of RMSE and other evaluation metrics
