@@ -30,6 +30,12 @@ Please update the config file with your own username in order to download data f
 - ~~Make Unnormalizer functional~~ (20/05/2025)
 - ~~Make test dataset return entire regions instead of mini grids used for training~~ (21/05/2025)
 - ~~Normalize all days identically~~ (21/05/2025)
+- ~~Create one pixel predictor~~ (22/05/2025)
+- ~~Build DACNN~~ (23/05/2025)
+- ~~Build SE UNET~~ (23/05/2025)
+- ~~Create Evaluation script for one pixel predictor~~ (23/05/2025)
+- Create framework for 12 month models and corresponding dataset downloading, etc.
+- **For large model allow for a stratified split so each of 12 months makes an appearance in every split**
 
 **BOLD** denotes tasks to be prioritized
 
@@ -124,3 +130,4 @@ Please update the config file with your own username in order to download data f
 
 1. Create nice plottings of RMSE and other evaluation metrics
 2. Create framework for 12 month models and corresponding dataset downloading, etc.
+3. Also for normal large model allow for a stratified split so each of 12 months makes an appearance in every split
