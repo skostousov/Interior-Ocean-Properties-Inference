@@ -3,6 +3,8 @@ from torch import nn
 from pathlib import Path
 import os
 from models.UNET_regression import UNetRegression
+from models.UNET_regressionSE import UNetRegressionSE
+from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
 from utils.datasetmonths import DatasetOverMonths
 # from utils.transforms import RescaledRotationTransform, ToTensor, Compose
@@ -54,9 +56,10 @@ data = DatasetOverMonths()
 batch_size = RAW_CONFIG['monthly']['training']["batch_size"]
 epochs = RAW_CONFIG['monthly']['training']["epochs"]
 
-model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
+# model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
+model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
-optimizer = AdamW(model.parameters(), lr=1e-5, weight_decay=1e-5)
+optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 

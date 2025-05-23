@@ -37,6 +37,8 @@ monthly:
     start_date: 1993-01-01
     end_date: 2021-06-01
     output_file: monthly_1993-2021.nc
+    test_indices: test_indices/large/num_1.pt
+    stats: stats/large/num_1.pt
   small:
     start_date: 1993-01-01
     end_date: 1994-01-01

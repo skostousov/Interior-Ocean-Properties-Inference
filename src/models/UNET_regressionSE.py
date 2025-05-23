@@ -1,38 +1,55 @@
 import torch
-from torch import nn
-from torch.nn import functional as F
+import torch.nn as nn
+import torch.nn.functional as F
+from torchvision.ops import SqueezeExcitation
 
-
-class UNetRegression(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21):
+class UNetRegressionSE(nn.Module):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, base_filters=32, reduction=16):
         super().__init__()
         self.grid_size = grid_size
-        self.down1 = SkipAndDownSample(in_channels, 32, )
-        self.down2 = SkipAndDownSample(32, 64, )
-        self.down3 = SkipAndDownSample(64, 128, )
-        self.down4 = SkipAndDownSample(128, 256, )
+        self.down1 = SkipAndDownSample(in_channels, base_filters)
+        self.se1   = SqueezeExcitation(base_filters, max(1, base_filters // reduction))
+        self.down2 = SkipAndDownSample(base_filters, base_filters * 2)
+        self.se2   = SqueezeExcitation(base_filters * 2, max(1, base_filters * 2 // reduction))
+        self.down3 = SkipAndDownSample(base_filters * 2, base_filters * 4)
+        self.se3   = SqueezeExcitation(base_filters * 4, max(1, base_filters * 4 // reduction))
+        self.down4 = SkipAndDownSample(base_filters * 4, base_filters * 8)
+        self.se4   = SqueezeExcitation(base_filters * 8, max(1, base_filters * 8 // reduction))
+        self.bottleneck  = ConvReluBlock(base_filters * 8, base_filters * 16)
+        self.se_bottleneck = SqueezeExcitation(base_filters * 16, max(1, base_filters * 16 // reduction))
 
-        self.bottleneck = ConvReluBlock(256, 512)
+        self.up_1  = UpSample(base_filters * 16, base_filters * 8)
+        self.se_up1 = SqueezeExcitation(base_filters * 8, max(1, base_filters * 8 // reduction))
+        self.up_2  = UpSample(base_filters * 8, base_filters * 4)
+        self.se_up2 = SqueezeExcitation(base_filters * 4, max(1, base_filters * 4 // reduction))
+        self.up_3  = UpSample(base_filters * 4, base_filters * 2)
+        self.se_up3 = SqueezeExcitation(base_filters * 2, max(1, base_filters * 2 // reduction))
+        self.up_4  = UpSample(base_filters * 2, base_filters)
+        self.se_up4 = SqueezeExcitation(base_filters,     max(1, base_filters // reduction))
+        self.output = OutputConv(base_filters, out_channels, grid_size)
 
-        self.up_1 = UpSample(512, 256)
-        self.up_2 = UpSample(256, 128, )
-        self.up_3 = UpSample(128, 64, )
-        self.up_4 = UpSample(64, 32, )
-        self.output = OutputConv(32, out_channels, grid_size)
     def forward(self, x):
-        x_down1, x_skip1 = self.down1(x)
-        x_down2, x_skip2 = self.down2(x_down1)
-        x_down3, x_skip3 = self.down3(x_down2)
-        x_down4, x_skip4 = self.down4(x_down3)
-        x_bottleneck = self.bottleneck(x_down4)
-        x_up1 = self.up_1(x_bottleneck, x_skip4)
-        x_up2 = self.up_2(x_up1, x_skip3)
-        x_up3 = self.up_3(x_up2, x_skip2)
-        x_up4 = self.up_4(x_up3, x_skip1)
-        x_out = self.output(x_up4)
-        return x_out
+        x_d1, x_skip1 = self.down1(x)
+        x_d1 = self.se1(x_d1)
+        x_d2, x_skip2 = self.down2(x_d1)
+        x_d2 = self.se2(x_d2)
+        x_d3, x_skip3 = self.down3(x_d2)
+        x_d3 = self.se3(x_d3)
+        x_d4, x_skip4 = self.down4(x_d3)
+        x_d4 = self.se4(x_d4)
+        x_b = self.bottleneck(x_d4)
+        x_b = self.se_bottleneck(x_b)
+        x_u1 = self.up_1(x_b,   x_skip4)
+        x_u1 = self.se_up1(x_u1)
+        x_u2 = self.up_2(x_u1,  x_skip3)
+        x_u2 = self.se_up2(x_u2)
+        x_u3 = self.up_3(x_u2,  x_skip2)
+        x_u3 = self.se_up3(x_u3)
+        x_u4 = self.up_4(x_u3,  x_skip1)
+        x_u4 = self.se_up4(x_u4)
+        return self.output(x_u4)
     def __repr__(self):
-        return "unet_regression_downsized"
+        return "unet_regression_downsized_se"
 
 class OutputConv(nn.Module):
     def __init__(self, in_channels, out_channels, grid_size):
@@ -94,7 +111,7 @@ if __name__ == "__main__":
     ds = DatasetOverMonths(transform=None)
     image, label = ds[0]
     print(f"image shape: {image.shape}, label shape: {label.shape}")
-    model = UNetRegression(image.shape[0], 1).to(device)
+    model = UNetRegressionSE(image.shape[0], 1).to(device)
     mu, std = ds.generate_mean_and_std([0])
     for i in range(image.shape[0]):
         image[i] = (image[i] - mu[i]) / std[i]
