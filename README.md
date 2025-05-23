@@ -123,3 +123,4 @@ Please update the config file with your own username in order to download data f
 ## 26/05/2025
 
 1. Create nice plottings of RMSE and other evaluation metrics
+2. Create framework for 12 month models and corresponding dataset downloading, etc.
