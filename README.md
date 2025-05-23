@@ -113,12 +113,12 @@ Please update the config file with your own username in order to download data f
 - Created DA-CNN from MLD bay of bengal paper and waiting to evaluate it.
 
 ## PLAN FOR WEEKEND:
-    - Train for 50 epochs ordinary UNET
-    - Evaluate ordinary UNET
-    - Train for 50 epochs UNET with SE
-    - Evaluate UNET with SE
-    - Train for 50 epochs DA-CNN
-    - Evaluate DA-CNN
+- Train for 50 epochs ordinary UNET
+- Evaluate ordinary UNET
+- Train for 50 epochs UNET with SE
+- Evaluate UNET with SE
+- Train for 50 epochs DA-CNN
+- Evaluate DA-CNN
 
 ## 26/05/2025
 
