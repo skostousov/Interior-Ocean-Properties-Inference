@@ -80,6 +80,12 @@ class DatasetOverMonths(TorchDataset):
             netcdf_compression_level=0,
             disable_progress_bar=False,)
         return alt_path
+    def _inversescale(self, label):
+        #inverse scale the label
+        label = label.view(-1, 1)
+        label = self.annotation_scaler.inverse_transform(label)
+        return label
+
     def _load(self, path):
         dataset = NETCDF4Dataset(Path(path))
         return dataset
@@ -192,6 +198,32 @@ class DatasetOverMonths(TorchDataset):
     
     def __len__(self):
         return len(self.grid_and_centre_coords_and_months)
+    
+class TestSubsetRegression(Subset):
+    def __init__(self, dataset, indices):
+        super().__init__(dataset, indices)
+    def __getitem__(self, idx):
+        original_idx = self.indices[idx]
+        grid_coords, centre_coords, month = self.dataset.grid_and_centre_coords_and_months[original_idx]
+        image = self.dataset.feature_map[month, :, grid_coords[0]:grid_coords[0]+self.dataset.config['grid_size'], grid_coords[1]:grid_coords[1]+self.dataset.config['grid_size']]
+        label = self.dataset.annotations_map[month, :, centre_coords[0], centre_coords[1]]
+
+        image = torch.from_numpy(image).float()
+        label = torch.from_numpy(label).float()
+
+        if self.dataset.normalize:
+            image = (image - self.dataset.mean) / self.dataset.std
+            label = (label - self.dataset.mean_label) / self.dataset.std_label
+
+        return image, label, (grid_coords, centre_coords, month)
+    
+    def __getitems__(self, indices: list[int]):
+        # add batched sampling support when parent dataset supports it.
+        # see torch.utils.data._utils.fetch._MapDatasetFetcher
+        if callable(getattr(self.dataset, "__getitems__", None)):
+            return self.dataset.__getitems__([self.indices[idx] for idx in indices])  # type: ignore[attr-defined]
+        else:
+            return [self.__getitem__(idx) for idx in indices]
 
 if __name__ == "__main__":
     dataset = DatasetOverMonths()

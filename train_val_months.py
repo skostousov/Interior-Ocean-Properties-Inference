@@ -14,6 +14,7 @@ from utils.splitter import train_val_test_split_months
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 cfg = RAW_CONFIG
+mode = cfg['monthly']['training']['mode']
 
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
     size = len(train_dataloader.dataset)
@@ -62,7 +63,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 loss_fn = nn.L1Loss()
 
 
-train_idx, val_idx, _ = train_val_test_split_months(data, seed=42, test_indices_path=Path(cfg['monthly'][cfg['monthly']['training']['mode']]["test_indices"]))
+train_idx, val_idx, _ = train_val_test_split_months(data, seed=42, test_indices_path=Path(cfg['monthly'][mode]["test_indices"]))
 
 # mu, std = data.generate_mean_and_std_partial(train_idx)
 # mu_label, std_label = data.generate_mean_and_std_labels(train_idx)
@@ -106,7 +107,7 @@ for epoch in range(0, epochs):
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
-            save_dir = SAVED_MODELS_DIR / f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg["datafile"]} strat: {cfg["test_indices"].split("/")[-1]}'
+            save_dir = SAVED_MODELS_DIR / f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg["monthly"][mode]["output_file"]} strat: {cfg["monthly"][mode]["test_indices"].split("s/")[-1]}'
             os.makedirs(save_dir, exist_ok=True)
             model_state_path = save_dir / 'best_model_state'
             model_path = save_dir / 'best_model'
