@@ -99,3 +99,11 @@ Please update the config file with your own username in order to download data f
 - After increasing region size, loss on 1993 dataset: 0.4, although it seems that now the dataset is too small as only two regions in test set
 - After reading paper on thermocline depth, implementin new dataloader which functions the same way
 - struggling with implmenting normalization so that it is done on the train idx only and then saving mean and std to later apply on test 
+
+## 23/05/2025
+
+1. Fix Normalization for monthly method.
+2. Create evaluation script.
+
+#### Log:
+- 
