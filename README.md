@@ -17,7 +17,7 @@ Please update the config file with your own username in order to download data f
 - **Organize config file**
 - ~~Allow the model to train on several days at once, and figure out how to approach this -possible solution: add several days to one region~~ (20/05/2025)
 - ~~Make sure grids in regions dont overflow on to other regions~~ (15/05/2025)
-- Review padding logic and handling of edge cases
+- ~~Review padding logic and handling of edge cases~~ (No longer neccessary for present method)
 - ~~Make training script functional with transforms~~ (15/05/2025)
 - ~~Allow for usage of splitter~~ (16/05/2025)
 - ~~Implement model saving and loading~~ (16/-5/2025)
@@ -102,8 +102,19 @@ Please update the config file with your own username in order to download data f
 
 ## 23/05/2025
 
-1. Fix Normalization for monthly method.
-2. Create evaluation script.
+1. ~~Fix Normalization for monthly method.~~
+2. ~~Create evaluation script.~~
+3. *See Log*
 
 #### Log:
-- 
+- Created and ran evaluation script. It seems that one could only properly train the models on more data as there are seasonal patterns unnacounted for when training on just one year (as I am doing now)
+- Ran training on basic CNN as a sanity check and alhtough it performs veryy poorly, seems to be learning
+- Added SE blocks to every CONVRELU block in model and trained on 10 epochs. currenty evaluating
+- Created DA-CNN from MLD bay of bengal paper and waiting to evaluate it.
+- PLAN FOR WEEKEND:
+    - Train for 50 epochs ordinary UNET
+    - Evaluate ordinary UNET
+    - Train for 50 epochs UNET with SE
+    - Evaluate UNET with SE
+    - Train for 50 epochs DA-CNN
+    - Evaluate DA-CNN
