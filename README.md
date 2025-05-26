@@ -132,3 +132,5 @@ Please update the config file with your own username in order to download data f
 2. Create nice plottings of RMSE and other evaluation metrics
 3. Create framework for 12 month models and corresponding dataset downloading, etc.
 4. Also for normal large model allow for a stratified split so each of 12 months makes an appearance in every split
+
+#### Log:
