@@ -52,7 +52,7 @@ class ConvReluBlock(nn.Module):
     def __init__(self, in_channels, out_channels):
         super().__init__()
         self.block = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, kernel_size=3),
+            nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1),
             nn.BatchNorm2d(out_channels),
             nn.ReLU()
         )
@@ -79,10 +79,12 @@ class DA_CNN(nn.Module):
     def forward(self, x):
         x_c1 = self.convcam1(x)
         x_c2 = self.convcam2(x_c1)
+        x_cam = x_c2
         x_cam = self.cam(x_c2)
         x_c3 = self.convcam3(x_cam)
         x_p1 = self.convpam1(x)
         x_p2 = self.convpam2(x_p1)
+        x_pam = x_p2
         x_pam = self.pam(x_p2)
         x_p3 = self.convpam3(x_pam)
         x_fuse = torch.cat((x_c3, x_p3), dim=1)

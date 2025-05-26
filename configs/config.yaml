@@ -23,7 +23,7 @@ features: [bottomT, so, thetao, uo, vo, zos, mlotst]
 
 monthly:
   training:
-    epochs: 10
+    epochs: 1000
     batch_size: 50
     early_stopping_thresh: 10
     model_save_dest: saved_monthly_models
