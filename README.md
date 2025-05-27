@@ -135,4 +135,10 @@ Please update the config file with your own username in order to download data f
 
 #### Log:
 - Implemented Incremental Loading to minimize working memory usage
+- Leaving for overnight training Unet+SE with downsized initial params form 32 to 16 (to avoid overfitting) as well as MSE Loss
 
+## 27/05/2025
+
+1. Integrate different dataset types and try daily evaluation (even for 12 days or so)
+2. Try EBAM-CNN
+3. Improve performance of DA-CNN

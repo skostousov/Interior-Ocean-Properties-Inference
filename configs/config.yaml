@@ -1,5 +1,5 @@
 defaults:
-- mode: default_2021
+- mode: monthly
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -18,8 +18,47 @@ features:
 - vo
 - zos
 - mlotst
+compressed mode:
+  mode: default
+  training:
+    epochs: 1000
+    batch_size: 20
+    early_stopping_thresh: 10
+    model_save_dest: saved_compressed_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/compressed
+    latitude_range:
+    - 31
+    - 61
+    longitude_range:
+    - -160
+    - -120
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-01
+      output_file: compressed_1993-2021.nc
+      test_indices: test_indices/large_01.pt
+      stats: stats/large_01.pt
+    ten:
+      start_date: 1993-01-01
+      end_date: 2003-01-01
+      output_file: compressed_ten_sample_1993-2003.nc
+      test_indices: test_indices/ten_01.pt
+      stats: stats/ten_01.pt
 monthly mode:
-  mode: ten
+  mode: small
   training:
     epochs: 1000
     batch_size: 50
