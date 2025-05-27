@@ -19,5 +19,5 @@ class PixelWiseRegressor(nn.Module):
         x = self.conv5(x)
         return x
     
-    def __repr__(self):
-        return "pixelwise_regressor"
+    def name(self):
+        return "simple_CNN"

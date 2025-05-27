@@ -36,7 +36,7 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         if batch % 50 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
             print(f"loss: {loss:>7f} [{current:>6d}/{size:>5d}]")
-    total_loss /= len(train_dataloader)
+    total_loss /= size
     return total_loss
 
 def val_loop(val_dataloader, model, loss_fn, device, scheduler):
@@ -120,7 +120,7 @@ for epoch in range(0, epochs):
             best_epoch = epoch
             best_loss = val_loss
             corresponding_train_loss = train_loss
-            model_name = f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg['data'][submode]["output_file"]} strat: {cfg['data'][submode]["test_indices"]}'
+            model_name = f'MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{cfg['data'][submode]["output_file"]}>STRAT:{cfg['data'][submode]["test_indices"]}>'
             model_dir = cfg["training"]["model_save_dest"]
             save_dir = root / model_dir / model_name
             os.makedirs(save_dir, exist_ok=True)
@@ -149,6 +149,7 @@ info = {
     "corresponding_train_loss": corresponding_train_loss,
     "train_dataset_size": len(train_data),
     "val_dataset_size": len(val_data),
+    "test_dataset_size": len(test_idx),
 }
 
 info_path =  save_dir / 'training_info.txt'
@@ -171,7 +172,7 @@ if cfg["training"]["immediate_test"]:
 
     after_model = []
 
-    filepath = Path(cfg["eval"]["results_dir"])/f"results_{model_name}.pkl"
+    filepath = save_dir/"results.pkl"
 
     with torch.no_grad():
         for i, batch in enumerate(test_dataloader):
@@ -181,24 +182,24 @@ if cfg["training"]["immediate_test"]:
             loss += torch.nn.functional.mse_loss(preds, labels.to(device)).item()
             preds, labels = preds.cpu(), labels.cpu()
             batch_dict = {"image": images, "label": labels, "pred": preds, "grid": metadata[0], "centre": metadata[1], "month": metadata[2]}
-        after_model.append(batch_dict)
+            after_model.append(batch_dict)
 
-        if i % 100 == 0:
-            print(f"Processed {i} batches")
+            if i % 100 == 0:
+                print(f"Processed {i} batches")
 
-        # Periodically append new results
-        if i % 10000 == 0 and i > 0:
-            with open(filepath, "ab") as f:
-                pickle.dump(after_model, f)
-            print(f"Appended {i} batches")
-            after_model.clear()
+            # Periodically append new results
+            if i % 10000 == 0 and i > 0:
+                with open(filepath, "ab") as f:
+                    pickle.dump(after_model, f)
+                print(f"Appended {i} batches")
+                after_model.clear()
 
         # if i > num_samples:
         #     break
     # Save any remaining batches
-    if len(after_model) > 0:
-        with open(filepath, "ab") as f:
-            pickle.dump(after_model, f)
+        if len(after_model) > 0:
+            with open(filepath, "ab") as f:
+                pickle.dump(after_model, f)
 print(f"Total loss: {loss / len(test_dataloader)}")
      
     

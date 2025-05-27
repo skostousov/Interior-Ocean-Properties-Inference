@@ -31,8 +31,8 @@ class UNetRegression(nn.Module):
         x_up4 = self.up_4(x_up3, x_skip1)
         x_out = self.output(x_up4)
         return x_out
-    def __repr__(self):
-        return "unet_regression_downsized"
+    def name(self):
+        return "UNetRegression"
 
 class OutputConv(nn.Module):
     def __init__(self, in_channels, out_channels, grid_size):

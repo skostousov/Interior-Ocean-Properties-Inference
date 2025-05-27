@@ -19,7 +19,7 @@ class ChannelAttentionModule(nn.Module):
         x_new_reshaped = torch.reshape(x_new, (b, c, h, w)) # (1, C, H*W) -> (1, C, H, W)
         x_out = x_new_reshaped * self.scale + x
         return x_out
-    def __repr__(self):
+    def name(self):
         return "ChannelAttentionModule"
     
 class PositionAttentionModule(nn.Module):
@@ -45,7 +45,7 @@ class PositionAttentionModule(nn.Module):
         A_new_reshaped = torch.reshape(A_new, (b, c, h, w))
         A_out = A_new_reshaped * self.scale + x
         return A_out
-    def __repr__(self):
+    def name(self):
         return "PositionAttentionModule"
     
 class ConvReluBlock(nn.Module):
@@ -58,7 +58,7 @@ class ConvReluBlock(nn.Module):
         )
     def forward(self, x):
         return self.block(x)
-    def __repr__(self):
+    def name(self):
         return "ConvReluBlock"
     
 class DA_CNN(nn.Module):
@@ -93,7 +93,7 @@ class DA_CNN(nn.Module):
         x_flat = self.flatten(x_pool)
         x_out = self.linear(x_flat)
         return x_out
-    def __repr__(self):
+    def name(self):
         return "DA_CNN"
     
 

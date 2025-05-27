@@ -23,5 +23,5 @@ class PixelWiseRegressor(nn.Module):
         x = self.linear(x)
         return x
 
-    def __repr__(self):
-        return "pixelwise_regressor_downsized"
+    def name(self):
+        return "PixelWiseRegressor"
