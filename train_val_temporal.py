@@ -24,6 +24,7 @@ submode = RELEVANT_CONFIG["submode"]
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
     size = len(train_dataloader.dataset)
     model.train()
+    total_loss = 0
     for batch, (images, labels) in enumerate(train_dataloader):
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
@@ -31,9 +32,12 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         loss = loss_fn(pred, labels)
         loss.backward()
         optimizer.step()
+        total_loss += loss.item()
         if batch % 50 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
             print(f"loss: {loss:>7f} [{current:>6d}/{size:>5d}]")
+    total_loss /= len(train_dataloader)
+    return total_loss
 
 def val_loop(val_dataloader, model, loss_fn, device, scheduler):
     model.eval()
@@ -103,16 +107,19 @@ best_loss = 1000000000000000000
 def checkpoint(model, filename):
      torch.save(model.state_dict(), filename)
 
+
+
 start_timestamp = time.strftime('%Y%m%d_%H%M%S')
 best_epoch=0
 for epoch in range(0, epochs):
         print('Epoch {}:'.format(epoch + 1))
         model.train(True)
-        train_loop(model, train_dataloader, optimizer, loss_fn, device)
+        train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
         val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
+            corresponding_train_loss = train_loss
             model_name = f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg['data'][submode]["output_file"]} strat: {cfg['data'][submode]["test_indices"]}'
             model_dir = cfg["training"]["model_save_dest"]
             save_dir = root / model_dir / model_name
@@ -125,6 +132,30 @@ for epoch in range(0, epochs):
              print(f"Early stopping on epoch {epoch}")
              break
 print(f"Best loss: {best_loss}")
+
+info = {
+    "start_time": start_timestamp,
+    "data_file": cfg['data'][submode]["output_file"],
+    "test_indices": cfg['data'][submode]["test_indices"],
+    "strat_file": cfg['data'][submode]["test_indices"],
+    "epochs": epochs,
+    "batch_size": batch_size,
+    "model": model.__repr__(),
+    "optimizer": optimizer.__repr__(),
+    "loss_fn": loss_fn.__repr__(),
+    "scheduler": scheduler.__repr__(),
+    "best_loss": best_loss,
+    "best_epoch": best_epoch,
+    "corresponding_train_loss": corresponding_train_loss,
+    "train_dataset_size": len(train_data),
+    "val_dataset_size": len(val_data),
+}
+
+info_path =  save_dir / 'training_info.txt'
+with open(info_path, 'w') as f:
+    for key, value in info.items():
+        f.write(f"{key}: {value}\n")
+print(f"Training completed. Best model saved at {model_path}")
 
 if cfg["training"]["immediate_test"]:
     test_data = TestSubsetRegression(data, test_idx)
@@ -140,7 +171,7 @@ if cfg["training"]["immediate_test"]:
 
     after_model = []
 
-    filepath = Path(cfg["eval"]["results_dir"]/f"results_{model_name}.pkl")
+    filepath = Path(cfg["eval"]["results_dir"])/f"results_{model_name}.pkl"
 
     with torch.no_grad():
         for i, batch in enumerate(test_dataloader):
