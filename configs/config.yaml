@@ -1,4 +1,4 @@
-mode: daily
+mode: monthly
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -58,7 +58,7 @@ daily:
       test_indices: test_indices/daily/very_small_01.pt
       stats: stats/daily/very_small_01.pt
 monthly:
-  submode: small
+  submode: large
   training:
     epochs: 1000
     batch_size: 50
