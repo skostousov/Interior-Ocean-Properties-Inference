@@ -21,9 +21,9 @@ def simple_train_val_split(dataset, val_frac=0.2, seed=42):
      )
 
 
-def train_val_test_split_months_strat(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
+def train_val_test_split_temp_strat(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
     groups = dataset.groups
-    month_of_year = dataset.groups_by_month
+    month_of_year = [group % 12 for group in groups]
 
     n_splits_test = math.ceil(1/test_frac)
     n_splits_val = math.ceil(1/(val_frac/(1-test_frac)))
@@ -70,9 +70,8 @@ def train_val_test_split_months_strat(dataset, val_frac=0.1, test_frac=0.15, see
     assert len(set(val_idx).intersection(set(test_idx))) == 0, "Val and Test overlap!"
     return train_idx, val_idx, test_idx
 
-def train_val_test_split_months(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
+def train_val_test_split_temp(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
     groups = dataset.groups
-    month_of_year = dataset.groups_by_month
 
     all_indices = list(range(len(dataset)))
 
@@ -86,23 +85,21 @@ def train_val_test_split_months(dataset, val_frac=0.1, test_frac=0.15, seed=42, 
 
         remaining_indices = np.array(all_indices)[train_val_mask].tolist()
         remaining_groups = [groups[i] for i in remaining_indices]
-        remaining_months = [month_of_year[i] for i in remaining_indices]
 
         gss_val = GroupShuffleSplit(n_splits=1, test_size=val_frac/(1-test_frac), random_state=seed)
-        train_idx, val_idx = next(gss_val.split(remaining_indices, remaining_months, groups=remaining_groups))
+        train_idx, val_idx = next(gss_val.split(remaining_indices, groups=remaining_groups))
 
         train_idx = [remaining_indices[i] for i in train_idx]
         val_idx = [remaining_indices[i] for i in val_idx]
     
     else:
         gss_test = GroupShuffleSplit(n_splits=1, test_size=test_frac, random_state=seed)
-        train_val_idx, test_idx = next(gss_test.split(all_indices, month_of_year, groups=groups))
+        train_val_idx, test_idx = next(gss_test.split(all_indices, groups=groups))
 
         gss_val = GroupShuffleSplit(n_splits=1, test_size=val_frac / (1-test_frac), random_state=seed)
         train_val_groups = [groups[i] for i in train_val_idx]
-        train_val_months = [month_of_year[i] for i in train_val_idx]
 
-        train_idx, val_idx = next(gss_val.split(train_val_idx, train_val_months, groups=train_val_groups))
+        train_idx, val_idx = next(gss_val.split(train_val_idx, groups=train_val_groups))
 
         train_idx = [train_val_idx[i] for i in train_idx]
         val_idx = [train_val_idx[i] for i in val_idx]

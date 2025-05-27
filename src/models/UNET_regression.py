@@ -88,10 +88,10 @@ class UpSample(nn.Module):
 if __name__ == "__main__":  
     device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
     print(f"Using {device} device")   
-    from utils.datasetmonths import DatasetOverMonths
+    from utils.datasettemporal import TemporalDataset
     from utils.transforms import ToTensor, RescaledRotationTransform, Compose
     transform = Compose([ToTensor(), RescaledRotationTransform()])
-    ds = DatasetOverMonths(transform=None)
+    ds = TemporalDataset(transform=None)
     image, label = ds[0]
     print(f"image shape: {image.shape}, label shape: {label.shape}")
     model = UNetRegression(image.shape[0], 1).to(device)

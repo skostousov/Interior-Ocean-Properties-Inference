@@ -13,15 +13,11 @@ RAW_CONFIG["project_root"] = str(_REPO_ROOT)
 with cfg_path.open("w") as f:
     yaml.safe_dump(RAW_CONFIG, f, sort_keys=False)
 
-DATA_DIR = (_REPO_ROOT / RAW_CONFIG["data_dir_relative_to_project_root"]).resolve()
-SAVED_MODELS_DIR = (_REPO_ROOT / RAW_CONFIG["model_save_dest"]).resolve()
+PROJECT_ROOT = RAW_CONFIG["project_root"]
 FEATURES = RAW_CONFIG["features"]
-EARLY_STOP = RAW_CONFIG['early_stopping_thresh']
-MONTHLY_CONFIG = RAW_CONFIG["monthly mode"]
-
-def fetch_datasets():
-    pass
+mode = RAW_CONFIG["mode"]
+RELEVANT_CONFIG = RAW_CONFIG[mode]
 
 if __name__=="__main__":
     print(FEATURES)
-    print(RAW_CONFIG["monthly mode"])
+    print(RELEVANT_CONFIG)

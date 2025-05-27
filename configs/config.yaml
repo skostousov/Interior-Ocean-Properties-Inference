@@ -1,5 +1,4 @@
-defaults:
-- mode: monthly
+mode: daily
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -18,17 +17,18 @@ features:
 - vo
 - zos
 - mlotst
-compressed mode:
-  mode: default
+daily:
+  submode: small
   training:
-    epochs: 1000
-    batch_size: 20
+    epochs: 1
+    batch_size: 50
     early_stopping_thresh: 10
-    model_save_dest: saved_compressed_models
+    model_save_dest: saved_models/saved_daily_models
     immediate_test: true
   eval:
     results_dir: results
   data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
     features:
     - bottomT
     - so
@@ -37,7 +37,7 @@ compressed mode:
     - vo
     - zos
     - mlotst
-    data_dir: data/compressed
+    data_dir: data/daily
     latitude_range:
     - 31
     - 61
@@ -45,29 +45,24 @@ compressed mode:
     - -160
     - -120
     grid_size: 21
-    large:
+    small:
       start_date: 1993-01-01
-      end_date: 2021-06-01
-      output_file: compressed_1993-2021.nc
-      test_indices: test_indices/large_01.pt
-      stats: stats/large_01.pt
-    ten:
-      start_date: 1993-01-01
-      end_date: 2003-01-01
-      output_file: compressed_ten_sample_1993-2003.nc
-      test_indices: test_indices/ten_01.pt
-      stats: stats/ten_01.pt
-monthly mode:
-  mode: small
+      end_date: 1993-01-30
+      output_file: small_daily_sample_1993-1994.nc
+      test_indices: test_indices/daily/small_01.pt
+      stats: stats/daily/small_01.pt
+monthly:
+  submode: small
   training:
     epochs: 1000
     batch_size: 50
     early_stopping_thresh: 10
-    model_save_dest: saved_monthly_models
+    model_save_dest: saved_models/saved_monthly_models
     immediate_test: true
   eval:
     results_dir: results
   data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1M-m
     features:
     - bottomT
     - so
@@ -88,24 +83,24 @@ monthly mode:
       start_date: 1993-01-01
       end_date: 2021-06-01
       output_file: monthly_1993-2021.nc
-      test_indices: test_indices/large_01.pt
-      stats: stats/large_01.pt
+      test_indices: test_indices/monthly/large_01.pt
+      stats: stats/monthly/large_01.pt
     ten:
       start_date: 1993-01-01
       end_date: 2003-01-01
       output_file: ten_sample_1993-2003.nc
-      test_indices: test_indices/ten_01.pt
-      stats: stats/ten_01.pt
+      test_indices: test_indices/monthly/ten_01.pt
+      stats: stats/monthly/ten_01.pt
     medium:
       start_date: 1993-01-01
       end_date: 2010-01-01
       output_file: medium_sample_1993-2010.nc
-      test_indices: test_indices/medium_01.pt
-      stats: stats/medium_01.pt
+      test_indices: test_indices/monthly/medium_01.pt
+      stats: stats/monthly/medium_01.pt
     small:
       start_date: 1993-01-01
       end_date: 1994-01-01
       output_file: small_sample_1993-1994.nc
-      test_indices: test_indices/small_01.pt
-      stats: stats/small_02.pt
+      test_indices: test_indices/monthly/small_01.pt
+      stats: stats/monthly/small_02.pt
 project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg

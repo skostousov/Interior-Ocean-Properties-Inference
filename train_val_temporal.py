@@ -8,17 +8,18 @@ from models.DA_CNN import DA_CNN
 from models.UNET_regressionSE import UNetRegressionSE
 from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
-from utils.datasetmonths import DatasetOverMonths, TestSubsetRegression
+from utils.datasettemporal import TemporalDataset, TestSubsetRegression
 # from utils.transforms import RescaledRotationTransform, ToTensor, Compose
 from torchvision.transforms import Normalize, Compose, ToTensor
-from utils.config import DATA_DIR, RAW_CONFIG, SAVED_MODELS_DIR, EARLY_STOP, MONTHLY_CONFIG
+from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
 from torch.optim import AdamW
 import time
-from utils.splitter import train_val_test_split_months
+from utils.splitter import train_val_test_split_temp
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-cfg = MONTHLY_CONFIG
-mode = cfg['mode']
+cfg = RELEVANT_CONFIG
+root = Path(PROJECT_ROOT)
+submode = RELEVANT_CONFIG["submode"]
 
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
     size = len(train_dataloader.dataset)
@@ -53,7 +54,7 @@ device = torch.accelerator.current_accelerator().type if torch.accelerator.is_av
 print(f"Using {device} device")
 
 # data_aug = Compose([ToTensor(), RescaledRotationTransform()])
-data = DatasetOverMonths()
+data = TemporalDataset()
 
 batch_size = cfg['training']["batch_size"]
 epochs = cfg['training']["epochs"]
@@ -68,7 +69,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 loss_fn = nn.MSELoss()
 
 
-train_idx, val_idx, test_idx = train_val_test_split_months(data, seed=42, test_indices_path=Path(cfg['data'][mode]["test_indices"]))
+train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]))
 
 # mu, std = data.generate_mean_and_std_partial(train_idx)
 # mu_label, std_label = data.generate_mean_and_std_labels(train_idx)
@@ -112,14 +113,15 @@ for epoch in range(0, epochs):
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
-            model_dir = f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg['data'][mode]["output_file"]} strat: {cfg['data'][mode]["test_indices"]}'
-            save_dir = SAVED_MODELS_DIR / model_dir
+            model_name = f'model: {model.__repr__()} training_start_time: {start_timestamp} datafile: {cfg['data'][submode]["output_file"]} strat: {cfg['data'][submode]["test_indices"]}'
+            model_dir = cfg["training"]["model_save_dest"]
+            save_dir = root / model_dir / model_name
             os.makedirs(save_dir, exist_ok=True)
             model_state_path = save_dir / 'best_model_state'
             model_path = save_dir / 'best_model'
             torch.save(model.state_dict(), model_state_path)
             torch.save(model, model_path)
-        if epoch - best_epoch >= EARLY_STOP:
+        if epoch - best_epoch >= cfg["training"]["early_stopping_thresh"]:
              print(f"Early stopping on epoch {epoch}")
              break
 print(f"Best loss: {best_loss}")
@@ -138,7 +140,7 @@ if cfg["training"]["immediate_test"]:
 
     after_model = []
 
-    filepath = Path(cfg["eval"]["results_dir"]/f"results_{model_dir}.pkl")
+    filepath = Path(cfg["eval"]["results_dir"]/f"results_{model_name}.pkl")
 
     with torch.no_grad():
         for i, batch in enumerate(test_dataloader):
