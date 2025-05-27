@@ -147,3 +147,4 @@ Please update the config file with your own username in order to download data f
 #### Log:
 - Fixed problems with ssh
 - Reorganized whole filepath/config system to make it easier to train and eval models 
+- Set up remote devide. will try training normal UNet on large device
