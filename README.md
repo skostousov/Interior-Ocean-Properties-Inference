@@ -139,6 +139,11 @@ Please update the config file with your own username in order to download data f
 
 ## 27/05/2025
 
-1. Integrate different dataset types and try daily evaluation (even for 12 days or so)
+1. ~~Integrate different dataset types~~ and try daily evaluation (even for 12 days or so)
 2. Try EBAM-CNN
 3. Improve performance of DA-CNN
+4. Set up remote computer for training and evaluation
+
+#### Log:
+- Fixed problems with ssh
+- Reorganized whole filepath/config system to make it easier to train and eval models 

@@ -7,3 +7,4 @@ src/models/__pycache__/
 saved_models
 test_indices/*
 src/notebooks/**/*.pkl
+sync_from_remote.sh
