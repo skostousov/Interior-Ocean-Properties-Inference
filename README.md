@@ -142,7 +142,7 @@ Please update the config file with your own username in order to download data f
 1. ~~Integrate different dataset types~~ and try daily evaluation (even for 12 days or so)
 2. Try EBAM-CNN
 3. Improve performance of DA-CNN
-4. Set up remote computer for training and evaluation
+4. Set up remote computer for training and evaluationgit s
 
 #### Log:
 - Fixed problems with ssh
