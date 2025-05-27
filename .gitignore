@@ -8,3 +8,5 @@ saved_models
 # test_indices/*
 src/notebooks/**/*.pkl
 sync_from_remote.sh
+recieved_data/*
+recieved_data
