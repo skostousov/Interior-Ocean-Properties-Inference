@@ -4,17 +4,21 @@ from netCDF4 import Dataset as NETCDF4Dataset
 import numpy as np
 from pathlib import Path
 import copernicusmarine
-from utils.config import RAW_CONFIG, DATA_DIR, _REPO_ROOT
+from utils.config import RAW_CONFIG, DATA_DIR, MONTHLY_CONFIG
 import torch
 from sklearn.preprocessing import RobustScaler
 cfg = RAW_CONFIG
+cfg_monthly = MONTHLY_CONFIG
+project_root = cfg['project_root']
 
 class DatasetOverMonths(TorchDataset):
     def __init__(self, months=False, transform = None, target_transform = None, full_dataset=False, normalize=True):
         self.full_dataset = full_dataset
-        self.config = cfg["monthly"]
-        self.features = self.config['features']
+        self.cfg_m = cfg_monthly
+        self.features = cfg_monthly['data']['features']
+        self.project_root = project_root
         self.transform = transform
+        self.mode = cfg_monthly['mode']
         self.target_transform = transform
         self.dataset = self._load(self._download())
         self._get_features_and_labels()
@@ -46,22 +50,22 @@ class DatasetOverMonths(TorchDataset):
         return reshaped_data
     
     def _download(self):
-        if self.full_dataset:
-            mode = 'large'
-            download_dest = (DATA_DIR / self.config['output_dir'] / self.config['large']['output_file']).resolve()
-        else:
-            mode = 'small'
-            download_dest = (DATA_DIR / self.config['output_dir'] / self.config['small']['output_file']).resolve()
+        data_dir = Path(self.project_root) / self.cfg_m["data"]["data_dir"]
+        print(self.mode)
+        filename = self.cfg_m['data'][self.mode]['output_file']
+        download_dest = (data_dir / filename).resolve()
         download_dest.parent.mkdir(parents=True, exist_ok=True)
-        alt_path = (Path(_REPO_ROOT)/self.config['output_dir'] / download_dest.name).resolve()
-        print(alt_path)
-        if not alt_path.is_file():
-            min_latitude = min(self.config['latitude_range'])
-            max_latitude = max(self.config['latitude_range'])
-            min_longitude = min(self.config['longitude_range'])
-            max_longitude = max(self.config['longitude_range'])
-            start_date = self.config[mode]['start_date'].isoformat() + "T00:00:00"
-            end_date = self.config[mode]['end_date'].isoformat() + "T00:00:00"
+        # alt_path = (Path(_REPO_ROOT)/self.config['output_dir'] / download_dest.name).resolve()
+        # print(alt_path)
+        print(download_dest)
+        if not download_dest.is_file():
+            self.data_cfg = self.cfg_m['data']
+            min_latitude = min(self.data_cfg['latitude_range'])
+            max_latitude = max(self.data_cfg['latitude_range'])
+            min_longitude = min(self.data_cfg['longitude_range'])
+            max_longitude = max(self.data_cfg['longitude_range'])
+            start_date = self.data_cfg[self.mode]['start_date'].isoformat() + "T00:00:00"
+            end_date = self.data_cfg[self.mode]['end_date'].isoformat() + "T00:00:00"
             copernicusmarine.subset(
             dataset_id="cmems_mod_glo_phy_my_0.083deg_P1M-m",
             dataset_version="202311",
@@ -72,14 +76,14 @@ class DatasetOverMonths(TorchDataset):
             maximum_latitude=max_latitude,
             start_datetime=start_date,
             end_datetime=end_date,
-            output_directory=self.config['output_dir'],
-            output_filename=self.config[mode]['output_file'],
+            output_directory=data_dir,
+            output_filename=filename,
             minimum_depth=0.49402499198913574,
             maximum_depth=0.49402499198913574,
             coordinates_selection_method="strict-inside",
             netcdf_compression_level=0,
             disable_progress_bar=False,)
-        return alt_path
+        return download_dest
     def _inversescale(self, label):
         #inverse scale the label
         label = label.view(-1, 1)
@@ -104,7 +108,7 @@ class DatasetOverMonths(TorchDataset):
         #creation of feature_map
         self.feature_map = np.concatenate(list(relevant_variables.values()), axis=1)
     def _grid_coords(self):
-        grid_size = self.config['grid_size']
+        grid_size = self.cfg_m['data']['grid_size']
         lat_range = self.feature_map.shape[-2]
         lon_range = self.feature_map.shape[-1]
         grid_coords = [(i, j) for i in range(0, lat_range-grid_size) for j in range(0, lon_range-grid_size)]
@@ -113,6 +117,8 @@ class DatasetOverMonths(TorchDataset):
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
         self.grid_and_centre_coords_and_months = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
         self.groups = [datapoint[-1] for datapoint in self.grid_and_centre_coords_and_months]
+        self.groups_by_month = [group % 12 for group in self.groups]
+
     def generate_mean_and_std(self, month_indices):
         X = self.feature_map[month_indices]
         mu = X.mean(axis=(0, 2, 3))
@@ -180,7 +186,7 @@ class DatasetOverMonths(TorchDataset):
         
     def __getitem__(self, index):
         grid_coords, centre_coords, month = self.grid_and_centre_coords_and_months[index]
-        image = self.feature_map[month, :, grid_coords[0]:grid_coords[0]+self.config['grid_size'], grid_coords[1]:grid_coords[1]+self.config['grid_size']]
+        image = self.feature_map[month, :, grid_coords[0]:grid_coords[0]+self.cfg_m['data']['grid_size'], grid_coords[1]:grid_coords[1]+self.cfg_m['data']['grid_size']]
         label = self.annotations_map[month, :, centre_coords[0], centre_coords[1]]
 
         image = torch.from_numpy(image).float()
@@ -205,7 +211,7 @@ class TestSubsetRegression(Subset):
     def __getitem__(self, idx):
         original_idx = self.indices[idx]
         grid_coords, centre_coords, month = self.dataset.grid_and_centre_coords_and_months[original_idx]
-        image = self.dataset.feature_map[month, :, grid_coords[0]:grid_coords[0]+self.dataset.config['grid_size'], grid_coords[1]:grid_coords[1]+self.dataset.config['grid_size']]
+        image = self.dataset.feature_map[month, :, grid_coords[0]:grid_coords[0]+self.dataset.cfg_m['data']['grid_size'], grid_coords[1]:grid_coords[1]+self.dataset.cfg_m['data']['grid_size']]
         label = self.dataset.annotations_map[month, :, centre_coords[0], centre_coords[1]]
 
         image = torch.from_numpy(image).float()

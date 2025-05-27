@@ -128,9 +128,11 @@ Please update the config file with your own username in order to download data f
 
 ## 26/05/2025
 
-1. Create evaluation proccess that minimizes RAM Usage
-2. Create nice plottings of RMSE and other evaluation metrics
+1. ~~Create evaluation proccess that minimizes RAM Usage~~
+2. ~~Create nice plottings of MAE~~ and other evaluation metrics
 3. Create framework for 12 month models and corresponding dataset downloading, etc.
-4. Also for normal large model allow for a stratified split so each of 12 months makes an appearance in every split
+4. ~~Also for normal large model allow for a stratified split so each of 12 months makes an appearance in every split~~
 
 #### Log:
+- Implemented Incremental Loading to minimize working memory usage
+
