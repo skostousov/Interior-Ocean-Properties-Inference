@@ -11,7 +11,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None):
         self.cfg = cfg
         self.features = cfg['data']['features']
         self.project_root = project_root
@@ -19,7 +19,10 @@ class TemporalDataset(TorchDataset):
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = transform
-        self.dataset = NETCDF4Dataset(Path(self._download()))
+        if filepath is not None:
+            self.dataset = NETCDF4Dataset(filepath)
+        else:
+            self.dataset = NETCDF4Dataset(Path(self._download()))
 
         relevant_variables = {k:v[:] for (k, v) in self.dataset.variables.items() if k in self.features}
         # delete dimensional variables

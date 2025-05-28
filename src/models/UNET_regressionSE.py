@@ -4,7 +4,7 @@ import torch.nn.functional as F
 from torchvision.ops import SqueezeExcitation
 
 class UNetRegressionSE(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21, base_filters=16, reduction=8):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, base_filters=32, reduction=8):
         super().__init__()
         self.grid_size = grid_size
         self.down1 = SkipAndDownSample(in_channels, base_filters)

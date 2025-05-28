@@ -10,6 +10,15 @@ poetry shell
 ```
 Please update the config file with your own username in order to download data from https://data.marine.copernicus.eu/ (from which all data in this repository is sourced from)
 
+## Model Checklist:
+#### (saved_models/saved_daily_alternative_small_models/):
+- UNET: ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_mae, transform_mae
+- UNETSE: notransform_mse, transform_mse, notransform_mae, transform_mae
+- BasicCNN: notransform_mse, tranform_mse, notransform_mae, transform_mae
+- DACNN: notransform_mse, transform_mse, notransform_mae, transform_mae
+- EBAMCNN: notransform_mse, transform_mse, notransform_mae, transform_mae
+
+
 ## TODO List:
 
 - ~~Fix train_no_val so that the model actually trains and converges to some solution~~ (15/05/2025)
@@ -145,12 +154,25 @@ Please update the config file with your own username in order to download data f
 #### Log:
 - Fixed problems with ssh
 - Reorganized whole filepath/config system to make it easier to train and eval models 
-- Set up remote devide. training normal UNet on large via ssh on remote device
+- Set up remote device. training normal UNet on large via ssh on remote device
 - created script to transfer results via ssh
 
 ## 28/05/2025
 
 1. Try EBAM-CNN
-2. Improve performance of DA-CNN
+2. Run & Improve performance of DA-CNN
+3. ~~Run evaluation~~
+4. Figure out squeeze and excitation
+5. ~~Analyze variation in MLD from day to day~~
+6. ~~evaluate very small daily dataset~~
+7. ~~compare MSE from previous day to prediction to evaluate overfitting~~
+
+#### Log:
+- Organized and redid file structure and training procedure for easier evaluation
+- Trained UNet and obtained results, seems that the network is collapsing into a uniform classifier, training UNetSE to compare
+    - another thought: Maybe because MSE penalizes outliers??? Will try MAE as well
+    - also try basic CNN, and CNN EBAM
+    - re-add transforms 
+
 
 

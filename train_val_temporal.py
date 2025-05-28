@@ -35,7 +35,7 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         total_loss += loss.item()
         if batch % 50 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
-            print(f"loss: {loss:>7f} [{current:>6d}/{size:>5d}]")
+            print(f"loss: {loss:>12f} [{current:>6d}/{size:>5d}]")
     total_loss /= size
     return total_loss
 
@@ -50,7 +50,7 @@ def val_loop(val_dataloader, model, loss_fn, device, scheduler):
             val_loss += loss_fn(pred, label).item()
 
     val_loss /= num_batches
-    print(f"Val Loss: {val_loss:>8f} \n")
+    print(f"Val Loss: {val_loss:>12f} \n")
     scheduler.step(val_loss)
     return val_loss
 
@@ -64,7 +64,7 @@ batch_size = cfg['training']["batch_size"]
 epochs = cfg['training']["epochs"]
 
 # model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
-model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
+model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
 model = model.to(device)
 optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
@@ -120,7 +120,7 @@ for epoch in range(0, epochs):
             best_epoch = epoch
             best_loss = val_loss
             corresponding_train_loss = train_loss
-            model_name = f'MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{cfg['data'][submode]["output_file"]}>STRAT:{cfg['data'][submode]["test_indices"]}>'
+            model_name = f'MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]["output_file"]).replace('/', '_')}>STRAT:{(cfg['data'][submode]["test_indices"]).replace('/', '_')}>'
             model_dir = cfg["training"]["model_save_dest"]
             save_dir = root / model_dir / model_name
             os.makedirs(save_dir, exist_ok=True)
@@ -135,9 +135,8 @@ print(f"Best loss: {best_loss}")
 
 info = {
     "start_time": start_timestamp,
-    "data_file": cfg['data'][submode]["output_file"],
-    "test_indices": cfg['data'][submode]["test_indices"],
-    "strat_file": cfg['data'][submode]["test_indices"],
+    "data_file": f"{cfg['data']['data_dir']}/{cfg['data'][submode]['output_file']}",
+    "test_indices": f"{cfg['data'][submode]['test_indices']}",
     "epochs": epochs,
     "batch_size": batch_size,
     "model": model.__repr__(),
@@ -201,6 +200,8 @@ if cfg["training"]["immediate_test"]:
             with open(filepath, "ab") as f:
                 pickle.dump(after_model, f)
 print(f"Total loss: {loss / len(test_dataloader)}")
+with open(info_path, 'a') as f:
+    f.write(f"total_test_loss: {loss / len(test_dataloader)}\n")
      
     
 
