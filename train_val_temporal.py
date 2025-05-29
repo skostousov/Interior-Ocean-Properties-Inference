@@ -64,7 +64,7 @@ data = TemporalDataset()
 batch_size = cfg['training']["batch_size"]
 epochs = cfg['training']["epochs"]
 
-model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
+model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
 # model = EBAM_CNN()
 model = model.to(device)
 optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)

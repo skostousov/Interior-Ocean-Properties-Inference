@@ -4,19 +4,19 @@ from torch.nn import functional as F
 
 class ChannelAttentionModule(nn.Module):
     def __init__(self, in_channels):
-        #input (1, C, H, W)
+        #input (B, C, H, W)
         super().__init__()
         self.flatten = nn.Flatten(start_dim=2, end_dim=-1)
         self.softmax = nn.Softmax(dim=2)
         self.scale = nn.Parameter(torch.tensor(0.0))
     def forward(self, x):
-        # x: (1, C, H, W)
+        # x: (B, C, H, W)
         b, c, h, w = x.shape
-        x_flat = self.flatten(x) # (1, C, H*W)
-        x_flat_transpose = x_flat.transpose(1, 2) # (1, H*W, C)
-        x_soft = self.softmax(torch.bmm(x_flat, x_flat_transpose)) # (1, C, C)
-        x_new = torch.bmm(x_soft, x_flat) # (1, C, H*W)
-        x_new_reshaped = torch.reshape(x_new, (b, c, h, w)) # (1, C, H*W) -> (1, C, H, W)
+        x_flat = self.flatten(x) # (B, C, H*W)
+        x_flat_transpose = x_flat.transpose(1, 2) # (B, H*W, C)
+        x_soft = self.softmax(torch.bmm(x_flat, x_flat_transpose)) # (B, C, C)
+        x_new = torch.bmm(x_soft, x_flat) # (B, C, H*W)
+        x_new_reshaped = torch.reshape(x_new, (b, c, h, w)) # (B, C, H*W) -> (B, C, H, W)
         x_out = x_new_reshaped * self.scale + x
         return x_out
     def name(self):
@@ -24,24 +24,25 @@ class ChannelAttentionModule(nn.Module):
     
 class PositionAttentionModule(nn.Module):
     def __init__(self, in_channels):
-        #input (1, C, H, W)
+        #input (B, C, H, W)
         super().__init__()
-        self.conv1 = nn.Conv2d(in_channels, in_channels, kernel_size=1)
-        self.conv2 = nn.Conv2d(in_channels, in_channels, kernel_size=1)
+        inter = max(1, in_channels // 8)
+        self.conv1 = nn.Conv2d(in_channels, inter, kernel_size=1)
+        self.conv2 = nn.Conv2d(in_channels, inter, kernel_size=1)
         self.conv3 = nn.Conv2d(in_channels, in_channels, kernel_size=1)
         self.softmax = nn.Softmax(dim=2)
         self.flatten = nn.Flatten(start_dim=2, end_dim=-1)
         self.scale = nn.Parameter(torch.tensor(0.0))
     def forward(self, x):
-        # x: (1, C, H, W)
+        # x: (B, C, H, W)
         b, c, h, w = x.shape
-        B = self.flatten(self.conv1(x)) # (1, C, H*W)
-        C = self.flatten(self.conv2(x)) # (1, C, H*W)
-        D = self.flatten(self.conv3(x)) # (1, C, H*W)
-        B_transpose = B.transpose(1, 2) # (1, H*W, C)
-        BC  = torch.bmm(B_transpose, C) # (1, H*W, H*W)
+        B = self.flatten(self.conv1(x)) # (B, C, H*W)
+        C = self.flatten(self.conv2(x)) # (B, C, H*W)
+        D = self.flatten(self.conv3(x)) # (B, C, H*W)
+        B_transpose = B.transpose(1, 2) # (B, H*W, C)
+        BC  = torch.bmm(B_transpose, C) # (B, H*W, H*W)
         BC_soft = self.softmax(BC)
-        A_new = torch.bmm(D, BC_soft) # (1, C, H*W)
+        A_new = torch.bmm(D, BC_soft) # (B, C, H*W)
         A_new_reshaped = torch.reshape(A_new, (b, c, h, w))
         A_out = A_new_reshaped * self.scale + x
         return A_out
@@ -72,7 +73,11 @@ class DA_CNN(nn.Module):
         self.convpam2 = ConvReluBlock(16, 32)
         self.pam = PositionAttentionModule(32)
         self.convpam3 = ConvReluBlock(32, 64)
-        self.fuseconv = ConvReluBlock(128, 128)
+        self.fuseconv = self.block = nn.Sequential(
+            nn.Conv2d(128, 128, kernel_size=1, padding=0),
+            nn.BatchNorm2d(128),
+            nn.ReLU()
+        )
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
         self.linear = nn.Linear(128, out_channels)

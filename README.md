@@ -175,5 +175,17 @@ Please update the config file with your own username in order to download data f
     - also try basic CNN, and CNN EBAM
     - re-add transforms 
 
+## 29/05/2025
+
+#### Log:
+- Rerunning UNet with MAE
+- Tweaked DA_CNN so fuse_conv has kernel of size 1, and PAM's Q and K convolutions have a reduced number of output channels. Will run when UNet finishes.
+
+## NEW TASKS
+
+- Analyze relationship between channels and mld
+- try with upscaling
+- if time, SWOT$
+
 
 
