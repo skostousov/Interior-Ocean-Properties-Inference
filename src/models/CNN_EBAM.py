@@ -32,7 +32,7 @@ class ChannelAttention(nn.Module):
 
 # Self-attention mechanism to capture long-range dependencies in spatial dimensions
 class Attention(nn.Module):
-    def __init__(self, dim, num_heads = 4, bias = True):
+    def __init__(self, dim, num_heads = 3, bias = True):
         super(Attention, self).__init__()
         self.num_heads = num_heads
         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
@@ -71,7 +71,7 @@ class Attention(nn.Module):
 
 # Spatial attention mechanism to focus on important spatial locations
 class SpatialAttention(nn.Module):
-    def __init__(self, kernel_size=7):
+    def __init__(self, kernel_size=3):
         super(SpatialAttention, self).__init__()
         # Convolutional layer to compute spatial attention based on average and max pooling
         assert kernel_size in (3, 7), 'kernel size must be 3 or 7'
@@ -90,7 +90,7 @@ class SpatialAttention(nn.Module):
 
 # EBAM (Enhanced Block Attention Module) that combines channel and spatial attention mechanisms
 class EBAM(nn.Module):
-    def __init__(self, dim, num_heads = 4, bias = True, kernel_size=7):
+    def __init__(self, dim, num_heads = 3, bias = True, kernel_size=3):
         super(EBAM, self).__init__()
         self.ca = Attention(dim, num_heads, bias)
         self.sa = SpatialAttention(kernel_size)
@@ -106,9 +106,9 @@ class EBAM_CNN(nn.Module):
         super(EBAM_CNN, self).__init__()
         # Define the number of channels at each layer
         self.channels_num_1 = 6
-        self.channels_num_2 = 32
-        self.channels_num_3 = 64
-        self.channels_num_4 = 128
+        self.channels_num_2 = 24
+        self.channels_num_3 = 48
+        self.channels_num_4 = 96
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.relu = nn.ELU()
         # Define EBAM blocks for each feature map size
@@ -119,36 +119,36 @@ class EBAM_CNN(nn.Module):
         
         # Define convolutional layers to process the input
         self.layer1 = nn.Sequential(
-            nn.Conv2d(6, 32, 3, stride = 1, padding=0),
-            nn.BatchNorm2d(32),
+            nn.Conv2d(6, 24, 3, stride = 1, padding=0),
+            nn.BatchNorm2d(24),
             #nn.Dropout(0.1)         
         )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(32, 64, 3, stride = 1,padding=0),
-            nn.BatchNorm2d(64),
+            nn.Conv2d(24, 48, 3, stride = 1,padding=0),
+            nn.BatchNorm2d(48),
             #nn.Dropout(0.1)  
         )
         self.layer3 = nn.Sequential(
-            nn.Conv2d(64,128, 3,stride = 1,padding=0),
-            nn.BatchNorm2d(128),
+            nn.Conv2d(48,96, 3,stride = 1,padding=0),
+            nn.BatchNorm2d(96),
             #nn.Dropout(0.1)
              
         )
 
         # Fully connected layers for final prediction
         self.fc1 = nn.Sequential(
-            nn.Linear(128, 64),
-            nn.Dropout(0.1),  
+            nn.Linear(96, 48),
+            nn.Dropout(0.1),
             nn.ELU()
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(64, 32),
-            nn.Dropout(0.1), 
+            nn.Linear(48, 24),
+            nn.Dropout(0.1),
             #nn.LeakyReLU()
             nn.ELU()
         )
         self.fc3 = nn.Sequential(
-            nn.Linear(32,1)
+            nn.Linear(24,1)
 #             nn.Dropout(0.5),
 #             nn.ELU()     
         )
@@ -173,12 +173,21 @@ class EBAM_CNN(nn.Module):
         out = self.fc3(out)
         # out = self.fc4(out)
         return out
+    def name(self):
+        return "EBAM_CNN"
 
 if __name__ == "__main__":
-    device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
-    print(f"Using {device} device")   
     from utils.datasettemporal import TemporalDataset
-    
+    from pathlib import Path
+    from utils.config import PROJECT_ROOT
+    root = Path(PROJECT_ROOT)
+    datafile = root / "data/daily_small/small_daily_sample_1993-1993.nc"
+    data = TemporalDataset(filepath=datafile)
+    model = EBAM_CNN()
+    image, label = data[0]
+    print(f"image shape: {image.shape}, label shape: {label.shape}")
+    output = model(image.unsqueeze(0))
+    print(f"output shape: {output.shape}")
 
 
 

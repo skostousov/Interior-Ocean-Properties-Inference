@@ -5,6 +5,7 @@ from pathlib import Path
 import os
 from models.UNET_regression import UNetRegression
 from models.DA_CNN import DA_CNN
+from models.CNN_EBAM import EBAM_CNN
 from models.UNET_regressionSE import UNetRegressionSE
 from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
@@ -63,14 +64,18 @@ data = TemporalDataset()
 batch_size = cfg['training']["batch_size"]
 epochs = cfg['training']["epochs"]
 
-# model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
-model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
+model = UNetRegression(data[0][0].shape[0], data[0][1].shape[0])
+# model = EBAM_CNN()
 model = model.to(device)
 optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
 
 scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
-loss_fn = nn.MSELoss()
+# loss_fn = nn.MSELoss()
+
+# loss_fn = nn.HuberLoss()
+
+loss_fn = nn.L1Loss()
 
 
 train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]))

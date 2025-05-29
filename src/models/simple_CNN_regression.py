@@ -10,7 +10,8 @@ class PixelWiseRegressor(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.conv4 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.pool = nn.AdaptiveAvgPool2d((1,1))
-        self.linear = nn.Linear(128, 1)
+        self.linear = nn.Linear(128, 64)
+        self.linear_out = nn.Linear(64, out_channels)
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x):
@@ -21,6 +22,7 @@ class PixelWiseRegressor(nn.Module):
         x = self.pool(x)
         x = torch.flatten(x, 1)
         x = self.linear(x)
+        x = self.linear_out(x)
         return x
 
     def name(self):

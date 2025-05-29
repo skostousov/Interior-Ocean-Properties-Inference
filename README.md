@@ -12,11 +12,12 @@ Please update the config file with your own username in order to download data f
 
 ## Model Checklist:
 #### (saved_models/saved_daily_alternative_small_models/):
-- UNET: ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_mae, transform_mae
-- UNETSE: notransform_mse, transform_mse, notransform_mae, transform_mae
-- BasicCNN: notransform_mse, tranform_mse, notransform_mae, transform_mae
-- DACNN: notransform_mse, transform_mse, notransform_mae, transform_mae
-- EBAMCNN: notransform_mse, transform_mse, notransform_mae, transform_mae
+- UNET: ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_hl, transform_hl
+- UNETSE: ~~notransform_mse~~ (MODEL:UNetRegressionSE>TRAINSTART:20250528_143122>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_hl, transform_hl
+- BasicCNN: notransform_mse, tranform_mse, notransform_hl, 
+    ~~transform_hl~~ (MODEL:PixelWiseRegressor>TRAINSTART:20250528_170655>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
+- DACNN: notransform_mse, transform_mse, notransform_hl, ~~transform_hl~~ (MODEL:DA_CNN>TRAINSTART:20250528_224803>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
+- EBAMCNN: notransform_mse, transform_mse, notransform_hl, ~~transform_hl~~ (MODEL:EBAM_CNN>TRAINSTART:20250528_200550>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
 
 
 ## TODO List:
@@ -159,18 +160,18 @@ Please update the config file with your own username in order to download data f
 
 ## 28/05/2025
 
-1. Try EBAM-CNN
-2. Run & Improve performance of DA-CNN
+1. ~~Try EBAM-CNN~~
+2. ~~Run~~ & Improve performance of DA-CNN
 3. ~~Run evaluation~~
-4. Figure out squeeze and excitation
+4. ~~Figure out squeeze and excitation~~
 5. ~~Analyze variation in MLD from day to day~~
 6. ~~evaluate very small daily dataset~~
 7. ~~compare MSE from previous day to prediction to evaluate overfitting~~
 
 #### Log:
 - Organized and redid file structure and training procedure for easier evaluation
-- Trained UNet and obtained results, seems that the network is collapsing into a uniform classifier, training UNetSE to compare
-    - another thought: Maybe because MSE penalizes outliers??? Will try MAE as well
+- Trained UNet and obtained results, seems that the network is collapsing into a uniform classifier, training UNetSE to compare (UPDATE: Less uniform, although still far off, will try normal cnn)
+    - another thought: Maybe because MSE penalizes outliers??? Will try MAE as well (with HuberLoss)
     - also try basic CNN, and CNN EBAM
     - re-add transforms 
 
