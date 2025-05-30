@@ -11,7 +11,8 @@ from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
 from utils.datasettemporal import TemporalDataset, TestSubsetRegression
 # from utils.transforms import RescaledRotationTransform, ToTensor, Compose
-from torchvision.transforms import Normalize, Compose, ToTensor
+from torchvision.transforms import Normalize, Compose
+from utils.transforms import RescaledRotationTransform, ToTensor 
 from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
 from torch.optim import AdamW
 import time
@@ -59,7 +60,8 @@ device = torch.accelerator.current_accelerator().type if torch.accelerator.is_av
 print(f"Using {device} device")
 
 # data_aug = Compose([ToTensor(), RescaledRotationTransform()])
-data = TemporalDataset()
+data_aug = RescaledRotationTransform()
+data = TemporalDataset(transform=data_aug)
 
 batch_size = cfg['training']["batch_size"]
 epochs = cfg['training']["epochs"]
@@ -154,7 +156,12 @@ info = {
     "train_dataset_size": len(train_data),
     "val_dataset_size": len(val_data),
     "test_dataset_size": len(test_idx),
+    "transform": data.transform.__repr__() if data.transform else None,
+    "target_transform": data.target_transform.__repr__() if data.target_transform else None,
+    "downsample": data.downsample if hasattr(data, 'downsample') else None,
+    "grid_size": data.grid_size if hasattr(data, 'grid_size') else None
 }
+
 
 info_path =  save_dir / 'training_info.txt'
 with open(info_path, 'w') as f:

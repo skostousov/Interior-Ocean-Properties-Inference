@@ -12,12 +12,31 @@ Please update the config file with your own username in order to download data f
 
 ## Model Checklist:
 #### (saved_models/saved_daily_alternative_small_models/):
-- UNET: ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_hl, transform_hl
-- UNETSE: ~~notransform_mse~~ (MODEL:UNetRegressionSE>TRAINSTART:20250528_143122>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), transform_mse, notransform_hl, transform_hl
-- BasicCNN: notransform_mse, tranform_mse, notransform_hl, 
+- UNET: 
+    ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), 
+    transform_mse, 
+    ~~notransform_mae~~ (MODEL:UNetRegression>TRAINSTART:20250529_100406>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>) NOTE: Promising!, 
+    transform_mae
+- UNETSE: 
+    ~~notransform_mse~~ (MODEL:UNetRegressionSE>TRAINSTART:20250528_143122>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), 
+    transform_mse, 
+    notransform_hl, 
+    transform_hl
+- BasicCNN: 
+    notransform_mse, 
+    tranform_mse, 
+    notransform_hl, 
     ~~transform_hl~~ (MODEL:PixelWiseRegressor>TRAINSTART:20250528_170655>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
-- DACNN: notransform_mse, transform_mse, notransform_hl, ~~transform_hl~~ (MODEL:DA_CNN>TRAINSTART:20250528_224803>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
-- EBAMCNN: notransform_mse, transform_mse, notransform_hl, ~~transform_hl~~ (MODEL:EBAM_CNN>TRAINSTART:20250528_200550>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
+- DACNN: 
+    notransform_mse, 
+    transform_mse, 
+    notransform_hl, 
+    ~~transform_hl~~ (MODEL:DA_CNN>TRAINSTART:20250528_224803>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
+- EBAMCNN: 
+    notransform_mse, 
+    transform_mse, 
+    notransform_hl, 
+    ~~transform_hl~~ (MODEL:EBAM_CNN>TRAINSTART:20250528_200550>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
 
 
 ## TODO List:
@@ -185,6 +204,7 @@ Please update the config file with your own username in order to download data f
 
 - Analyze relationship between channels and mld
 - try with upscaling
+- transforms
 - if time, SWOT$
 
 

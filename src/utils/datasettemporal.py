@@ -7,41 +7,51 @@ import copernicusmarine
 from utils.config import RAW_CONFIG, RELEVANT_CONFIG, PROJECT_ROOT
 import torch
 from sklearn.preprocessing import RobustScaler
+import torch.nn.functional as F
+
 cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False):
         self.cfg = cfg
+        self.downsample = downsample
         self.features = cfg['data']['features']
         self.project_root = project_root
         self.transform = transform
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
-        self.target_transform = transform
+        self.target_transform = target_transform
         if filepath is not None:
             self.dataset = NETCDF4Dataset(filepath)
         else:
             self.dataset = NETCDF4Dataset(Path(self._download()))
 
-        relevant_variables = {k:v[:] for (k, v) in self.dataset.variables.items() if k in self.features}
+        self.relevant_variables = {k:v[:] for (k, v) in self.dataset.variables.items() if k in self.features}
         # delete dimensional variables
         for key, _ in self.dataset.dimensions.items():
-            if key in relevant_variables.keys():
-                del relevant_variables[key]
+            if key in self.relevant_variables.keys():
+                del self.relevant_variables[key]
         # reshape variables into (months, 1, long, lat)
-        for key, value in relevant_variables.items():
-            if len (relevant_variables[key].shape) != 4: relevant_variables[key] = np.expand_dims(value, 1)
-        #creation of label_map
-        self.annotations_map = relevant_variables.pop("mlotst")
-        #creation of feature_map
-        self.feature_map = np.concatenate(list(relevant_variables.values()), axis=1)
+        for key, value in self.relevant_variables.items():
+            if len (self.relevant_variables[key].shape) != 4: self.relevant_variables[key] = np.expand_dims(value, 1)
 
-        grid_size = self.cfg['data']['grid_size']
+        self.all_variables = self.relevant_variables.copy()
+        #creation of label_map
+        self.annotations_map = self.relevant_variables.pop("mlotst")
+        #creation of feature_map
+        self.feature_map = np.concatenate(list(self.relevant_variables.values()), axis=1)
+
+        self.grid_size = self.cfg['data']['grid_size']
+        if self.downsample:
+            self.grid_size = self.grid_size / 3
+            self.feature_map = F.avg_pool2d(torch.tensor(self.feature_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
+            self.annotations_map = F.avg_pool2d(torch.tensor(self.annotations_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
+
         lat_range = self.feature_map.shape[-2]
         lon_range = self.feature_map.shape[-1]
-        grid_coords = [(i, j) for i in range(0, lat_range-grid_size) for j in range(0, lon_range-grid_size)]
-        centre_coords = [(i+grid_size//2, j+grid_size//2) for i in range(0, lat_range-grid_size) for j in range(0, lon_range-grid_size)]
+        grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
+        centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
         self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
@@ -189,9 +199,9 @@ class TemporalDataset(TorchDataset):
         if self.normalize:
             image = (image - self.mean) / self.std
             label = (label - self.mean_label) / self.std_label
-
         if self.transform:
             image = self.transform(image)
+        if self.target_transform:
             label = self.target_transform(label)
 
         return image, label
