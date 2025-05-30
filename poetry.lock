@@ -765,6 +765,25 @@ files = [
 ]
 
 [[package]]
+name = "eofs"
+version = "2.0.0"
+description = "EOF analysis in Python"
+optional = false
+python-versions = ">=3.8"
+groups = ["main"]
+files = [
+    {file = "eofs-2.0.0-py3-none-any.whl", hash = "sha256:a5a045ac044cdf3a8f6607b5fde092b9a92bf7231ae57ecf3803e35287667c55"},
+    {file = "eofs-2.0.0.tar.gz", hash = "sha256:4afecba7dd8076399803b71570d96a12dce237615c6317685f83a206fe70ee57"},
+]
+
+[package.dependencies]
+numpy = "*"
+
+[package.extras]
+iris = ["scitools-iris"]
+xarray = ["xarray"]
+
+[[package]]
 name = "executing"
 version = "2.2.0"
 description = "Get the currently executing AST node of a frame, and other information"
@@ -3476,4 +3495,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "f448e242b870548adc184f9f551be06f8d5d4a5b25168fac469d2eadff5a374d"
+content-hash = "b5fa162bf99e54cdf1921b082110649496620849d4e4af6f1a48ef425e6f8f29"
