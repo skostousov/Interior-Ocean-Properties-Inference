@@ -77,6 +77,7 @@ def train_val_test_split_temp(dataset, val_frac=0.1, test_frac=0.15, seed=42, te
     all_indices = list(range(len(dataset)))
 
     if test_indices_path and os.path.exists(test_indices_path):
+        print(f"About to load existing test indices from {test_indices_path}")
         test_idx = torch.load(test_indices_path, weights_only=False)
         print(f"Loaded existing test indices from {test_indices_path}, test size: {len(test_idx)}")
         
