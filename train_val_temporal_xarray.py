@@ -85,6 +85,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 loss_fn = nn.L1Loss()
 
 
+print("hello")
 train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]))
 
 
