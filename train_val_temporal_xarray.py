@@ -18,6 +18,10 @@ import time
 from utils.splitter import train_val_test_split_temp
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
+import sys, importlib
+sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
+
+
 cfg = RELEVANT_CONFIG
 root = Path(PROJECT_ROOT)
 submode = RELEVANT_CONFIG["submode"]
