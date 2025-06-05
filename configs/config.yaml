@@ -83,7 +83,7 @@ daily_alternative_small:
       start_date: 1993-01-01
       end_date: 1993-01-30
       output_file: small_daily_alternative_sample_1993-1993.nc
-      test_indices: test_indices/daily_alternative_small/small_01.pt
+      test_indices: test_indices/daily_alternative_small/small_cluster.pt
       stats: stats/daily_alternative_small/small_01.pt
 daily:
   submode: very_small
