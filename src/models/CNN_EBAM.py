@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import math
-from netCDF4 import Dataset
 from tqdm.notebook import tqdm as tqdm
 import torch.utils.checkpoint
 from torch.optim.optimizer import Optimizer, required
@@ -180,6 +179,7 @@ if __name__ == "__main__":
     from utils.datasettemporal import TemporalDataset
     from pathlib import Path
     from utils.config import PROJECT_ROOT
+    from netCDF4 import Dataset
     root = Path(PROJECT_ROOT)
     datafile = root / "data/daily_small/small_daily_sample_1993-1993.nc"
     data = TemporalDataset(filepath=datafile)
