@@ -71,6 +71,7 @@ def train_val_test_split_temp_strat(dataset, val_frac=0.1, test_frac=0.15, seed=
     return train_idx, val_idx, test_idx
 
 def train_val_test_split_temp(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
+    print("entered splitter function")
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
