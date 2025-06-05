@@ -70,13 +70,13 @@ def train_val_test_split_temp_strat(dataset, val_frac=0.1, test_frac=0.15, seed=
     assert len(set(val_idx).intersection(set(test_idx))) == 0, "Val and Test overlap!"
     return train_idx, val_idx, test_idx
 
-def train_val_test_split_temp(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None):
+def train_val_test_split_temp(dataset, val_frac=0.1, test_frac=0.15, seed=42, test_indices_path = None, gen_new = False):
     print("entered splitter function")
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
 
-    if test_indices_path and os.path.exists(test_indices_path):
+    if test_indices_path and os.path.exists(test_indices_path) and not gen_new:
         print(f"About to load existing test indices from {test_indices_path}")
         test_idx = torch.load(test_indices_path, weights_only=False)
         print(f"Loaded existing test indices from {test_indices_path}, test size: {len(test_idx)}")

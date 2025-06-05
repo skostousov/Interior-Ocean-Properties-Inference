@@ -86,7 +86,7 @@ loss_fn = nn.L1Loss()
 
 
 print("hello")
-train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]))
+train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]), gen_new=True)
 
 
 train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
