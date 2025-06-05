@@ -57,7 +57,8 @@ def val_loop(val_dataloader, model, loss_fn, device, scheduler):
     scheduler.step(val_loss)
     return val_loss
 
-device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+# device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device} device")
 
 data_aug = RescaledRotationTransform()
