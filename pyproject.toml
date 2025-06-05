@@ -26,6 +26,8 @@ scikit-learn = "^1.6.1"
 hydra-core = "^1.3.2"
 einops = "^0.8.1"
 eofs = "^2.0.0"
+cartopy = "^0.24.1"
+tensorboard = "^2.19.0"
 
 [[tool.poetry.source]]
 name = "pytorch"

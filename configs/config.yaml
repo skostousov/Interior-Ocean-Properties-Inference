@@ -54,7 +54,7 @@ daily_small:
 daily_alternative_small:
   submode: small
   training:
-    epochs: 1
+    epochs: 100
     batch_size: 50
     early_stopping_thresh: 10
     model_save_dest: saved_models/saved_daily_alternative_small_models

@@ -16,17 +16,18 @@ Please update the config file with your own username in order to download data f
     ~~notransform_mse~~ (MODEL:UNetRegression>TRAINSTART:20250528_101243>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), 
     transform_mse, 
     ~~notransform_mae~~ (MODEL:UNetRegression>TRAINSTART:20250529_100406>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>) NOTE: Promising!, 
-    transform_mae
+    ~~transform_mae~~ (MODEL:UNetRegression>TRAINSTART:20250601_163708>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
 - UNETSE: 
     ~~notransform_mse~~ (MODEL:UNetRegressionSE>TRAINSTART:20250528_143122>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>), 
     transform_mse, 
-    notransform_hl, 
-    transform_hl
+    notransform_mae, 
+    ~~transform_mae~~ (MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>),
 - BasicCNN: 
     notransform_mse, 
     tranform_mse, 
     notransform_hl, 
-    ~~transform_hl~~ (MODEL:PixelWiseRegressor>TRAINSTART:20250528_170655>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>)
+    ~~transform_hl~~ (MODEL:PixelWiseRegressor>TRAINSTART:20250528_170655>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>),
+    ~~transform_mae~~ (MODEL:PixelWiseRegressor>TRAINSTART:20250604_181302>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>),
 - DACNN: 
     notransform_mse, 
     transform_mse, 
@@ -207,5 +208,13 @@ Please update the config file with your own username in order to download data f
 - transforms
 - if time, SWOT$
 
+## 03/06/2025
 
+1. Get on cluster
+2. ~~Analyze difference in loss between eval and test~~
+3. ~~Examine networks for saturation~~
+
+## 04/06/2025
+
+1. GET ON CLUSTER
 
