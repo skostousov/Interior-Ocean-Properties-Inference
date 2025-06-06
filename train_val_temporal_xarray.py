@@ -25,6 +25,7 @@ import numpy as np
 import sys, importlib
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 
+torch.backends.cudnn.benchmark = True
 
 cfg = RELEVANT_CONFIG
 root = Path(PROJECT_ROOT)
@@ -75,8 +76,7 @@ data = XArrayDataset(transform=data_aug)
 
 
 batch_size = cfg['training']["batch_size"]
-# epochs = cfg['training']["epochs"]
-epochs = 1
+epochs = cfg['training']["epochs"]
 
 model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
 
