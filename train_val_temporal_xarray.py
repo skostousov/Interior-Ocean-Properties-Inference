@@ -18,6 +18,7 @@ import time
 from utils.splitter import train_val_test_split_temp
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 import sys, importlib
@@ -71,7 +72,8 @@ data_aug = RescaledRotationTransform()
 data = XArrayDataset(transform=data_aug)
 
 batch_size = cfg['training']["batch_size"]
-epochs = cfg['training']["epochs"]
+# epochs = cfg['training']["epochs"]
+epochs = 1
 
 model = UNetRegressionSE(data[0][0].shape[0], data[0][1].shape[0])
 
@@ -240,17 +242,12 @@ if cfg["training"]["immediate_test"]:
                     print("Unpickling error encountered.")
                     break
 
-    def iter_pickled_batches(file_path):
-        """Generator to yield batches from a pickled file."""
-        with open(file_path, "rb") as f:
-            while True:
-                try:
-                    yield pickle.load(f)
-                except EOFError:
-                    break
-                except pickle.UnpicklingError:
-                    print("Unpickling error encountered.")
-                    break
+    def get_t_from_pickled(file_path):
+        time_steps = set()
+        for batch in iter_pickled_batches(file_path):
+            for entry in batch:
+                time_steps.add(entry["month"].item())
+        return tuple(time_steps)
 
     time_steps = get_t_from_pickled(filepath)
 
