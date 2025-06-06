@@ -9,6 +9,7 @@ from models.UNET_regressionSE import UNetRegressionSE
 from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
 from utils.datasettemporalxarray import XArrayDataset, TestSubsetRegression
+from utils.datasettemporal import TemporalDataset, TestSubsetRegression
 # from utils.transforms import RescaledRotationTransform, ToTensor, Compose
 from torchvision.transforms import Normalize, Compose
 from utils.transforms import RescaledRotationTransform, ToTensor 
@@ -69,7 +70,9 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using {device} device")
 
 data_aug = RescaledRotationTransform()
+# data = TemporalDataset(transform=data_aug)
 data = XArrayDataset(transform=data_aug)
+
 
 batch_size = cfg['training']["batch_size"]
 # epochs = cfg['training']["epochs"]
@@ -163,7 +166,7 @@ info = {
     "target_transform": data.target_transform.__repr__() if data.target_transform else None,
     "downsample": data.downsample if hasattr(data, 'downsample') else None,
     "grid_size": data.grid_size if hasattr(data, 'grid_size') else None,
-    "datatype": "xarray",
+    "datatype": data.name,
 }
 
 
@@ -290,7 +293,7 @@ if cfg["training"]["immediate_test"]:
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
     plt.suptitle(f"{model_name} \n Results")
     plt.subplots_adjust(hspace=0.5)
-    fig.savefig(model_path / "resultsxarray.png", dpi=600)
+    fig.savefig(model_path / "results.png", dpi=600)
 
     fig, ax = plt.subplots(len(time_steps), 1, figsize=(6, 5* len(time_steps)))
     for i, t in enumerate(time_steps):
@@ -306,4 +309,4 @@ if cfg["training"]["immediate_test"]:
     plt.suptitle(f"{model_name} \n Difference Results")
     plt.subplots_adjust(hspace=0.3)
     plt.show()
-    fig.savefig(model_path / "results_diffxarray.png", dpi=600)
+    fig.savefig(model_path / "results_diff.png", dpi=600)

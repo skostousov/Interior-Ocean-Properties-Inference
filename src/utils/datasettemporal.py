@@ -209,6 +209,9 @@ class TemporalDataset(TorchDataset):
     def __len__(self):
         return len(self.grid_and_centre_coords_and_temp_unit)
 
+    def name(self):
+        return "netcdf4"
+
 class TestSubsetRegression(Subset):
     def __init__(self, dataset, indices):
         super().__init__(dataset, indices)

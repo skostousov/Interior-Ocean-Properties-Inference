@@ -208,6 +208,9 @@ class XArrayDataset(TorchDataset):
     
     def __len__(self):
         return len(self.grid_and_centre_coords_and_temp_unit)
+    
+    def name(self):
+        return "xarray"
 
 class TestSubsetRegression(Subset):
     def __init__(self, dataset, indices):
