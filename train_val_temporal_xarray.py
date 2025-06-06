@@ -184,7 +184,7 @@ if cfg["training"]["immediate_test"]:
     test_data,
     batch_size=1,
     shuffle=False,
-    num_workers=0,
+    num_workers=2,
     pin_memory=True,)
 
     model.eval()
@@ -225,14 +225,6 @@ if cfg["training"]["immediate_test"]:
         f.write(f"total_test_loss: {loss / len(test_dataloader)}\n")
 
     test_data = TestSubsetRegression(data, test_idx)
-
-    test_dataloader = torch.utils.data.DataLoader(
-        test_data,
-        batch_size=1,
-        shuffle=False,
-        num_workers=0,
-        pin_memory=True,
-    )
 
     def iter_pickled_batches(file_path):
         """Generator to yield batches from a pickled file."""
@@ -294,7 +286,7 @@ if cfg["training"]["immediate_test"]:
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
     plt.suptitle(f"{model_name} \n Results")
     plt.subplots_adjust(hspace=0.5)
-    fig.savefig(model_path / "results.png", dpi=600)
+    fig.savefig(save_dir / "results.png", dpi=600)
 
     fig, ax = plt.subplots(len(time_steps), 1, figsize=(6, 5* len(time_steps)))
     for i, t in enumerate(time_steps):
@@ -310,4 +302,4 @@ if cfg["training"]["immediate_test"]:
     plt.suptitle(f"{model_name} \n Difference Results")
     plt.subplots_adjust(hspace=0.3)
     plt.show()
-    fig.savefig(model_path / "results_diff.png", dpi=600)
+    fig.savefig(save_dir / "results_diff.png", dpi=600)
