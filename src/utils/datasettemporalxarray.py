@@ -23,9 +23,9 @@ class XArrayDataset(TorchDataset):
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
         if filepath is not None:
-            self.dataset = xr.open_dataset(filepath)
+            self.dataset = xr.open_dataset(filepath, mask_and_scale=False)
         else:
-            self.dataset = xr.open_dataset(Path(self._download()))
+            self.dataset = xr.open_dataset(Path(self._download()), mask_and_scale=False)
 
         self.relevant_variables = {k:v[:] for (k, v) in self.dataset.variables.items() if k in self.features}
         # delete dimensional variables
