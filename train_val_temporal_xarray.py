@@ -115,7 +115,7 @@ start_timestamp = time.strftime('%Y%m%d_%H%M%S')
 model_name = f"MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{(cfg['data'][submode]['test_indices']).replace('/', '_')}>"
 model_dir = cfg["training"]["model_save_dest"]
 save_dir = root / model_dir / model_name
-os.makedirs(save_dir, exist_ok=True)
+# os.makedirs(save_dir, exist_ok=True)
 
 writer= SummaryWriter(save_dir / 'tensorboard_logs')
 
@@ -136,6 +136,7 @@ for epoch in range(0, epochs):
             best_epoch = epoch
             best_loss = val_loss
             corresponding_train_loss = train_loss
+            os.makedirs(save_dir, exist_ok=True)
             model_state_path = save_dir / 'best_model_state'
             model_path = save_dir / 'best_model'
             torch.save(model.state_dict(), model_state_path)
