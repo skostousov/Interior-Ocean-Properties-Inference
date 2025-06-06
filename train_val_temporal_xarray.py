@@ -40,7 +40,6 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         optimizer.step()
         total_loss += loss.item()
         if batch % 50 == 0:
-            print(pred, labels)
             print(loss)
             loss, current = loss.item(), batch * batch_size + len(images)
             print(f"loss: {loss:>12f} [{current:>6d}/{total_size:>5d}]")
