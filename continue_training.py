@@ -1,78 +1,125 @@
-from trainonly_xarray import train_loop, val_loop
+from trainonly_xarray import train_loop, val_loop, update_values
 import torch
 from torch.utils.tensorboard import SummaryWriter
-import pickle
 from torch import nn
 from pathlib import Path
-import os
-from models.UNET_regression import UNetRegression
-from models.UNET_regressionSE import UNetRegressionSE
-from models.simple_CNN_regression import PixelWiseRegressor
 from torch.utils.data import Subset, DataLoader
-from utils.datasettemporalxarray import XArrayDataset, TestSubsetRegression
-from utils.datasettemporal import TemporalDataset, TestSubsetRegression
-from torchvision.transforms import Normalize, Compose
-from utils.transforms import RescaledRotationTransform, ToTensor 
-from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
+from utils.datasettemporalxarray import XArrayDataset
+from utils.transforms import RescaledRotationTransform
+from utils.config import PROJECT_ROOT
 from torch.optim import AdamW
-import time
 from utils.splitter import train_val_test_split_temp
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-import matplotlib.pyplot as plt
-import numpy as np
 import sys, importlib
 
-project_root = Path(PROJECT_ROOT)
-model_relative_path = "saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>"
-save_dir = project_root / model_relative_path
+def fetch_info(info_path):
+     with open(info_path, "r") as f:
+        info_text = f.read()
+        info = {}
+        for line in info_text.strip().split('\n'):
+            if ':' in line:
+                key, value = line.split(':', 1)
+                value = value.strip()
+                if value == "None":
+                    value = None
+                elif value == "True":
+                    value = True
+                elif value == "False":
+                    value = False
+                info[key.strip()] = value
+        return info
 
-info_txt_path = save_dir / "training_info.txt"
-with open(info_txt_path, "r") as f:
-    info_text = f.read()
-info = {}
-for line in info_text.strip().split('\n'):
-    if ':' in line:
-        key, value = line.split(':', 1)
-        info[key.strip()] = value.strip()
+def main(args):
+    sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
+    torch.backends.cudnn.benchmark = True
 
-training_completed = info["training_completed"]
-if not training_completed:
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Using {device} device")
-    model = torch.load(save_dir/'best_model', map_location=device, weights_only=False)
+    project_root = Path(PROJECT_ROOT)
+    model_relative_path = args.model_relative_path
+    save_dir = project_root / model_relative_path
 
-    start_epoch = info['t']
+    info_path = save_dir / "training_info.txt"
+    info = fetch_info(info_path)
 
+    training_completed = info["training_completed"]
+    if not training_completed:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        print(f"Using {device} device")
 
+        model = torch.load(save_dir/'best_model', map_location=device, weights_only=False)
+        optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
+        scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
+        checkpoint = torch.load(save_dir / 'checkpoint.pt', map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint['model_state'])
+        optimizer.load_state_dict(checkpoint['optimizer_state'])
+        scheduler.load_state_dict(checkpoint['scheduler_state'])
 
-    for epoch in range(start_epoch, end_epoch):
-        print('Epoch {}:'.format(epoch + 1))
-        model.train(True)
-        train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
-        update_values(info_path, {'current_epoch': epoch})
-        writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
-        for name, p in model.named_parameters():
-                writer.add_histogram(f"weights/{name}", p, epoch)
-                if p.grad is not None:
-                    writer.add_histogram(f"gradients/{name}", p.grad, epoch)
-        val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
-        writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
-        if val_loss < best_loss:
-            best_epoch = epoch
-            best_loss = val_loss
-            corresponding_train_loss = train_loss
-            checkpoint = {
-                'model_state':model.state_dict(),
-                'optimizer_state': optimizer.state_dict(),
-                'scheduler_state': scheduler.state_dict(),
-                }
-            torch.save(checkpoint, save_dir / 'checkpoint.pt')
-            torch.save(model, save_dir / 'best_model')
-        update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_train_loss": corresponding_train_loss})
-        if epoch - best_epoch >= cfg["training"]["early_stopping_thresh"]:
-                print(f"Early stopping on epoch {epoch}")
-                update_values(info_path, {'training_completed': True})
-                break
+        loss_fn = nn.L1Loss()
+        assert info['loss_fn'] == loss_fn.__repr__(), f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__repr__()}"
+
+        if info['transform']:
+            data_aug = RescaledRotationTransform()
+            assert data_aug.__repr__() == info['transform'], f"Transform mismatch: {data_aug.__repr__()} != {info['transform']}"
+        else:
+            data_aug = None
+
+        downsample = info['downsample'] 
+
+        data = XArrayDataset(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample)
+
+        batch_size = int(info['batch_size']) 
+        train_idx, val_idx, _ = train_val_test_split_temp(data, seed=42, test_indices_path=Path(info['test_indices']), gen_new=False)
+        train_data, val_data = Subset(data, train_idx), Subset(data, val_idx)
+        print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
+
+        train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
+        val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
+
+        start_epoch = info['current_epoch']
+        end_epoch = int(info['epochs'])
+        best_epoch = int(info['best_epoch'])
+        early_stopping_thresh = int(info['early_stopping_thresh'])
+
+        writer= SummaryWriter(save_dir / 'tensorboard_logs')
+
+        for epoch in range(start_epoch, end_epoch):
+            print('Epoch {}:'.format(epoch + 1))
+            model.train(True)
+            train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
+            update_values(info_path, {'current_epoch': epoch})
+            writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
+            for name, p in model.named_parameters():
+                    writer.add_histogram(f"weights/{name}", p, epoch)
+                    if p.grad is not None:
+                        writer.add_histogram(f"gradients/{name}", p.grad, epoch)
+            val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
+            writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
+            if val_loss < best_loss:
+                best_epoch = epoch
+                best_loss = val_loss
+                corresponding_train_loss = train_loss
+                checkpoint = {
+                    'model_state':model.state_dict(),
+                    'optimizer_state': optimizer.state_dict(),
+                    'scheduler_state': scheduler.state_dict(),
+                    }
+                torch.save(checkpoint, save_dir / 'checkpoint.pt')
+                torch.save(model, save_dir / 'best_model')
+            update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_train_loss": corresponding_train_loss})
+            if epoch - best_epoch >= early_stopping_thresh:
+                    print(f"Early stopping on epoch {epoch}")
+                    update_values(info_path, {'training_completed': True})
+                    break
+        print(f"Best loss: {best_loss}")
+        print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
+    else:
+        print("Training already completed. Skipping training process.")
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Continue training a model.")
+    parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")
+    args = parser.parse_args()
+    main(args)
 
 
 

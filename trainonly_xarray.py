@@ -21,9 +21,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys, importlib
 
-
-continue_training = False
-
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
 
@@ -47,7 +44,7 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 loss_fn = nn.L1Loss()
 
 
-train_idx, val_idx, _ = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]), gen_new=True)
+train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]), gen_new=True)
 train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 
 print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
@@ -90,7 +87,8 @@ info_bef = {
     "training_completed": False,
     "best_epoch": best_epoch,
     "best_val_loss": best_loss,
-    "corresponding_train_loss": train_loss}
+    "corresponding_train_loss": train_loss,
+    "early_stopping_thresh": cfg["training"]["early_stopping_thresh"],}
 
 with open(info_path, 'w') as f:
     for key, value in info_bef.items():
@@ -123,7 +121,7 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         loss.backward()
         optimizer.step()
         total_loss += loss.item()
-        if batch % 50 == 0:
+        if batch % 200 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
             print(f"loss: {loss:>12f} [{current:>6d}/{total_size:>5d}]")
     total_loss /= size
@@ -144,7 +142,7 @@ def val_loop(val_dataloader, model, loss_fn, device, scheduler):
     scheduler.step(val_loss)
     return val_loss
 
-for epoch in range(start_epoch, end_epoch):
+for epoch in range(0, epochs):
     print('Epoch {}:'.format(epoch + 1))
     model.train(True)
     train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
@@ -173,7 +171,5 @@ for epoch in range(start_epoch, end_epoch):
             update_values(info_path, {'training_completed': True})
             break
 
-train_val_loop(0, epochs, model)
-
 print(f"Best loss: {best_loss}")
-print(f"Training completed. Best model saved at {model_path}")
+print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
