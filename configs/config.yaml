@@ -130,7 +130,7 @@ monthly:
   training:
     epochs: 100
     batch_size: 50
-    early_stopping_thresh: 10
+    early_stopping_thresh: 5
     model_save_dest: saved_models/saved_monthly_models
     immediate_test: true
   eval:
