@@ -1,4 +1,4 @@
-mode: daily_alternative_small
+mode: monthly
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -107,11 +107,11 @@ daily:
     - mlotst
     data_dir: data/daily
     latitude_range:
-    - 31
+    - 47
     - 61
     longitude_range:
-    - -160
-    - -120
+    - -152
+    - -127
     grid_size: 21
     small:
       start_date: 1993-01-01
@@ -126,9 +126,9 @@ daily:
       test_indices: test_indices/daily/very_small_01.pt
       stats: stats/daily/very_small_01.pt
 monthly:
-  submode: large
+  submode: ten
   training:
-    epochs: 1000
+    epochs: 100
     batch_size: 50
     early_stopping_thresh: 10
     model_save_dest: saved_models/saved_monthly_models
@@ -177,4 +177,4 @@ monthly:
       output_file: small_sample_1993-1994.nc
       test_indices: test_indices/monthly/small_01.pt
       stats: stats/monthly/small_02.pt
-project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg
+project_root: /scratch/n/ngrisoua/kostouso/OceanPropInfSatImgScratch/OceanPropInfSatImg

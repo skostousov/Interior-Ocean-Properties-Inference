@@ -92,7 +92,6 @@ scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 loss_fn = nn.L1Loss()
 
 
-print("hello")
 train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]), gen_new=True)
 
 
@@ -118,6 +117,32 @@ save_dir = root / model_dir / model_name
 # os.makedirs(save_dir, exist_ok=True)
 
 writer= SummaryWriter(save_dir / 'tensorboard_logs')
+
+info_path =  save_dir / 'training_info.txt'
+
+info_bef = {
+    "start_time": start_timestamp,
+    "data_file": f"{cfg['data']['data_dir']}/{cfg['data'][submode]['output_file']}",
+    "test_indices": f"{cfg['data'][submode]['test_indices']}",
+    "epochs": epochs,
+    "batch_size": batch_size,
+    "model": model.__repr__(),
+    "optimizer": optimizer.__repr__(),
+    "loss_fn": loss_fn.__repr__(),
+    "scheduler": scheduler.__repr__(),
+    "train_dataset_size": len(train_data),
+    "val_dataset_size": len(val_data),
+    "test_dataset_size": len(test_idx),
+    "transform": data.transform.__repr__() if data.transform else None,
+    "target_transform": data.target_transform.__repr__() if data.target_transform else None,
+    "downsample": data.downsample if hasattr(data, 'downsample') else None,
+    "grid_size": data.grid_size if hasattr(data, 'grid_size') else None,
+    "datatype": data.name,
+}
+
+with open(info_path, 'w') as f:
+    for key, value in info_bef.items():
+        f.write(f"{key}: {value}\n")
 
 
 best_epoch=0
@@ -147,34 +172,16 @@ for epoch in range(0, epochs):
 print(f"Best loss: {best_loss}")
 
 
-info = {
-    "start_time": start_timestamp,
-    "data_file": f"{cfg['data']['data_dir']}/{cfg['data'][submode]['output_file']}",
-    "test_indices": f"{cfg['data'][submode]['test_indices']}",
-    "epochs": epochs,
-    "batch_size": batch_size,
-    "model": model.__repr__(),
-    "optimizer": optimizer.__repr__(),
-    "loss_fn": loss_fn.__repr__(),
-    "scheduler": scheduler.__repr__(),
+info_aft = {
     "best_loss": best_loss,
     "best_epoch": best_epoch,
     "corresponding_train_loss": corresponding_train_loss,
-    "train_dataset_size": len(train_data),
-    "val_dataset_size": len(val_data),
-    "test_dataset_size": len(test_idx),
-    "transform": data.transform.__repr__() if data.transform else None,
-    "target_transform": data.target_transform.__repr__() if data.target_transform else None,
-    "downsample": data.downsample if hasattr(data, 'downsample') else None,
-    "grid_size": data.grid_size if hasattr(data, 'grid_size') else None,
-    "datatype": data.name,
 }
 
+with open(info_path, 'a') as f:
+    for key, value in info_aft.items():
+        f.write(f"{key}:{value}\n")
 
-info_path =  save_dir / 'training_info.txt'
-with open(info_path, 'w') as f:
-    for key, value in info.items():
-        f.write(f"{key}: {value}\n")
 print(f"Training completed. Best model saved at {model_path}")
 
 
