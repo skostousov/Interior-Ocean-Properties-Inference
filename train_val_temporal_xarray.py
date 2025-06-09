@@ -103,8 +103,8 @@ train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
 print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Val dataset shape: img: {val_data[0][0].shape}, lbl: {val_data[0][1].shape}")
 
-train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
-val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=2, pin_memory=True)
+train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
+val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
 
 best_loss = 1000000000000000000
 
@@ -184,7 +184,7 @@ if cfg["training"]["immediate_test"]:
     test_data,
     batch_size=1,
     shuffle=False,
-    num_workers=2,
+    num_workers=6,
     pin_memory=True,)
 
     model.eval()
