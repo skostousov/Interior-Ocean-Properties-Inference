@@ -107,11 +107,11 @@ daily:
     - mlotst
     data_dir: data/daily
     latitude_range:
-    - 31
+    - 47
     - 61
     longitude_range:
-    - -160
-    - -120
+    - -152
+    - -127
     grid_size: 21
     small:
       start_date: 1993-01-01
@@ -177,4 +177,4 @@ monthly:
       output_file: small_sample_1993-1994.nc
       test_indices: test_indices/monthly/small_01.pt
       stats: stats/monthly/small_02.pt
-project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg
+project_root: /scratch/n/ngrisoua/kostouso/OceanPropInfSatImgScratch/OceanPropInfSatImg
