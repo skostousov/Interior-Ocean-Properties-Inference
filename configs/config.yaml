@@ -147,11 +147,11 @@ monthly:
     - mlotst
     data_dir: data/monthly
     latitude_range:
-    - 31
+    - 47
     - 61
     longitude_range:
-    - -160
-    - -120
+    - -152
+    - -127
     grid_size: 21
     large:
       start_date: 1993-01-01
