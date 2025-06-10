@@ -1,11 +1,9 @@
-from trainonly_xarray import train_loop, val_loop, update_values, fetch_data_processor
+from begin_training import train_loop, val_loop, update_values, fetch_data_processor
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from pathlib import Path
 from torch.utils.data import Subset, DataLoader
-from utils.datasettemporalxarray import XArrayDataset
-from utils.datasettemporal import TemporalDataset
 from utils.transforms import RescaledRotationTransform
 from utils.config import PROJECT_ROOT
 from torch.optim import AdamW
@@ -124,6 +122,8 @@ def main(args):
         print("Training already completed. Skipping training process.")
 
 if __name__ == "__main__":
+    from utils.datasettemporalxarray import XArrayDataset
+    from utils.datasettemporal import TemporalDataset
     import argparse
     parser = argparse.ArgumentParser(description="Continue training a model.")
     parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")

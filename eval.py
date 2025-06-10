@@ -1,7 +1,6 @@
 from utils.config import RAW_CONFIG, PROJECT_ROOT, RELEVANT_CONFIG
 from pathlib import Path
 from utils.datasettemporal import TestSubsetRegression
-from utils.datasettemporalxarray import XArrayDataset
 from torch.utils.data import DataLoader
 from utils.splitter import test_indices
 import torch
@@ -13,6 +12,7 @@ import numpy as np
 from continue_training import fetch_info
 import torch.nn as nn
 import os
+from begin_training import fetch_data_processor
 
 
 def main(args):
@@ -34,7 +34,10 @@ def main(args):
     model = torch.load(model_path/'best_model', map_location=device, weights_only=False)
     model.eval()
 
-    data = XArrayDataset(filepath=data_file)
+    print(f"Using data processor {info['data_processor']}")
+    data = fetch_data_processor(info['data_processor'])(filepath=data_file)
+
+    # data = XArrayDataset(filepath=data_file)
     test_idx = test_indices(test_indices_file)
     test_data = TestSubsetRegression(data, test_idx)
     test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True,)

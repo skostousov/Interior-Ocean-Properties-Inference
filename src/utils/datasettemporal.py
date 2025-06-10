@@ -209,6 +209,7 @@ class TemporalDataset(TorchDataset):
     def __len__(self):
         return len(self.grid_and_centre_coords_and_temp_unit)
 
+    @staticmethod
     def name():
         return "netcdf4"
 

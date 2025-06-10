@@ -77,7 +77,7 @@ def val_loop(val_dataloader, model, loss_fn, device, scheduler):
 
 def fetch_data_processor(name):
     from utils.datasettemporalxarray import XArrayDataset
-    from utils.datasettemporal import TemporalDataset, 
+    from utils.datasettemporal import TemporalDataset
     data_processors = {
         XArrayDataset.name(): XArrayDataset,
         TemporalDataset.name(): TemporalDataset
@@ -206,10 +206,12 @@ def main(args):
     print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
 
 if __name__ == "__main__":
+    from utils.datasettemporalxarray import XArrayDataset
+    from utils.datasettemporal import TemporalDataset
     import argparse
     parser = argparse.ArgumentParser(description="Train a model on xarray data")
     parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', type=int, default=0, help="number of epochs to train for")
-    parser.add_argumet('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
+    parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
     args = parser.parse_args()
     main(args)

@@ -13,6 +13,6 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/train_val_temporal_xarray.py --model $1 --num_epochs $2
+python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py --model $1 --num_epochs $2 --data_processors $3
 
 echo "train.slurm executed"
