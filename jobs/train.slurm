@@ -13,6 +13,7 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py --model $1 --num_epochs $2 --data_processors $3
+python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py --model $1 --num_epochs $2 --data_processors $3 \
+&& echo "saved_models/$(ls -td -- $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/saved_models/*/ | head -1)" >> $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/logs/latest_model_dir.txt
 
 echo "train.slurm executed"
