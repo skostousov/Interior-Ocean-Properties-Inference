@@ -10,8 +10,7 @@ from models.simple_CNN_regression import PixelWiseRegressor
 from models.DA_CNN import DA_CNN
 from models.CNN_EBAM import EBAM_CNN
 from torch.utils.data import Subset, DataLoader
-from utils.datasettemporalxarray import XArrayDataset, TestSubsetRegression
-from utils.datasettemporal import TemporalDataset, TestSubsetRegression
+from utils.datasettemporal import TestSubsetRegression
 from torchvision.transforms import Normalize, Compose
 from utils.transforms import RescaledRotationTransform, ToTensor 
 from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
@@ -26,6 +25,66 @@ import sys, importlib
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
 
+def update_values(info_path, key_values):
+    info = {}
+    with open(info_path, 'r') as f:
+        for line in f:
+            if ':: ' not in line:
+                continue
+            key, val = line.rstrip('\n').split(':: ', 1)
+            info[key.strip()] = val.strip()
+    for key, value in key_values.items():
+        info[key] = value
+    with open(info_path, 'w') as f:
+        for key, val in info.items():
+            f.write(f"{key}:: {val}\n")
+
+def train_loop(model, train_dataloader, optimizer, loss_fn, device):
+    size = len(train_dataloader)
+    batch_size = train_dataloader.batch_size
+    total_size = len(train_dataloader.dataset)
+    model.train()
+    total_loss = 0
+    for batch, (images, labels) in enumerate(train_dataloader):
+        images, labels = images.to(device), labels.to(device)
+        optimizer.zero_grad()
+        pred = model(images)
+        loss = loss_fn(pred, labels)
+        loss.backward()
+        optimizer.step()
+        total_loss += loss.item()
+        if batch % 200 == 0:
+            loss, current = loss.item(), batch * batch_size + len(images)
+            print(f"loss: {loss:>12f} [{current:>6d}/{total_size:>5d}]")
+    total_loss /= size
+    return total_loss
+
+def val_loop(val_dataloader, model, loss_fn, device, scheduler):
+    model.eval()
+    num_batches = len(val_dataloader)
+    val_loss = 0
+    size = len(val_dataloader)
+    with torch.no_grad():
+        for image, label in val_dataloader:
+            image, label = image.to(device), label.to(device)
+            pred = model(image)
+            val_loss += loss_fn(pred, label).item()
+    val_loss /= num_batches
+    print(f"Val Loss: {val_loss:>12f} \n")
+    scheduler.step(val_loss)
+    return val_loss
+
+
+def fetch_data_processor(name):
+    from utils.datasettemporalxarray import XArrayDataset
+    from utils.datasettemporal import TemporalDataset, 
+    data_processors = {
+        XArrayDataset.name(): XArrayDataset,
+        TemporalDataset.name(): TemporalDataset
+    }
+    return data_processors[name]
+
+
 def main(args):
     models = {
         "UNetRegression": UNetRegression,
@@ -35,7 +94,6 @@ def main(args):
         "EBAM_CNN": EBAM_CNN,
     }
 
-
     cfg = RELEVANT_CONFIG
     root = Path(PROJECT_ROOT)
     submode = RELEVANT_CONFIG["submode"]
@@ -44,7 +102,7 @@ def main(args):
     print(f"Using {device} device")
 
     data_aug = RescaledRotationTransform()
-    data = XArrayDataset(transform=data_aug)
+    data = fetch_data_processor(args.data_processors)(transform=data_aug)
 
     batch_size = cfg['training']["batch_size"]
     epochs = cfg['training']["epochs"]
@@ -83,18 +141,18 @@ def main(args):
         "test_indices": f"{cfg['data'][submode]['test_indices']}",
         "total_epochs": epochs,
         "batch_size": batch_size,
-        "model": model.__repr__(),
-        "optimizer": optimizer.__repr__(),
-        "loss_fn": loss_fn.__repr__(),
-        "scheduler": scheduler.__repr__(),
+        "model": model.__repr__().replace("\n", r"\n"),
+        "optimizer": optimizer.__class__.__name__,
+        "loss_fn": loss_fn.__class__.__name__,
+        "scheduler": scheduler.__class__.__name__,
         "train_dataset_size": len(train_data),
         "val_dataset_size": len(val_data),
         "test_dataset_size": len(test_idx),
-        "transform": data.transform.__repr__() if data.transform else None,
-        "target_transform": data.target_transform.__repr__() if data.target_transform else None,
+        "transform": data.transform.__class__.__name__ if data.transform else None,
+        "target_transform": data.target_transform.__class__.__name__ if data.target_transform else None,
         "downsample": data.downsample if hasattr(data, 'downsample') else None,
         "grid_size": data.grid_size if hasattr(data, 'grid_size') else None,
-        "datatype": data.name,
+        "data_processor": data.name(),
         "current_epoch": 0,
         "training_completed": False,
         "best_epoch": best_epoch,
@@ -104,61 +162,17 @@ def main(args):
 
     with open(info_path, 'w') as f:
         for key, value in info_bef.items():
-            f.write(f"{key}: {value}\n")
+            f.write(f"{key}:: {value}\n")
 
-    def update_values(info_path, key_values):
-        info = {}
-        with open(info_path, 'r') as f:
-            for line in f:
-                if ':' not in line:
-                    continue
-                key, val = line.rstrip('\n').split(':', 1)
-                info[key.strip()] = val.strip()
-        for key, value in key_values:
-            info[key] = value
-        with open(info_path, 'w') as f:
-            for key, val in info.items():
-                f.write(f"{key}: {val}\n")
+    num_epochs = args.num_epochs
+    if num_epochs == 0:
+        num_epochs = epochs
 
-    def train_loop(model, train_dataloader, optimizer, loss_fn, device):
-        size = len(train_dataloader)
-        total_size = len(train_dataloader.dataset)
-        model.train()
-        total_loss = 0
-        for batch, (images, labels) in enumerate(train_dataloader):
-            images, labels = images.to(device), labels.to(device)
-            optimizer.zero_grad()
-            pred = model(images)
-            loss = loss_fn(pred, labels)
-            loss.backward()
-            optimizer.step()
-            total_loss += loss.item()
-            if batch % 200 == 0:
-                loss, current = loss.item(), batch * batch_size + len(images)
-                print(f"loss: {loss:>12f} [{current:>6d}/{total_size:>5d}]")
-        total_loss /= size
-        return total_loss
-
-    def val_loop(val_dataloader, model, loss_fn, device, scheduler):
-        model.eval()
-        num_batches = len(val_dataloader)
-        val_loss = 0
-        size = len(val_dataloader)
-        with torch.no_grad():
-            for image, label in val_dataloader:
-                image, label = image.to(device), label.to(device)
-                pred = model(image)
-                val_loss += loss_fn(pred, label).item()
-        val_loss /= num_batches
-        print(f"Val Loss: {val_loss:>12f} \n")
-        scheduler.step(val_loss)
-        return val_loss
-
-    for epoch in range(0, epochs):
+    # for epoch in range(0, epochs):
+    for epoch in range(0, num_epochs):
         print('Epoch {}:'.format(epoch + 1))
         model.train(True)
         train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
-        update_values(info_path, {'current_epoch': epoch})
         writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
         for name, p in model.named_parameters():
                 writer.add_histogram(f"weights/{name}", p, epoch)
@@ -166,6 +180,7 @@ def main(args):
                     writer.add_histogram(f"gradients/{name}", p.grad, epoch)
         val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
         writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
+        update_values(info_path, {'current_epoch': epoch})
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
@@ -182,6 +197,10 @@ def main(args):
                 print(f"Early stopping on epoch {epoch}")
                 update_values(info_path, {'training_completed': True})
                 break
+        elif epoch == epochs:
+                print(f"finished all epochs")
+                update_values(info_path, {'training_completed': True})
+                break
 
     print(f"Best loss: {best_loss}")
     print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
@@ -190,5 +209,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Train a model on xarray data")
     parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
+    parser.add_argument('--num_epochs', type=int, default=0, help="number of epochs to train for")
+    parser.add_argumet('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
     args = parser.parse_args()
     main(args)

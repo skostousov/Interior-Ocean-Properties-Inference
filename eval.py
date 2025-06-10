@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from continue_training import fetch_info
 import torch.nn as nn
+import os
 
 
 def main(args):
@@ -26,7 +27,7 @@ def main(args):
     test_indices_file = project_root / info['test_indices']
 
     loss_fn = nn.L1Loss()
-    assert info['loss_fn'] == loss_fn.__repr__(), f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__repr__()}"
+    assert info['loss_fn'] == loss_fn.__class__.__name__, f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__class__.__name__}"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -44,30 +45,34 @@ def main(args):
 
     filepath = model_path/"results.pkl"
 
-    with torch.no_grad():
-        for i, batch in enumerate(test_dataloader):
-            images, labels, metadata = batch
-            images_gpu = images.to(device)
-            preds = model(images_gpu)
-            loss += loss_fn(preds, labels.to(device)).item()
-            preds, labels = preds.cpu(), labels.cpu()
-            batch_dict = {"image": images, "label": labels, "pred": preds, "grid": metadata[0], "centre": metadata[1], "month": metadata[2]}
-            after_model.append(batch_dict)
+    if args.recalculate or not os.path.exists(filepath):
+        if os.path.exists(filepath):
+            os.remove(filepath)
+            print("previous file removed")
+        with torch.no_grad():
+            for i, batch in enumerate(test_dataloader):
+                images, labels, metadata = batch
+                images_gpu = images.to(device)
+                preds = model(images_gpu)
+                loss += loss_fn(preds, labels.to(device)).item()
+                preds, labels = preds.cpu(), labels.cpu()
+                batch_dict = {"image": images, "label": labels, "pred": preds, "grid": metadata[0], "centre": metadata[1], "month": metadata[2]}
+                after_model.append(batch_dict)
 
-            if i % 100 == 0:
-                print(f"Processed {i} batches")
+                if i % 100 == 0:
+                    print(f"Processed {i} batches")
 
-            # Periodically append new results
-            if i % 10000 == 0 and i > 0:
+                # Periodically append new results
+                if i % 10000 == 0 and i > 0:
+                    with open(filepath, "ab") as f:
+                        pickle.dump(after_model, f)
+                    print(f"Appended {i} batches")
+                    after_model.clear()
+
+            if len(after_model) > 0:
                 with open(filepath, "ab") as f:
                     pickle.dump(after_model, f)
-                print(f"Appended {i} batches")
-                after_model.clear()
-
-        if len(after_model) > 0:
-            with open(filepath, "ab") as f:
-                pickle.dump(after_model, f)
-    print(f"Total loss: {loss / len(test_dataloader)}")
+            print(f"Total loss: {loss / len(test_dataloader)}")
 
     with open(info_path, 'a') as f:
         f.write(f"total_test_loss: {loss / len(test_dataloader)}\n")
@@ -116,6 +121,7 @@ def main(args):
     mae_loss = nn.L1Loss()
 
     fig, ax = plt.subplots(len(time_steps), 2, figsize=(15, 8* len(time_steps)))
+    ax = np.atleast_2d(ax)
     for i, t in enumerate(time_steps):
         pred_map = pred_maps[i]
         label_map = label_maps[i]    
@@ -140,7 +146,7 @@ def main(args):
             ax = [ax]  # Ensure ax is iterable if there's only one time step
         pred_map = pred_maps[i]
         label_map = label_maps[i]    
-        im_0 = ax[i,].imshow(abs(label_map - pred_map), origin='lower', vmin=0, vmax=80, cmap='viridis')
+        im_0 = ax[i].imshow(abs(label_map - pred_map), origin='lower', vmin=0, vmax=80, cmap='viridis')
         ax[i].set_title('Difference Map for Time Step ' + str(t))
         ax[i].set_xlabel('Longitude Index')
         ax[i].set_ylabel('Latitude Index')
@@ -154,5 +160,6 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Continue training a model.")
     parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")
+    parser.add_argument('--recalculate', type=bool, default=True, help="recompute inference forward pass")
     args = parser.parse_args()
     main(args)

@@ -1,10 +1,11 @@
-from trainonly_xarray import train_loop, val_loop, update_values
+from trainonly_xarray import train_loop, val_loop, update_values, fetch_data_processor
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from pathlib import Path
 from torch.utils.data import Subset, DataLoader
 from utils.datasettemporalxarray import XArrayDataset
+from utils.datasettemporal import TemporalDataset
 from utils.transforms import RescaledRotationTransform
 from utils.config import PROJECT_ROOT
 from torch.optim import AdamW
@@ -17,8 +18,8 @@ def fetch_info(info_path):
         info_text = f.read()
         info = {}
         for line in info_text.strip().split('\n'):
-            if ':' in line:
-                key, value = line.split(':', 1)
+            if ':: ' in line:
+                key, value = line.split(':: ', 1)
                 value = value.strip()
                 if value == "None":
                     value = None
@@ -54,17 +55,18 @@ def main(args):
         scheduler.load_state_dict(checkpoint['scheduler_state'])
 
         loss_fn = nn.L1Loss()
-        assert info['loss_fn'] == loss_fn.__repr__(), f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__repr__()}"
+        assert info['loss_fn'] == loss_fn.__class__.__name__, f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__class__.__name__}"
 
         if info['transform']:
             data_aug = RescaledRotationTransform()
-            assert data_aug.__repr__() == info['transform'], f"Transform mismatch: {data_aug.__repr__()} != {info['transform']}"
+            assert data_aug.__class__.__name__ == info['transform'], f"Transform mismatch: {data_aug.__class__.__name__} != {info['transform']}"
         else:
             data_aug = None
 
         downsample = info['downsample'] 
 
-        data = XArrayDataset(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample)
+        data = fetch_data_processor(info['data_processor'])(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample)
+
 
         batch_size = int(info['batch_size']) 
         train_idx, val_idx, _ = train_val_test_split_temp(data, seed=42, test_indices_path=Path(info['test_indices']), gen_new=False)
@@ -74,9 +76,11 @@ def main(args):
         train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
         val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
 
-        start_epoch = info['current_epoch']
-        end_epoch = int(info['epochs'])
+        start_epoch = int(info['current_epoch']) + 1
+        end_epoch = start_epoch + args.num_epochs
+        max_epochs = int(info['total_epochs'])
         best_epoch = int(info['best_epoch'])
+        best_loss = float(info['best_val_loss'])
         early_stopping_thresh = int(info['early_stopping_thresh'])
 
         writer= SummaryWriter(save_dir / 'tensorboard_logs')
@@ -85,7 +89,6 @@ def main(args):
             print('Epoch {}:'.format(epoch + 1))
             model.train(True)
             train_loss = train_loop(model, train_dataloader, optimizer, loss_fn, device)
-            update_values(info_path, {'current_epoch': epoch})
             writer.add_scalar('Learning Rate', optimizer.param_groups[0]['lr'], epoch)
             for name, p in model.named_parameters():
                     writer.add_histogram(f"weights/{name}", p, epoch)
@@ -93,6 +96,7 @@ def main(args):
                         writer.add_histogram(f"gradients/{name}", p.grad, epoch)
             val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
             writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
+            update_values(info_path, {'current_epoch': epoch})
             if val_loss < best_loss:
                 best_epoch = epoch
                 best_loss = val_loss
@@ -104,11 +108,16 @@ def main(args):
                     }
                 torch.save(checkpoint, save_dir / 'checkpoint.pt')
                 torch.save(model, save_dir / 'best_model')
-            update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_train_loss": corresponding_train_loss})
+                update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_train_loss": corresponding_train_loss})
+                print("achieved best val loss")
             if epoch - best_epoch >= early_stopping_thresh:
-                    print(f"Early stopping on epoch {epoch}")
-                    update_values(info_path, {'training_completed': True})
-                    break
+                print(f"Early stopping on epoch {epoch}")
+                update_values(info_path, {'training_completed': True})
+                break
+            elif epoch == max_epochs:
+                print(f"finished all epochs")
+                update_values(info_path, {'training_completed': True})
+                break
         print(f"Best loss: {best_loss}")
         print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
     else:
@@ -118,6 +127,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Continue training a model.")
     parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")
+    parser.add_argument('--num_epochs', type=int, default=5, help="number of epochs to train for")
     args = parser.parse_args()
     main(args)
 

@@ -209,7 +209,7 @@ class XArrayDataset(TorchDataset):
     def __len__(self):
         return len(self.grid_and_centre_coords_and_temp_unit)
     
-    def name(self):
+    def name():
         return "xarray"
 
 class TestSubsetRegression(Subset):
