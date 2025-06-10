@@ -101,13 +101,13 @@ class EBAM(nn.Module):
 
 # CNN model with embedded attention mechanisms
 class EBAM_CNN(nn.Module):
-    def __init__(self):
+    def __init__(self, in_channels=6, out_channels=1):
         super(EBAM_CNN, self).__init__()
         # Define the number of channels at each layer
-        self.channels_num_1 = 6
-        self.channels_num_2 = 24
-        self.channels_num_3 = 48
-        self.channels_num_4 = 96
+        self.channels_num_1 = in_channels
+        self.channels_num_2 = in_channels * 3
+        self.channels_num_3 = self.channels_num_2 * 2
+        self.channels_num_4 = self.channels_num_3 * 2
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.relu = nn.ELU()
         # Define EBAM blocks for each feature map size
@@ -118,36 +118,36 @@ class EBAM_CNN(nn.Module):
         
         # Define convolutional layers to process the input
         self.layer1 = nn.Sequential(
-            nn.Conv2d(6, 24, 3, stride = 1, padding=0),
-            nn.BatchNorm2d(24),
-            #nn.Dropout(0.1)         
+            nn.Conv2d(in_channels, self.channels_num_2, 3, stride = 1, padding=0),
+            nn.BatchNorm2d(self.channels_num_2),
+            #nn.Dropout(0.1)
         )
         self.layer2 = nn.Sequential(
-            nn.Conv2d(24, 48, 3, stride = 1,padding=0),
-            nn.BatchNorm2d(48),
-            #nn.Dropout(0.1)  
+            nn.Conv2d(self.channels_num_2, self.channels_num_3, 3, stride = 1,padding=0),
+            nn.BatchNorm2d(self.channels_num_3),
+            #nn.Dropout(0.1)
         )
         self.layer3 = nn.Sequential(
-            nn.Conv2d(48,96, 3,stride = 1,padding=0),
-            nn.BatchNorm2d(96),
+            nn.Conv2d(self.channels_num_3, self.channels_num_4, 3,stride = 1,padding=0),
+            nn.BatchNorm2d(self.channels_num_4),
             #nn.Dropout(0.1)
-             
+
         )
 
         # Fully connected layers for final prediction
         self.fc1 = nn.Sequential(
-            nn.Linear(96, 48),
+            nn.Linear(self.channels_num_4, self.channels_num_3),
             nn.Dropout(0.1),
             nn.ELU()
         )
         self.fc2 = nn.Sequential(
-            nn.Linear(48, 24),
+            nn.Linear(self.channels_num_3, self.channels_num_2),
             nn.Dropout(0.1),
             #nn.LeakyReLU()
             nn.ELU()
         )
         self.fc3 = nn.Sequential(
-            nn.Linear(24,1)
+            nn.Linear(self.channels_num_2, out_channels)
 #             nn.Dropout(0.5),
 #             nn.ELU()     
         )
