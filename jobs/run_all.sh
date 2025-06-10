@@ -1,21 +1,24 @@
 #!/bin/bash
-cd ~/$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
+cd $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
 
-prevJob_id=$(sbatch jobs/train.slurm UNetRegressionSE --num_epochs "1" --data_processors netcdf4 | awk '{print $4}')
+prevJob_id=$(sbatch jobs/train.slurm UNetRegression 0 netcdf4 | awk '{print $4}')
 
-while squeue -h -j "$prevJob_id" | grep -q .; do
-  sleep 10
+TARGET=$SCRATCH/logs/${prevJob_id}_model_dir.txt
+
+echo "Waiting for $TARGET to appear..."
+while [ ! -f "$TARGET" ]; do
+  sleep 5
 done
 
-MODEL=$(tail -n 1 logs/latest_model_dir.txt)
+MODEL=$(tail -n 1 $TARGET)
 
-echo "initial training loop has run, model: $MODEL"
+echo "using, model: $MODEL"
 
-for i in {1..2}
+for i in {1..10}
 do
-    prevJob_id=$(sbatch --dependency=afterok:$prevJob_id jobs/continue_train.slurm $MODEL 1 | awk '{print $4}')
+    prevJob_id=$(sbatch --dependency=afterok:$prevJob_id jobs/continue_train.slurm $MODEL 10 | awk '{print $4}')
 done
 
 echo "model trained"
-sbatch --dependency=afterok:$prevJob_id jobs/continue_train.slurm $MODEL
+sbatch --dependency=afterok:$prevJob_id jobs/eval.slurm $MODEL
 echo "inference has been run"

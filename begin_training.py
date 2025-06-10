@@ -165,8 +165,17 @@ def main(args):
             f.write(f"{key}:: {value}\n")
 
     num_epochs = args.num_epochs
-    if num_epochs == 0:
+
+    if num_epochs is None:
         num_epochs = epochs
+
+    checkpoint = {
+                'model_state':model.state_dict(),
+                'optimizer_state': optimizer.state_dict(),
+                'scheduler_state': scheduler.state_dict(),
+                }
+    torch.save(checkpoint, save_dir / 'checkpoint.pt')
+    torch.save(model, save_dir / 'best_model')
 
     # for epoch in range(0, epochs):
     for epoch in range(0, num_epochs):
@@ -211,7 +220,7 @@ if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Train a model on xarray data")
     parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
-    parser.add_argument('--num_epochs', type=int, default=0, help="number of epochs to train for")
+    parser.add_argument('--num_epochs', type=int, help="number of epochs to train for")
     parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
     args = parser.parse_args()
     main(args)
