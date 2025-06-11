@@ -77,7 +77,12 @@ def main(args):
         val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
 
         start_epoch = int(info['current_epoch']) + 1
-        end_epoch = start_epoch + args.num_epochs
+        if args.num_epochs is None:
+            num_epochs = int(info['total_epochs']) - start_epoch
+        else:
+            num_epochs = args.num_epochs
+
+        end_epoch = start_epoch + num_epochs
         max_epochs = int(info['total_epochs'])
         best_epoch = int(info['best_epoch'])
         best_loss = float(info['best_val_loss'])

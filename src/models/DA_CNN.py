@@ -63,24 +63,34 @@ class ConvReluBlock(nn.Module):
         return "ConvReluBlock"
     
 class DA_CNN(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, first_layer_filters=16, fuse_conv_filters="equal", kernel_size=1):
         super().__init__()
-        self.convcam1 = ConvReluBlock(in_channels, 16)
-        self.convcam2 = ConvReluBlock(16, 32)
-        self.cam = ChannelAttentionModule(32)
-        self.convcam3 = ConvReluBlock(32, 64)
-        self.convpam1 = ConvReluBlock(in_channels, 16)
-        self.convpam2 = ConvReluBlock(16, 32)
-        self.pam = PositionAttentionModule(32)
-        self.convpam3 = ConvReluBlock(32, 64)
-        self.fuseconv = self.block = nn.Sequential(
-            nn.Conv2d(128, 128, kernel_size=1, padding=0),
-            nn.BatchNorm2d(128),
+        self.convcam1 = ConvReluBlock(in_channels, first_layer_filters)
+        self.convcam2 = ConvReluBlock(first_layer_filters, first_layer_filters * 2)
+        self.cam = ChannelAttentionModule(first_layer_filters * 2)
+        self.convcam3 = ConvReluBlock(first_layer_filters * 2, first_layer_filters * 4)
+        self.convpam1 = ConvReluBlock(in_channels, first_layer_filters)
+        self.convpam2 = ConvReluBlock(first_layer_filters, first_layer_filters * 2)
+        self.pam = PositionAttentionModule(first_layer_filters * 2)
+        self.convpam3 = ConvReluBlock(first_layer_filters * 2, first_layer_filters * 4)
+        if fuse_conv_filters == 'twice':
+            fuse_conv_filters = first_layer_filters * 8
+        elif fuse_conv_filters == 'equal':
+            fuse_conv_filters = first_layer_filters * 4
+        if kernel_size == 1:
+            padding = 0
+        elif kernel_size == 3:
+            padding = 1
+        else:
+            padding = 0
+        self.fuseconv = nn.Sequential(
+            nn.Conv2d(fuse_conv_filters, fuse_conv_filters, kernel_size=kernel_size, padding=padding),
+            nn.BatchNorm2d(fuse_conv_filters),
             nn.ReLU()
         )
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
         self.flatten = nn.Flatten()
-        self.linear = nn.Linear(128, out_channels)
+        self.linear = nn.Linear(fuse_conv_filters, out_channels)
     def forward(self, x):
         x_c1 = self.convcam1(x)
         x_c2 = self.convcam2(x_c1)
