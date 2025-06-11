@@ -13,6 +13,6 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/eval.py --model_relative_path $1
+python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/eval.py --model_relative_path $1 --recalculate $2
 
-echo "continue_train.slurm executed"
+echo "eval.slurm executed"

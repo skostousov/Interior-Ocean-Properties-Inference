@@ -63,7 +63,9 @@ def main(args):
 
         downsample = info['downsample'] 
 
-        data = fetch_data_processor(info['data_processor'])(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample)
+        grid_size = int(info['grid_size'])
+
+        data = fetch_data_processor(info['data_processor'])(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample, grid_size=grid_size)
 
 
         batch_size = int(info['batch_size']) 

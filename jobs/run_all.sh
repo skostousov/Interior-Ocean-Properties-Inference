@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
 
-prevJob_id=$(sbatch jobs/train.slurm PixelWiseRegressor 0 netcdf4 | awk '{print $4}')
+prevJob_id=$(sbatch jobs/train.slurm UNetRegressionSE 0 netcdf4 14 | awk '{print $4}')
 
 TARGET=$SCRATCH/logs/${prevJob_id}_model_dir.txt
 
@@ -20,5 +20,5 @@ do
 done
 
 echo "model trained"
-sbatch --dependency=afterok:$prevJob_id jobs/eval.slurm $MODEL
+sbatch --dependency=afterok:$prevJob_id jobs/eval.slurm $MODEL True
 echo "inference has been run"

@@ -3,7 +3,7 @@ from torch import nn
 from torch.nn import functional as F
 
 class PixelWiseRegressor(nn.Module):
-    def __init__(self, in_channels, out_channels=1):
+    def __init__(self, in_channels, out_channels=1, grid_size=21):
         super().__init__()
         self.conv1 = nn.Conv2d(in_channels, 16, kernel_size=3, padding=1)
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)

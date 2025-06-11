@@ -101,13 +101,18 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Using {device} device")
 
+    if args.grid_size is not None:
+        grid_size = args.grid_size
+    else:
+        grid_size = cfg['data']['grid_size']
+
     data_aug = RescaledRotationTransform()
-    data = fetch_data_processor(args.data_processors)(transform=data_aug)
+    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size)
 
     batch_size = cfg['training']["batch_size"]
     epochs = cfg['training']["epochs"]
 
-    model = models[args.model](data[0][0].shape[0], data[0][1].shape[0])
+    model = models[args.model](data[0][0].shape[0], data[0][1].shape[0], grid_size=grid_size)
     model = model.to(device)
     optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
@@ -151,7 +156,7 @@ def main(args):
         "transform": data.transform.__class__.__name__ if data.transform else None,
         "target_transform": data.target_transform.__class__.__name__ if data.target_transform else None,
         "downsample": data.downsample if hasattr(data, 'downsample') else None,
-        "grid_size": data.grid_size if hasattr(data, 'grid_size') else None,
+        "grid_size": data.grid_size,
         "data_processor": data.name(),
         "current_epoch": 0,
         "training_completed": False,
@@ -222,5 +227,6 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', type=int, help="number of epochs to train for")
     parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
+    parser.add_argument('--grid_size', type=int)
     args = parser.parse_args()
     main(args)

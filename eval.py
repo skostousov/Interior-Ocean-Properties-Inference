@@ -34,8 +34,10 @@ def main(args):
     model = torch.load(model_path/'best_model', map_location=device, weights_only=False)
     model.eval()
 
+    grid_size = int(info['grid_size'])
+
     print(f"Using data processor {info['data_processor']}")
-    data = fetch_data_processor(info['data_processor'])(filepath=data_file)
+    data = fetch_data_processor(info['data_processor'])(filepath=data_file, grid_size='grid_size')
 
     # data = XArrayDataset(filepath=data_file)
     test_idx = test_indices(test_indices_file)
@@ -141,7 +143,7 @@ def main(args):
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
     plt.suptitle(f"{model_name} \n Results")
     plt.subplots_adjust(hspace=0.5)
-    fig.savefig(model_path / "results.png", dpi=600)
+    fig.savefig(model_path / "results.png", dpi=300)
 
     fig, ax = plt.subplots(len(time_steps), 1, figsize=(6, 5* len(time_steps)))
     for i, t in enumerate(time_steps):
