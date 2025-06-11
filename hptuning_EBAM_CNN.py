@@ -1,4 +1,4 @@
-from models.DA_CNN import DA_CNN
+from models.EBAM_CNN import EBAM_CNN
 from utils.datasettemporal import TemporalDataset
 from utils.config import PROJECT_ROOT
 from pathlib import Path
@@ -25,7 +25,7 @@ def train_model(config):
     train_loader = DataLoader(train_subset, batch_size=int(config["batch_size"]), shuffle=True)
     val_loader = DataLoader(val_subset, batch_size=int(config["batch_size"]), shuffle=False)
 
-    model = DA_CNN(6, first_layer_filters=int(config["first_layer_filters"]), fuse_conv_filters=config["fuse_conv_filters"], kernel_size=int(config['kernel_size']))
+    model = EBAM_CNN(6, num_heads=int(config["num_heads"]))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
     criterion = torch.nn.L1Loss()
@@ -57,9 +57,7 @@ search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
     "batch_size": tune.choice([10, 50, 100]),
     "grid_size": tune.choice([17, 21, 25]),
-    "first_layer_filters": tune.choice([8, 16, 32, 64]),
-    "fuse_conv_filters": tune.choice(["twice", "equal"]),
-    "kernel_size": tune.choice([1, 3])
+    "num_heads": tune.choice([2, 3, 4, 5, 6]),
 }
 
 scheduler = ASHAScheduler(

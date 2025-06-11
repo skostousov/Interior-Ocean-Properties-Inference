@@ -101,7 +101,7 @@ class EBAM(nn.Module):
 
 # CNN model with embedded attention mechanisms
 class EBAM_CNN(nn.Module):
-    def __init__(self, in_channels=6, out_channels=1, grid_size=21):
+    def __init__(self, in_channels=6, out_channels=1, grid_size=21, num_heads=3):
         super(EBAM_CNN, self).__init__()
         # Define the number of channels at each layer
         self.channels_num_1 = in_channels
@@ -111,10 +111,10 @@ class EBAM_CNN(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.relu = nn.ELU()
         # Define EBAM blocks for each feature map size
-        self.ebam_1 = EBAM(self.channels_num_1)
-        self.ebam_2 = EBAM(self.channels_num_2)
-        self.ebam_3 = EBAM(self.channels_num_3)
-        self.ebam_4= EBAM(self.channels_num_4)
+        self.ebam_1 = EBAM(self.channels_num_1, num_heads=num_heads)
+        self.ebam_2 = EBAM(self.channels_num_2, num_heads=num_heads)
+        self.ebam_3 = EBAM(self.channels_num_3, num_heads=num_heads)
+        self.ebam_4= EBAM(self.channels_num_4, num_heads=num_heads)
         
         # Define convolutional layers to process the input
         self.layer1 = nn.Sequential(
