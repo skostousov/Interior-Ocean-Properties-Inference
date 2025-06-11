@@ -107,16 +107,17 @@ if __name__ == "__main__":
     from utils.datasettemporal import TemporalDataset
     from utils.transforms import ToTensor, RescaledRotationTransform, Compose
     transform = Compose([ToTensor(), RescaledRotationTransform()])
-    ds = TemporalDataset(transform=None)
+    new_grid_size = 17
+    ds = TemporalDataset(transform=None, grid_size=new_grid_size)
     image, label = ds[0]
     print(f"image shape: {image.shape}, label shape: {label.shape}")
-    model = UNetRegressionSE(image.shape[0], 1, grid_size=15).to(device)
+    model = UNetRegressionSE(image.shape[0], 1, grid_size=new_grid_size).to(device)
     mu, std = ds.generate_mean_and_std([0])
     for i in range(image.shape[0]):
         image[i] = (image[i] - mu[i]) / std[i]
     # image_nm = (image - mu) / std
     image = image.unsqueeze(0)
-    image = torch.rand(1, 6, 5, 5).to(device)
+    image = torch.rand(1, 6, new_grid_size, new_grid_size).to(device)
     new_input = image.to(device)
     output = model(new_input)
     print(f"model output: {output}")
