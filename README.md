@@ -218,3 +218,12 @@ Please update the config file with your own username in order to download data f
 
 1. GET ON CLUSTER
 
+## 10/06/2025
+
+#### Log:
+    JOBS LAUNCHED ON CLUSTER:
+    - UNetRegressionSE monthly-ten netcdf4
+    - UNetRegression monthly-ten netcdf4
+    - PixelWiseRegressor monthly-ten netcdf4
+    - UNetRegressionSE daily_alternative_small netcdf4
+    - UNetRegression daily_alternative_small netcdf4
