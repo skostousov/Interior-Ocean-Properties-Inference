@@ -56,7 +56,7 @@ daily_alternative_small:
   training:
     epochs: 100
     batch_size: 50
-    early_stopping_thresh: 10
+    early_stopping_thresh: 7
     model_save_dest: saved_models/saved_daily_alternative_small_models
     immediate_test: true
   eval:
@@ -177,4 +177,4 @@ monthly:
       output_file: small_sample_1993-1994.nc
       test_indices: test_indices/monthly/small_01.pt
       stats: stats/monthly/small_02.pt
-project_root: /scratch/n/ngrisoua/kostouso/OceanPropInfSatImgScratch/OceanPropInfSatImg
+project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg
