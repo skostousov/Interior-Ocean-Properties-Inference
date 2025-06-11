@@ -74,16 +74,16 @@ class DA_CNN(nn.Module):
         self.pam = PositionAttentionModule(first_layer_filters * 2)
         self.convpam3 = ConvReluBlock(first_layer_filters * 2, first_layer_filters * 4)
         if fuse_conv_filters == 'twice':
-            fuse_conv_filters = first_layer_filters * 8
+            fuse_conv_filters = first_layer_filters * 16
         elif fuse_conv_filters == 'equal':
-            fuse_conv_filters = first_layer_filters * 4
+            fuse_conv_filters = first_layer_filters * 8
         if kernel_size == 1:
             padding = 0
         elif kernel_size == 3:
             padding = 1
         else:
             padding = 0
-        self.fuseconv = nn.Sequential(
+        self.fuseconv = self.batch = nn.Sequential(
             nn.Conv2d(fuse_conv_filters, fuse_conv_filters, kernel_size=kernel_size, padding=padding),
             nn.BatchNorm2d(fuse_conv_filters),
             nn.ReLU()

@@ -12,7 +12,7 @@ root = Path(PROJECT_ROOT)
 
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / 'data/monthly/ten_sample_1993-2003.nc', grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc', grid_size=int(config["grid_size"]))
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
