@@ -1,16 +1,17 @@
 from utils.datasettemporal import TemporalDataset
 from utils.datasettemporalxarray import XArrayDataset
+from utils.dataset025 import PaperlikeDataset
 from utils.config import PROJECT_ROOT
 from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-data_class = TemporalDataset
+data_class = PaperlikeDataset
 
 root = Path(PROJECT_ROOT)
 
-relative_file = "data/daily/very_small_daily_sample_1993-1994.nc"
+relative_file = "data/monthly/ten_sample_1993-2003.nc"
 filepath = root / relative_file
 filepath_no_nc = root/relative_file.replace(".nc", f"_{data_class.name()}.png")
 
