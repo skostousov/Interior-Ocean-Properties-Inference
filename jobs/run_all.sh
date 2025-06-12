@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
 
-prevJob_id=$(sbatch jobs/train.slurm PixelWiseRegressor 0 netcdf4 21 | awk '{print $4}')
+prevJob_id=$(sbatch jobs/train.slurm UNetRegressionSE 0 netcdf4 21 | awk '{print $4}')
 
 TARGET=$SCRATCH/logs/${prevJob_id}_model_dir.txt
 

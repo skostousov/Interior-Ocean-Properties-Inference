@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=0-03:00:00
+#SBATCH --time=0-00:30:00
 #SBATCH --output=/scratch/n/ngrisoua/kostouso/logs/%x_%j.out
 
 JOBID=$SLURM_JOB_ID

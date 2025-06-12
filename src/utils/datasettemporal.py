@@ -42,7 +42,7 @@ class TemporalDataset(TorchDataset):
         #creation of feature_map
         self.feature_map = np.concatenate(list(self.relevant_variables.values()), axis=1)
 
-        self.grid_size = grid_size
+        self.grid_size = int(grid_size)
         if self.downsample:
             self.grid_size = self.grid_size / 3
             self.feature_map = F.avg_pool2d(torch.tensor(self.feature_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()

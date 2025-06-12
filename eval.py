@@ -37,7 +37,7 @@ def main(args):
     grid_size = int(info['grid_size'])
 
     print(f"Using data processor {info['data_processor']}")
-    data = fetch_data_processor(info['data_processor'])(filepath=data_file, grid_size='grid_size')
+    data = fetch_data_processor(info['data_processor'])(filepath=data_file, grid_size=grid_size)
 
     # data = XArrayDataset(filepath=data_file)
     test_idx = test_indices(test_indices_file)
