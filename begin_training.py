@@ -78,9 +78,11 @@ def val_loop(val_dataloader, model, loss_fn, device, scheduler):
 def fetch_data_processor(name):
     from utils.datasettemporalxarray import XArrayDataset
     from utils.datasettemporal import TemporalDataset
+    from utils.dataset025 import PaperlikeDataset
     data_processors = {
         XArrayDataset.name(): XArrayDataset,
-        TemporalDataset.name(): TemporalDataset
+        TemporalDataset.name(): TemporalDataset,
+        PaperlikeDataset.name(): PaperlikeDataset,
     }
     return data_processors[name]
 
@@ -222,11 +224,12 @@ def main(args):
 if __name__ == "__main__":
     from utils.datasettemporalxarray import XArrayDataset
     from utils.datasettemporal import TemporalDataset
+    from utils.dataset025 import PaperlikeDataset
     import argparse
     parser = argparse.ArgumentParser(description="Train a model on xarray data")
     parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', type=int, help="number of epochs to train for")
-    parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
+    parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name(), PaperlikeDataset.name()], help='Data processor to use')
     parser.add_argument('--grid_size', type=int)
     parser.add_argument('--downsample', default=False, type=bool)
     args = parser.parse_args()
