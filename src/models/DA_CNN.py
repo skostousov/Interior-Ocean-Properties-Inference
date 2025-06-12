@@ -63,7 +63,7 @@ class ConvReluBlock(nn.Module):
         return "ConvReluBlock"
     
 class DA_CNN(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21, first_layer_filters=16, fuse_conv_filters="equal", kernel_size=1):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, first_layer_filters=16, kernel_size=1):
         super().__init__()
         self.convcam1 = ConvReluBlock(in_channels, first_layer_filters)
         self.convcam2 = ConvReluBlock(first_layer_filters, first_layer_filters * 2)
@@ -73,10 +73,7 @@ class DA_CNN(nn.Module):
         self.convpam2 = ConvReluBlock(first_layer_filters, first_layer_filters * 2)
         self.pam = PositionAttentionModule(first_layer_filters * 2)
         self.convpam3 = ConvReluBlock(first_layer_filters * 2, first_layer_filters * 4)
-        if fuse_conv_filters == 'twice':
-            fuse_conv_filters = first_layer_filters * 16
-        elif fuse_conv_filters == 'equal':
-            fuse_conv_filters = first_layer_filters * 8
+        fuse_conv_filters = first_layer_filters * 8
         if kernel_size == 1:
             padding = 0
         elif kernel_size == 3:

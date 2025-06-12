@@ -1,18 +1,11 @@
 #!/bin/bash
 cd $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
 
-prevJob_id=$(sbatch jobs/train.slurm UNetRegressionSE 0 netcdf4 21 True | awk '{print $4}')
-
-TARGET=$SCRATCH/logs/${prevJob_id}_model_dir.txt
-
-echo "Waiting for $TARGET to appear..."
-while [ ! -f "$TARGET" ]; do
-  sleep 5
-done
-
-MODEL=$(tail -n 1 $TARGET)
+MODEL="saved_models/saved_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250611_105430>DATAFILE:ten_sample_1993-2003.nc>STRAT:test_indices_monthly_ten_01.pt>"
 
 echo "using, model: $MODEL"
+
+prevJob_id=$(sbatch jobs/continue_train.slurm $MODEL 10 | awk '{print $4}')
 
 for i in {1..10}
 do

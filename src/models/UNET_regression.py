@@ -4,21 +4,21 @@ from torch.nn import functional as F
 
 
 class UNetRegression(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, first_out=32):
         super().__init__()
         self.grid_size = grid_size
-        self.down1 = SkipAndDownSample(in_channels, 32, )
-        self.down2 = SkipAndDownSample(32, 64, )
-        self.down3 = SkipAndDownSample(64, 128, )
-        self.down4 = SkipAndDownSample(128, 256, )
+        self.down1 = SkipAndDownSample(in_channels, first_out)
+        self.down2 = SkipAndDownSample(first_out, first_out*2)
+        self.down3 = SkipAndDownSample(first_out*2, first_out*4)
+        self.down4 = SkipAndDownSample(first_out*4, first_out*8)
 
-        self.bottleneck = ConvReluBlock(256, 512)
+        self.bottleneck = ConvReluBlock(first_out*8, first_out*16)
 
-        self.up_1 = UpSample(512, 256)
-        self.up_2 = UpSample(256, 128, )
-        self.up_3 = UpSample(128, 64, )
-        self.up_4 = UpSample(64, 32, )
-        self.output = OutputConv(32, out_channels, grid_size)
+        self.up_1 = UpSample(first_out*16, first_out*8)
+        self.up_2 = UpSample(first_out*8, first_out*4, )
+        self.up_3 = UpSample(first_out*4, first_out*2, )
+        self.up_4 = UpSample(first_out*2, first_out, )
+        self.output = OutputConv(first_out, out_channels, grid_size)
     def forward(self, x):
         x_down1, x_skip1 = self.down1(x)
         x_down2, x_skip2 = self.down2(x_down1)

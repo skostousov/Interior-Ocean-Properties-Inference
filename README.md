@@ -231,7 +231,6 @@ Please update the config file with your own username in order to download data f
 
 ## 11/06/2025
 #### Plan:
-- Reanalyze difference between xarray and netcdf4 (and run xarray version of above local)
 - DA_CNN, EBAM_CNN hyperparameter grid_search and figure out what is up with these models
 - ~~make script for computing dataset stats~~
 - Deal with border generated near coast

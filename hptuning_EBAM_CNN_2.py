@@ -1,4 +1,4 @@
-from models.DA_CNN import DA_CNN
+from models.CNN_EBAM import EBAM_CNN
 from utils.datasettemporal import TemporalDataset
 from utils.config import PROJECT_ROOT
 from pathlib import Path
@@ -37,11 +37,7 @@ def train_model(config):
         shuffle=False
     )
 
-    model = DA_CNN(
-        6,
-        first_layer_filters=int(config["first_layer_filters"]),
-        kernel_size=int(config["kernel_size"])
-    )
+    model = EBAM_CNN(6, num_heads=int(config["num_heads"]))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
     criterion = torch.nn.L1Loss()
@@ -79,12 +75,14 @@ def train_model(config):
 # ---------------------------------------------------------------------------
 
 param_distributions = {
-    "lr": loguniform(1e-5, 1e-2),          # log-uniform just like Ray’s tune.loguniform
-    "batch_size": [10, 50, 100, 500],
+    "lr": loguniform(1e-5, 1e-2),
+    "batch_size": [10, 50, 100],
     "grid_size": [17, 21, 25],
-    "first_layer_filters": [8, 16, 32, 64],
-    "kernel_size": [1, 3],
+    "num_heads": [2, 3, 6],
 }
+
+
+
 
 num_samples = 10
 sampler = ParameterSampler(param_distributions,

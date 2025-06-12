@@ -107,7 +107,7 @@ def main(args):
         grid_size = cfg['data']['grid_size']
 
     data_aug = RescaledRotationTransform()
-    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size)
+    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size, downsample=args.downsample)
 
     batch_size = cfg['training']["batch_size"]
     epochs = cfg['training']["epochs"]
@@ -228,5 +228,6 @@ if __name__ == "__main__":
     parser.add_argument('--num_epochs', type=int, help="number of epochs to train for")
     parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name()])
     parser.add_argument('--grid_size', type=int)
+    parser.add_argument('--downsample', default=False, type=bool)
     args = parser.parse_args()
     main(args)

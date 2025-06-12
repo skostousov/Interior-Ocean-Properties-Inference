@@ -43,15 +43,16 @@ class TemporalDataset(TorchDataset):
         self.feature_map = np.concatenate(list(self.relevant_variables.values()), axis=1)
 
         self.grid_size = int(grid_size)
+        self.grid_size_temp = self.grid_size
         if self.downsample:
-            self.grid_size = self.grid_size / 3
+            self.grid_size_temp = self.grid_size / 3
             self.feature_map = F.avg_pool2d(torch.tensor(self.feature_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
             self.annotations_map = F.avg_pool2d(torch.tensor(self.annotations_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
 
         lat_range = self.feature_map.shape[-2]
         lon_range = self.feature_map.shape[-1]
-        grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
-        centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
+        grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size_temp) for j in range(0, lon_range-self.grid_size_temp)]
+        centre_coords = [(i+self.grid_size_temp//2, j+self.grid_size_temp//2) for i in range(0, lat_range-self.grid_size_temp) for j in range(0, lon_range-self.grid_size_temp)]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
         self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
@@ -190,7 +191,7 @@ class TemporalDataset(TorchDataset):
         
     def __getitem__(self, index):
         grid_coords, centre_coords, temp_unit = self.grid_and_centre_coords_and_temp_unit[index]
-        image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
+        image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size_temp, grid_coords[1]:grid_coords[1]+self.grid_size_temp]
         label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
 
         image = torch.from_numpy(image).float()
@@ -219,7 +220,7 @@ class TestSubsetRegression(Subset):
     def __getitem__(self, idx):
         original_idx = self.indices[idx]
         grid_coords, centre_coords, temp_unit = self.dataset.grid_and_centre_coords_and_temp_unit[original_idx]
-        image = self.dataset.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size, grid_coords[1]:grid_coords[1]+self.dataset.grid_size]
+        image = self.dataset.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size_temp, grid_coords[1]:grid_coords[1]+self.dataset.grid_size_temp]
         label = self.dataset.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
 
         image = torch.from_numpy(image).float()

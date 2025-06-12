@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=hp_tuning
+#SBATCH --job-name=hp_tuning_UNETSE
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
@@ -13,6 +13,6 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_DA_CNN_2.py"
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hp_tuning_UNetRegressionSE.py"
 
 echo "hp_tuning executed"
