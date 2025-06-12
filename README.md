@@ -231,7 +231,7 @@ Please update the config file with your own username in order to download data f
 
 ## 11/06/2025
 #### Plan:
-- DA_CNN, EBAM_CNN hyperparameter grid_search and figure out what is up with these models
+- ~~DA_CNN, EBAM_CNN hyperparameter grid_search and figure out what is up with these models~~ (Launched and in the process)
 - ~~make script for computing dataset stats~~
 - Deal with border generated near coast
 - ~~adjust grid size~~
@@ -246,7 +246,7 @@ Please update the config file with your own username in order to download data f
     - PixelWiseRegressor monthly netcdf4 grid_size 17 batch_size 500
     - UNETRegressionSE monthly netcdf4 grid_size 17 batch_size 100
     - UNETRegressionSE monthly netcdf4 grid_size 21 batch_size 100
-    -hp_tuning_DA_CNN -618614
+    - hp_tuning_DA_CNN -618614
 
 ## 12/06/2025
 #### Plan:
