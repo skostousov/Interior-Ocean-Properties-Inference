@@ -13,7 +13,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class PaperlikeDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size']):
+    def __init__(self, transform = None, target_transform = None, downsample = False, normalize=True, filepath=None, grid_size = cfg['data']['grid_size']):
         self.cfg = cfg
         self.features = cfg['data']['features']
         self.project_root = project_root
