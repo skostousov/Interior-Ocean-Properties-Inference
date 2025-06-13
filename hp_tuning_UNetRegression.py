@@ -9,12 +9,13 @@ from scipy.stats import loguniform
 import pprint  # just for pretty printing at the end
 
 root = Path(PROJECT_ROOT)
-
+# filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
+filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 
 def train_model(config):
     # Prepare dataset
     dataset = TemporalDataset(
-        filepath=root / 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc',
+        filepath=root / filepath,
         grid_size=int(config["grid_size"])
     )
     groups = dataset.groups
@@ -76,7 +77,7 @@ def train_model(config):
 
 param_distributions = {
     "lr": loguniform(1e-5, 1e-2),
-    "batch_size": [10, 50, 100],
+    "batch_size": [10, 50, 100, 200, 500],
     "grid_size": [17, 21, 25],
     "first_out": [8, 16, 32, 64]
 }
@@ -84,7 +85,7 @@ param_distributions = {
 
 
 
-num_samples = 10
+num_samples = 5
 sampler = ParameterSampler(param_distributions,
                            n_iter=num_samples,
                            random_state=0)
