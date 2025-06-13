@@ -45,7 +45,7 @@ def main(args):
         print(f"Using {device} device")
 
         model = torch.load(save_dir/'best_model', map_location=device, weights_only=False)
-        optimizer = AdamW(model.parameters(), lr=info['lr'], weight_decay=1e-5)
+        optimizer = AdamW(model.parameters(), lr=float(info['lr']), weight_decay=1e-5)
         scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
         checkpoint = torch.load(save_dir / 'checkpoint.pt', map_location=device, weights_only=False)
         model.load_state_dict(checkpoint['model_state'])

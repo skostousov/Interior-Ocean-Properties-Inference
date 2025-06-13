@@ -56,7 +56,7 @@ class TemporalDataset(TorchDataset):
         print(self.grid_size)
         print(self.downsample)
         grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
-        centre_coords = [(i+self.grid_size//2, j+self.grid_size_temp//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
+        centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
         self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]

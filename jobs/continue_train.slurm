@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=continue_train025
+#SBATCH --job-name=continue_train
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
