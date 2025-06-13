@@ -4,7 +4,7 @@ from torch.nn import functional as F
 
 
 class UNetRegression(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21, first_out=32):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, first_out=64):
         super().__init__()
         self.grid_size = grid_size
         self.down1 = SkipAndDownSample(in_channels, first_out)

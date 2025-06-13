@@ -101,7 +101,7 @@ class EBAM(nn.Module):
 
 # CNN model with embedded attention mechanisms
 class EBAM_CNN(nn.Module):
-    def __init__(self, in_channels=6, out_channels=1, grid_size=21, num_heads=3):
+    def __init__(self, in_channels=6, out_channels=1, grid_size=17, num_heads=3):
         super(EBAM_CNN, self).__init__()
         # Define the number of channels at each layer
         self.channels_num_1 = in_channels

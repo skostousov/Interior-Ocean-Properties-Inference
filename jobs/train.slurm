@@ -15,7 +15,7 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py" --model $1 --num_epochs $2 --data_processors $3 --grid_size $4 --downsample $5 \
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py" --model $1 --num_epochs $2 --data_processors $3 --grid_size $4 --downsample $5 --lr $6 --batch_size $7 \
 && model="saved_models/$(ls -td -- $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/saved_models/*/*/ | head -1)" \
 && model=${model#*$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/} \
 && model=${model%/} \

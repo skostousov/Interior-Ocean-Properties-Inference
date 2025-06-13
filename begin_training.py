@@ -109,14 +109,15 @@ def main(args):
         grid_size = cfg['data']['grid_size']
 
     data_aug = RescaledRotationTransform()
-    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size, downsample=args.downsample)
+    print(args.downsample)
+    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size, downsample=bool(args.downsample))
 
-    batch_size = cfg['training']["batch_size"]
+    batch_size = args.batch_size
     epochs = cfg['training']["epochs"]
 
     model = models[args.model](data[0][0].shape[0], data[0][1].shape[0], grid_size=grid_size)
     model = model.to(device)
-    optimizer = AdamW(model.parameters(), lr=1e-4, weight_decay=1e-5)
+    optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
     loss_fn = nn.L1Loss()
 
@@ -165,7 +166,9 @@ def main(args):
         "best_epoch": best_epoch,
         "best_val_loss": best_loss,
         "corresponding_train_loss": train_loss,
-        "early_stopping_thresh": cfg["training"]["early_stopping_thresh"],}
+        "early_stopping_thresh": cfg["training"]["early_stopping_thresh"],
+        "lr": args.lr,
+        }
 
     with open(info_path, 'w') as f:
         for key, value in info_bef.items():
@@ -232,5 +235,7 @@ if __name__ == "__main__":
     parser.add_argument('--data_processors', type=str, default = XArrayDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name(), PaperlikeDataset.name()], help='Data processor to use')
     parser.add_argument('--grid_size', type=int)
     parser.add_argument('--downsample', default=False, type=bool)
+    parser.add_argument('--lr', default = 1e-4, type=float)
+    parser.add_argument('--batch_size', default=50, type=int)
     args = parser.parse_args()
     main(args)

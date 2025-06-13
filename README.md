@@ -248,6 +248,7 @@ Please update the config file with your own username in order to download data f
     - UNETRegressionSE monthly netcdf4 grid_size 21 batch_size 100
     - hp_tuning_DA_CNN -618614
 
-## 12/06/2025
+## 13/06/2025
 #### Plan:
-- EBAMCNN hp tuning
+- 1/4 degree smoothing and other stuff
+- try 1/4 degree or 1/8 degree labels for 1/12 degree data

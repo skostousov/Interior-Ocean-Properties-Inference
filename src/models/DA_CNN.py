@@ -63,7 +63,7 @@ class ConvReluBlock(nn.Module):
         return "ConvReluBlock"
     
 class DA_CNN(nn.Module):
-    def __init__(self, in_channels, out_channels=1, grid_size=21, first_layer_filters=16, kernel_size=1):
+    def __init__(self, in_channels, out_channels=1, grid_size=21, first_layer_filters=16, kernel_size=3):
         super().__init__()
         self.convcam1 = ConvReluBlock(in_channels, first_layer_filters)
         self.convcam2 = ConvReluBlock(first_layer_filters, first_layer_filters * 2)
