@@ -9,8 +9,8 @@ from scipy.stats import loguniform
 import pprint  # just for pretty printing at the end
 
 root = Path(PROJECT_ROOT)
-# filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
-filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
+# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 
 def train_model(config):
     # Prepare dataset
@@ -46,7 +46,7 @@ def train_model(config):
     size_train = len(train_loader)
     size_val = len(val_loader)
 
-    for epoch in range(5):  # keep small for speed
+    for epoch in range(10):  # keep small for speed
         model.train()
         for i, (inputs, targets) in enumerate(train_loader):
             inputs, targets = inputs.to(device), targets.to(device)
@@ -85,7 +85,7 @@ param_distributions = {
 
 
 
-num_samples = 5
+num_samples = 10
 sampler = ParameterSampler(param_distributions,
                            n_iter=num_samples,
                            random_state=0)

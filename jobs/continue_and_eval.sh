@@ -1,7 +1,7 @@
 #!/bin/bash
 cd $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg
 
-MODEL="saved_models/saved_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250611_105430>DATAFILE:ten_sample_1993-2003.nc>STRAT:test_indices_monthly_ten_01.pt>"
+MODEL=$1
 
 echo "using, model: $MODEL"
 
