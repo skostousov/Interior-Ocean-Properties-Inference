@@ -5,14 +5,19 @@ from pathlib import Path
 import torch
 from torch.utils.data import DataLoader, Subset
 from ray import tune
+from ray.tune.search.optuna import OptunaSearch
+from ray.tune.search import BasicVariantGenerator
 from ray.tune.schedulers import ASHAScheduler
 from sklearn.model_selection import GroupShuffleSplit
 
 root = Path(PROJECT_ROOT)
 
+filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
+# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc', grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -51,7 +56,7 @@ def train_model(config):
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
         val_loss /= len(val_loader)
-        tune.report(val_loss=val_loss)
+        tune.report({'val_loss': val_loss})
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
@@ -75,5 +80,10 @@ tune.run(
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
     num_samples=20,
-    scheduler=scheduler
+    scheduler=scheduler,
+    search_alg=OptunaSearch(
+        metric="val_loss",
+        mode="min",
+    )
+
 )

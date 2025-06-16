@@ -1,4 +1,4 @@
-from models.EBAM_CNN import EBAM_CNN
+from models.CNN_EBAM import EBAM_CNN
 from utils.datasettemporal import TemporalDataset
 from utils.config import PROJECT_ROOT
 from pathlib import Path
@@ -6,13 +6,17 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from ray import tune
 from ray.tune.schedulers import ASHAScheduler
+from ray.tune.search import BasicVariantGenerator
+from ray.tune.search.optuna import OptunaSearch
 from sklearn.model_selection import GroupShuffleSplit
 
 root = Path(PROJECT_ROOT)
 
+filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
+# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc', grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -51,13 +55,13 @@ def train_model(config):
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
         val_loss /= len(val_loader)
-        tune.report(val_loss=val_loss)
+        tune.report({'val_loss': val_loss})
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
-    "batch_size": tune.choice([10, 50, 100]),
+    "batch_size": tune.choice([10, 50, 100, 200, 500]),
     "grid_size": tune.choice([17, 21, 25]),
-    "num_heads": tune.choice([2, 3, 4, 5, 6]),
+    "num_heads": tune.choice([2, 3, 6]),
 }
 
 scheduler = ASHAScheduler(
@@ -73,5 +77,11 @@ tune.run(
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
     num_samples=20,
-    scheduler=scheduler
+    scheduler=scheduler,
+    storage_path=str(root / "ray_results" / "hptuning_EBAM_CNN"),
+    search_alg=OptunaSearch(
+        metric="val_loss",
+        mode="min",
+    ),
+    name="hptuning_EBAM_CNN",
 )

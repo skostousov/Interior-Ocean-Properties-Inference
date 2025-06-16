@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import math
 
-data_class = PaperlikeDataset
+data_class = TemporalDataset
 
 root = Path(PROJECT_ROOT)
 
-relative_file = "data/monthly/ten_sample_1993-2003.nc"
+relative_file = "data/BoBMonthly/BoBMonthly_1993-2003.nc"
 filepath = root / relative_file
 filepath_no_nc = root/relative_file.replace(".nc", f"_{data_class.name()}.png")
 
@@ -24,14 +24,14 @@ print(annotation_map.shape, feature_map.shape)
 annotation_map_to_plot = np.squeeze(annotation_map)
 
 #unit = 12
-unit = 2
+unit = 12
 
 fig, ax = plt.subplots(math.ceil(annotation_map.shape[0]/unit), unit, figsize=(math.ceil(annotation_map.shape[0]/unit) * 5, 5 * unit))
 ax = np.atleast_2d(ax)
 
 
 for month, image in enumerate(annotation_map_to_plot):
-    im = ax[month//unit, month%unit].imshow(image, cmap='viridis', vmax=90, vmin=0)
+    im = ax[month//unit, month%unit].imshow(image, cmap='viridis', vmax=60, vmin=0, origin='lower')
     ax[month//unit, month%unit].set_title(f"Temporal Unit {month+1} ")
     ax[month//unit, month%unit].axis('off')
     fig.colorbar(im, label='MLD (m)', ax=ax[month//unit, month%unit])
