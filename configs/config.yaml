@@ -1,4 +1,4 @@
-mode: daily_alternative_small
+mode: BoBMonthly
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -56,7 +56,7 @@ daily_alternative_small:
   training:
     epochs: 100
     batch_size: 50
-    early_stopping_thresh: 7
+    early_stopping_thresh: 5
     model_save_dest: saved_models/saved_daily_alternative_small_models
     immediate_test: true
   eval:
@@ -177,4 +177,72 @@ monthly:
       output_file: small_sample_1993-1994.nc
       test_indices: test_indices/monthly/small_01.pt
       stats: stats/monthly/small_02.pt
+BoBMonthly:
+  submode: small
+  training:
+    epochs: 100
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_BoB_monthly_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1M-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/BoBMonthly
+    latitude_range:
+    - 5
+    - 23
+    longitude_range:
+    - 79
+    - 99
+    grid_size: 21
+    small:
+      start_date: 1993-01-01
+      end_date: 2003-01-01
+      output_file: BoBMonthly_1993-2003.nc
+      test_indices: test_indices/BoBMonthly/small_01.pt
+      stats: stats/BoBMonthly/small_01.pt
+BoBDaily:
+  submode: small
+  training:
+    epochs: 100
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_BoB_daily_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/BoBDaily
+    latitude_range:
+    - 5
+    - 23
+    longitude_range:
+    - 79
+    - 99
+    grid_size: 21
+    small:
+      start_date: 1993-01-01
+      end_date: 1993-01-30
+      output_file: BoBDaily_1993-1993.nc
+      test_indices: test_indices/BoBDaily/small_01.pt
+      stats: stats/BoBDaily/small_01.pt
 project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg
