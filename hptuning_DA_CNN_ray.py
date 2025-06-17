@@ -90,7 +90,7 @@ tune.run(
     config=search_space,
     num_samples=40,
     scheduler=scheduler,
-    storage_path = str(root/"ray_results" / "hptuning_DA_CNN"),
+    storage_path=str(root / "ray_results" / f"hptuning_DA_CNN_{filepath.split('/')[-1].split('.')[0]}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(

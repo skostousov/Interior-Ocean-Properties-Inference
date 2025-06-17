@@ -91,9 +91,9 @@ tune.run(
     config=search_space,
     num_samples=40,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / "hptuning_UNET_SE"),
+    storage_path=str(root / "ray_results" / f"hptuning_UNET_SE_{filepath.split('/')[-1].split('.')[0]}"),
     verbose=True,
-    progress_reporter = reporter,
+    progress_reporter=reporter,
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
