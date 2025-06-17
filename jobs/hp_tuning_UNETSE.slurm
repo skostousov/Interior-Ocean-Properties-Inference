@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=hp_UNETSE_daily
+#SBATCH --job-name=hp_UNETSE_ray
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
@@ -7,12 +7,14 @@
 #SBATCH --output=/scratch/n/ngrisoua/kostouso/logs/%x_%j.out
 
 module load anaconda3
-source activate torch39
+# source activate torch39
+source activate raytorch
+
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hp_tuning_UNetRegressionSE.py"
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_UNETSE_ray.py"
 
 echo "hp_tuning executed"

@@ -9,6 +9,16 @@ from ray.tune.search import BasicVariantGenerator
 from ray.tune.search.optuna import OptunaSearch
 from models.UNET_regressionSE import UNetRegressionSE
 from sklearn.model_selection import GroupShuffleSplit
+from ray.tune import CLIReporter
+
+print("Trial started:")
+import sys
+sys.stdout.flush()
+
+reporter = CLIReporter(
+    parameter_columns=["lr", "batch_size", "grid_size", "base_filters", "reduction"],
+    metric_columns=["val_loss", "training_iteration", "total_time_s"]
+)
 
 
 root = Path(PROJECT_ROOT)
@@ -57,7 +67,7 @@ def train_model(config):
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
         val_loss /= len(val_loader)
-        tune.report({'val_loss': val_loss})
+        tune.report(val_loss=val_loss)
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
@@ -71,7 +81,7 @@ scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
     max_t=7,
-    grace_period=1,
+    grace_period=2,
     reduction_factor=2
 )
 
@@ -82,11 +92,11 @@ tune.run(
     num_samples=40,
     scheduler=scheduler,
     storage_path=str(root / "ray_results" / "hptuning_UNET_SE"),
+    verbose=True,
+    progress_reporter = reporter,
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
     ),
-    name="hptuning_UNET_SE#2",
-    resume="AUTO+RESTART_ERRORED",
-    
+    log_to_file=True,
 )

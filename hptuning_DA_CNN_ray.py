@@ -9,6 +9,16 @@ from ray.tune.search.optuna import OptunaSearch
 from ray.tune.search import BasicVariantGenerator
 from ray.tune.schedulers import ASHAScheduler
 from sklearn.model_selection import GroupShuffleSplit
+from ray.tune import CLIReporter
+
+print("Trial started:")
+import sys
+sys.stdout.flush()
+
+reporter = CLIReporter(
+    parameter_columns=["lr", "batch_size", "grid_size", "first_layer_filters", "fuse_conv_filters", "kernel_size"],
+    metric_columns=["val_loss", "training_iteration", "total_time_s"]
+)
 
 root = Path(PROJECT_ROOT)
 
@@ -36,7 +46,7 @@ def train_model(config):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    for epoch in range(5):  # Use small number for tuning speed
+    for epoch in range(7):  # Use small number for tuning speed
         model.train()
         for batch in train_loader:
             inputs, targets = batch
@@ -70,8 +80,8 @@ search_space = {
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
-    max_t=5,
-    grace_period=1,
+    max_t=7,
+    grace_period=2,
     reduction_factor=2
 )
 
@@ -79,11 +89,15 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=20,
+    num_samples=40,
     scheduler=scheduler,
+    storage_path = str(root/"ray_results" / "hptuning_DA_CNN"),
+    verbose=True,
+    progress_reporter=reporter,
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
-    )
+    ),
+    log_to_file=True,
 
 )
