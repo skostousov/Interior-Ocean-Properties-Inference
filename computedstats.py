@@ -11,11 +11,12 @@ data_class = TemporalDataset
 
 root = Path(PROJECT_ROOT)
 
-relative_file = "data/BoBMonthly/BoBMonthly_1993-2003.nc"
+relative_file = "data/BoBDaily/BoBDaily_1993-1993.nc"
 filepath = root / relative_file
 filepath_no_nc = root/relative_file.replace(".nc", f"_{data_class.name()}.png")
 
 ds = data_class(filepath=filepath)
+
 
 annotation_map, feature_map = ds.annotations_map, ds.feature_map
 
@@ -24,7 +25,7 @@ print(annotation_map.shape, feature_map.shape)
 annotation_map_to_plot = np.squeeze(annotation_map)
 
 #unit = 12
-unit = 12
+unit = 4
 
 fig, ax = plt.subplots(math.ceil(annotation_map.shape[0]/unit), unit, figsize=(math.ceil(annotation_map.shape[0]/unit) * 5, 5 * unit))
 ax = np.atleast_2d(ax)
