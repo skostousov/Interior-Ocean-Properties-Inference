@@ -127,7 +127,7 @@ def main(args):
 
     mae_loss = nn.L1Loss()
 
-    fig, ax = plt.subplots(len(time_steps), 2, figsize=(15, 8* len(time_steps)))
+    fig, ax = plt.subplots(max(1, len(time_steps)), 2, figsize=(15, 8* len(time_steps)))
     ax = np.atleast_2d(ax)
     for i, t in enumerate(time_steps):
         pred_map = pred_maps[i]
@@ -147,7 +147,7 @@ def main(args):
     plt.subplots_adjust(hspace=0.5)
     fig.savefig(model_path / "results.png", dpi=300)
 
-    fig, ax = plt.subplots(len(time_steps), 1, figsize=(6, 5* len(time_steps)))
+    fig, ax = plt.subplots(max(1, len(time_steps)), 1, figsize=(6, 5* len(time_steps)))
     for i, t in enumerate(time_steps):
         if len(time_steps) == 1:
             ax = [ax]  # Ensure ax is iterable if there's only one time step
