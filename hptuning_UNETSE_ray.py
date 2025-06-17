@@ -70,7 +70,7 @@ search_space = {
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
-    max_t=5,
+    max_t=7,
     grace_period=1,
     reduction_factor=2
 )
@@ -79,12 +79,14 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=20,
+    num_samples=40,
     scheduler=scheduler,
     storage_path=str(root / "ray_results" / "hptuning_UNET_SE"),
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
     ),
-    name="hptuning_UNET_SE",
+    name="hptuning_UNET_SE#2",
+    resume="AUTO+RESTART_ERRORED",
+    
 )
