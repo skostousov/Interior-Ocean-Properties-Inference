@@ -47,7 +47,7 @@ def train_model(config):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    for epoch in range(5):  # Use small number for tuning speed
+    for epoch in range(7):  # Use small number for tuning speed
         model.train()
         for batch in train_loader:
             inputs, targets = batch

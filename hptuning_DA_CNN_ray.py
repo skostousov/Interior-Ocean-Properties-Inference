@@ -16,7 +16,7 @@ import sys
 sys.stdout.flush()
 
 reporter = CLIReporter(
-    parameter_columns=["lr", "batch_size", "grid_size", "first_layer_filters", "fuse_conv_filters", "kernel_size"],
+    parameter_columns=["lr", "batch_size", "grid_size", "first_layer_filters", "kernel_size"],
     metric_columns=["val_loss", "training_iteration", "total_time_s"]
 )
 
@@ -40,7 +40,7 @@ def train_model(config):
     train_loader = DataLoader(train_subset, batch_size=int(config["batch_size"]), shuffle=True)
     val_loader = DataLoader(val_subset, batch_size=int(config["batch_size"]), shuffle=False)
 
-    model = DA_CNN(6, first_layer_filters=int(config["first_layer_filters"]), fuse_conv_filters=config["fuse_conv_filters"], kernel_size=int(config['kernel_size']))
+    model = DA_CNN(6, first_layer_filters=int(config["first_layer_filters"]), kernel_size=int(config['kernel_size']))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
     criterion = torch.nn.L1Loss()
@@ -66,14 +66,13 @@ def train_model(config):
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets).item()
         val_loss /= len(val_loader)
-        tune.report({'val_loss': val_loss})
+        tune.report(val_loss=val_loss)
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
     "batch_size": tune.choice([10, 50, 100]),
     "grid_size": tune.choice([17, 21, 25]),
     "first_layer_filters": tune.choice([8, 16, 32, 64]),
-    "fuse_conv_filters": tune.choice(["twice", "equal"]),
     "kernel_size": tune.choice([1, 3])
 }
 
@@ -99,5 +98,6 @@ tune.run(
         mode="min",
     ),
     log_to_file=True,
+    resume="AUTO+RESTART_ERRORED”"
 
 )
