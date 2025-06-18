@@ -22,8 +22,12 @@ reporter = CLIReporter(
 
 root = Path(PROJECT_ROOT)
 
-filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
-# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+#filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
+#filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+# filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
+filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+
+
 def train_model(config):
     # Prepare dataset
     dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
@@ -86,7 +90,7 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=40,
+    num_samples=10,
     scheduler=scheduler,
     storage_path=str(root / "ray_results" / f"hptuning_EBAM_CNN_{filepath.split('/')[-1].split('.')[0]}"),
     verbose=True,
@@ -96,4 +100,5 @@ tune.run(
         mode="min",
     ),
     log_to_file=True,
+    resume="AUTO+RESTART_ERRORED”"
 )
