@@ -252,3 +252,8 @@ Please update the config file with your own username in order to download data f
 #### Plan:
 - 1/4 degree smoothing and other stuff
 - try 1/4 degree or 1/8 degree labels for 1/12 degree data
+
+# 17/06/2025
+#### Currently Running:
+- 
+
