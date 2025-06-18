@@ -89,11 +89,11 @@ def fetch_data_processor(name):
 
 def main(args):
     models = {
-        "UNetRegression": (UNetRegression, {"first_out": args.first_out}),
-        "UNetRegressionSE": (UNetRegressionSE, {"base_filters": args.base_filters, "reduction": args.reduction}),
+        "UNetRegression": (UNetRegression, {"first_out": getattr(args, "first_out", 64)}),
+        "UNetRegressionSE": (UNetRegressionSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16)}),
         "PixelWiseRegressor": (PixelWiseRegressor, {}),
-        "DA_CNN": (DA_CNN, {"first_layer_filters": args.first_layer_filters, "kernel_size": args.kernel_size}),
-        "EBAM_CNN": (EBAM_CNN, {"num_heads": args.num_heads}),
+        "DA_CNN": (DA_CNN, {"first_layer_filters": getattr(args, "first_layer_filters", 64), "kernel_size": getattr(args, "kernel_size", 3)}),
+        "EBAM_CNN": (EBAM_CNN, {"num_heads": getattr(args, "num_heads", 4)}),
     }
 
     cfg = RELEVANT_CONFIG
