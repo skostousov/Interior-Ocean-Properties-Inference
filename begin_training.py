@@ -89,11 +89,11 @@ def fetch_data_processor(name):
 
 def main(args):
     models = {
-        "UNetRegression": UNetRegression,
-        "UNetRegressionSE": UNetRegressionSE,
-        "PixelWiseRegressor": PixelWiseRegressor,
-        "DA_CNN": DA_CNN,
-        "EBAM_CNN": EBAM_CNN,
+        "UNetRegression": (UNetRegression, {"first_out": args.first_out}),
+        "UNetRegressionSE": (UNetRegressionSE, {"base_filters": args.base_filters, "reduction": args.reduction}),
+        "PixelWiseRegressor": (PixelWiseRegressor, {}),
+        "DA_CNN": (DA_CNN, {"first_layer_filters": args.first_layer_filters, "kernel_size": args.kernel_size}),
+        "EBAM_CNN": (EBAM_CNN, {"num_heads": args.num_heads}),
     }
 
     cfg = RELEVANT_CONFIG
@@ -115,7 +115,7 @@ def main(args):
     batch_size = args.batch_size
     epochs = cfg['training']["epochs"]
 
-    model = models[args.model](data[0][0].shape[0], data[0][1].shape[0], grid_size=grid_size)
+    model = models[args.model][0](data[0][0].shape[0], data[0][1].shape[0], grid_size=grid_size, **models[args.model][1])
     model = model.to(device)
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
@@ -168,6 +168,7 @@ def main(args):
         "corresponding_train_loss": train_loss,
         "early_stopping_thresh": cfg["training"]["early_stopping_thresh"],
         "lr": args.lr,
+        "model_specific_args": models[args.model][1],
         }
 
     with open(info_path, 'w') as f:
@@ -230,7 +231,19 @@ if __name__ == "__main__":
     from utils.dataset025 import PaperlikeDataset
     import argparse
     parser = argparse.ArgumentParser(description="Train a model on xarray data")
-    parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
+    subs = parser.add_subparsers(dest='model', required=True, help='Model to train', )
+    m1 = subs.add_parser('UNetRegression', help='Train UNetRegression model')
+    m2 = subs.add_parser('UNetRegressionSE', help='Train UNetRegressionSE model')
+    m3 = subs.add_parser('PixelWiseRegressor', help='Train PixelWiseRegressor model')
+    m4 = subs.add_parser('DA_CNN', help='Train DA_CNN model')
+    m5 = subs.add_parser('EBAM_CNN', help='Train EBAM_CNN model')
+    m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
+    m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
+    m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
+    m4.add_argument('--first_layer_filters', type=int, default=64, help='Number of filters in the first layer of DA_CNN')
+    m4.add_argument('--kernel_size', type=int, default=3, choices=[1, 3], help='Kernel size for DA_CNN')
+    m5.add_argument('--num_heads', type=int, default=4, help='Number of heads for EBAM_CNN')
+    # parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', type=int, help="number of epochs to train for")
     parser.add_argument('--data_processors', type=str, default = TemporalDataset.name(), choices=[XArrayDataset.name(), TemporalDataset.name(), PaperlikeDataset.name()], help='Data processor to use')
     parser.add_argument('--grid_size', type=int, default=21)
