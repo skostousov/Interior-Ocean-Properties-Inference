@@ -1,7 +1,7 @@
 | Job ID        | Name           | Date Sub.  | Duration | Status    | Specifics  | Notes |
 |---------------|----------------|------------|----------|-----------|------------|-------|
 | 620854-620861 | continue_train | 17/06/2025 | 20:00:00 | Pending   |            |       |
-| 620662        | eval           | 17/06/2025 | 24:00:00 | Pending   |            | saved_BoB_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250617_092253>DATAFILE:BoBMonthly_1993-2003.nc>STRAT:test_indices_BoBMonthly_small_01.pt>|
+| 620862        | eval           | 17/06/2025 | 24:00:00 | Pending   |            | saved_BoB_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250617_092253>DATAFILE:BoBMonthly_1993-2003.nc>STRAT:test_indices_BoBMonthly_small_01.pt>|
 | 620499-620503 | continue_train | 17/06/2025 | 20:00:00 | Completed |            |       |
 | 620504        | eval           | 17/06/2025 | 24:00:00 | Analyzed  | BoBMonthly | In need of hp tuning, saved_BoB_monthly_models/MODEL:UNetRegression>TRAINSTART:20250616_173058>DATAFILE:BoBMonthly_1993-2003.nc>STRAT:test_indices_BoBMonthly_small_01.pt> |
 | 620853        | continue_train | 17/06/2025 | 20:00:00 | Completed |            |       |
@@ -27,7 +27,12 @@
 | 620911        | hp_DA_ray      | 17/06/2025 | 24:00:00 | Running   | 10 trials, BobMonthly| hptuning_DA_CNN_BoBMonthly_1993-2003/train_model_2025-06-17_20-11-06|
 | 620910        | hp_EBAM_ray    | 17/06/2025 | 24:00:00 | Running   | 10 trials, BoBMonthly| hptuning_EBAM_CNN_BoBMonthly_1993-2003/train_model_2025-06-17_20-11-02|
 | 620870        | hp_UNETSE_ray  | 17/06/2025 | 24:00:00 | Completed | 20 trials | hptuning_UNET_SE/train_model_2025-06-17_11-03-584
-| 
+| 621247-621255, 621256 | continue_train, eval | 18/06/2025 | | ERROR | daily_alternative_small, UNetRegressionSE, grid=21 lr=1e-5, batch=200, reduction=16, base_filters=16| saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_180351>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_cluster.pt> |
+| 621257, ..., 621268 | train, continue, eval | 18/06/2025 | | ERROR | daily_alternative_small, UNetRegressionSE, grid=21 lr=0.0003, batch=200, reduction=16, base_filters=16 | saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_180904>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_cluster.pt> |
+| 621270, ..., 621281 | train, continue, eval | 18/06/2025 | | Running | daily_alternative_small, UNetRegressionSE, grid=17 lr=4e-5, batch=50, reduction=8, base_filters=32 | saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_181334>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_cluster.pt> |
+| 621283, 621289..., 6212300 | train, continue, eval | 18/06/2025 | | Running | monthly, UNETSE, grid=17, lr=5e-5, batch=100, reduction=8, base_filters=16 | saved_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_181925>DATAFILE:ten_sample_1993-2003.nc>STRAT:test_indices_monthly_ten_01.pt> |
+| 621313 | hp_UNETSE_ray | 18/06/2025 | 24:00:00 | Running | 10 trials, monthly | hptuning_UNET_SE_ten_sample_1993-2003/train_model_2025-06-18_18-49-45
+| 621317, ..., 621328 | train, continue, eval | 18/06/2025 | | Running | daily_alternative_small, UNetRegressionSE, grid=21 lr=0.0003, batch=200, reduction=16, base_filters=16 | saved_models/saved_monthly_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_181925>DATAFILE:ten_sample_1993-2003.nc>STRAT:test_indices_monthly_ten_01.pt> |
 
 
 ### RUN HISTORY

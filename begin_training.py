@@ -121,8 +121,8 @@ def main(args):
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
     loss_fn = nn.L1Loss()
 
-
-    train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=Path(cfg['data'][submode]["test_indices"]), gen_new=True)
+    test_indices_path = Path(cfg['data'][submode]["test_indices"]+str(grid_size))
+    train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
     train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 
     print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
@@ -146,7 +146,7 @@ def main(args):
     info_bef = {
         "start_time": start_timestamp,
         "data_file": f"{cfg['data']['data_dir']}/{cfg['data'][submode]['output_file']}",
-        "test_indices": f"{cfg['data'][submode]['test_indices']}",
+        "test_indices": f"{test_indices_path}",
         "total_epochs": epochs,
         "batch_size": batch_size,
         "model": model.__repr__().replace("\n", r"\n"),

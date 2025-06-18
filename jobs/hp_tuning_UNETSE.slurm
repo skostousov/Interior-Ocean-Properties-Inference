@@ -10,11 +10,10 @@ module load anaconda3
 # source activate torch39
 source activate raytorch
 
-
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-
+echo "hello"
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
-
+echo "hi"
 python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_UNETSE_ray.py"
 
 echo "hp_tuning executed"

@@ -10,6 +10,12 @@ from ray.tune.search.optuna import OptunaSearch
 from models.UNET_regressionSE import UNetRegressionSE
 from sklearn.model_selection import GroupShuffleSplit
 from ray.tune import CLIReporter
+import ray
+import os
+
+print(os.getcwd())
+
+ray.init(ignore_reinit_error=True)
 
 print("Trial started:")
 import sys
@@ -24,9 +30,9 @@ reporter = CLIReporter(
 root = Path(PROJECT_ROOT)
 
 # filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
-# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
-filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+# filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
 
 def train_model(config):
     # Prepare dataset
@@ -49,7 +55,7 @@ def train_model(config):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    for epoch in range(7):  # Use small number for tuning speed
+    for epoch in range(6):  # Use small number for tuning speed
         model.train()
         for batch in train_loader:
             inputs, targets = batch
