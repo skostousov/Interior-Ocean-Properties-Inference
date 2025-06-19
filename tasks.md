@@ -89,4 +89,9 @@
             - Name: 
 
 
+ADD MORE RUNS TO saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250618_220110>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_cluster.pt>
+
+Run Ready RUNALL.sh
+
+
         
