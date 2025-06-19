@@ -121,7 +121,7 @@ def main(args):
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
     loss_fn = nn.L1Loss()
 
-    test_indices_path = Path(cfg['data'][submode]["test_indices"]+str(grid_size))
+    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', str(grid_size)+'.pt'))
     train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
     train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 
@@ -136,7 +136,7 @@ def main(args):
     best_epoch=0
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    model_name = f"MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{(cfg['data'][submode]['test_indices']).replace('/', '_')}>"
+    model_name = f"MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{str(test_indices_path).replace('/', '_')}>"
     model_dir = cfg["training"]["model_save_dest"]
     save_dir = root / model_dir / model_name
     os.makedirs(save_dir, exist_ok=True)
