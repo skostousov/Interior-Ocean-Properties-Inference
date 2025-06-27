@@ -114,7 +114,7 @@ if __name__ == "__main__":
     import torch
     model = DA_CNN(6, 1)
     print(model)
-    x = torch.randn(1, 6, 21, 21)
+    x = torch.randn(1, 6, 13, 13)
     y = model(x)
     print(y.shape)
 

@@ -11,7 +11,7 @@ data_class = TemporalDataset
 
 root = Path(PROJECT_ROOT)
 
-relative_file = "data/BoBDaily/BoBDaily_1993-1993.nc"
+relative_file = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
 filepath = root / relative_file
 filepath_no_nc = root/relative_file.replace(".nc", f"_{data_class.name()}.png")
 
@@ -32,7 +32,7 @@ ax = np.atleast_2d(ax)
 
 
 for month, image in enumerate(annotation_map_to_plot):
-    im = ax[month//unit, month%unit].imshow(image, cmap='viridis', vmax=60, vmin=0, origin='lower')
+    im = ax[month//unit, month%unit].imshow(image, cmap='viridis', vmax=100, vmin=0, origin='lower')
     ax[month//unit, month%unit].set_title(f"Temporal Unit {month+1} ")
     ax[month//unit, month%unit].axis('off')
     fig.colorbar(im, label='MLD (m)', ax=ax[month//unit, month%unit])
