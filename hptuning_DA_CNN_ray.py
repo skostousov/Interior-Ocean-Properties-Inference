@@ -25,7 +25,9 @@ root = Path(PROJECT_ROOT)
 #filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
 # filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
-filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+# filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+# filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
 
 
 def train_model(config):

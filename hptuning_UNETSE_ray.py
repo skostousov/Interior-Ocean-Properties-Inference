@@ -33,7 +33,9 @@ root = Path(PROJECT_ROOT)
 # filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
 # filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
-filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
+# filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
+
 
 def train_model(config):
     # Prepare dataset
@@ -56,7 +58,7 @@ def train_model(config):
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    for epoch in range(6):  # Use small number for tuning speed
+    for epoch in range(7):  # Use small number for tuning speed
         model.train()
         for batch in train_loader:
             inputs, targets = batch
@@ -86,6 +88,14 @@ search_space = {
     "reduction": tune.choice([2, 4, 6, 8, 16]),
 }
 
+# preset = {
+#     "lr": 5e-5,
+#     "batch_size": 50,
+#     "grid_size": 21,
+#     "base_filters": 32,
+#     "reduction": 8,
+# }
+
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
@@ -98,7 +108,7 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=30,
+    num_samples=10,
     scheduler=scheduler,
     storage_path=str(root / "ray_results" / f"hptuning_UNET_SE_{filepath.split('/')[-1].split('.')[0]}"),
     verbose=True,
@@ -106,6 +116,7 @@ tune.run(
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
+        # points_to_evaluate=[preset]
     ),
     log_to_file=True,
     resume="AUTO+RESTART_ERRORED”"

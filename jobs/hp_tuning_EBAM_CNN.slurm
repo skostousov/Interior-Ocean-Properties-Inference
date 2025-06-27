@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=hp_EBAM_ray
+#SBATCH --job-name=hp_EBAM_M_ray
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8

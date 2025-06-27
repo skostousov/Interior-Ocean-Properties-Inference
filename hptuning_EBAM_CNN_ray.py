@@ -25,7 +25,9 @@ root = Path(PROJECT_ROOT)
 #filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
 #filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
-filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+# filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
+# filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
 
 
 def train_model(config):
@@ -78,6 +80,13 @@ search_space = {
     "num_heads": tune.choice([2, 3, 6]),
 }
 
+preset = {
+    "lr": 5.909729808291333e-05,
+    "batch_size": 10,
+    "grid_size": 21,
+    "num_heads": 6,
+}
+
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
@@ -98,6 +107,7 @@ tune.run(
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
+        points_to_evaluate=[preset],
     ),
     log_to_file=True,
     resume="AUTO+RESTART_ERRORED”"
