@@ -198,6 +198,7 @@ def main(args):
                 if p.grad is not None:
                     writer.add_histogram(f"gradients/{name}", p.grad, epoch)
         val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
+        scheduler.step(train_loss)
         writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
         update_values(info_path, {'current_epoch': epoch})
         checkpoint = {
