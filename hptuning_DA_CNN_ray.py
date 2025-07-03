@@ -23,11 +23,11 @@ reporter = CLIReporter(
 root = Path(PROJECT_ROOT)
 
 #filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
-# filepath  = 'data/monthly/ten_sample_1993-2003.nc'
+filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
 # filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
 # filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
-filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
+# filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
 
 
 def train_model(config):
@@ -75,7 +75,7 @@ def train_model(config):
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
-    "batch_size": tune.choice([10, 50, 100]),
+    "batch_size": tune.choice([10, 32, 50, 100, 200]),
     "grid_size": tune.choice([17, 21, 25]),
     "first_layer_filters": tune.choice([8, 16, 32, 64]),
     "kernel_size": tune.choice([1, 3])
@@ -93,7 +93,7 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=10,
+    num_samples=100,
     scheduler=scheduler,
     storage_path=str(root / "ray_results" / f"hptuning_DA_CNN_{filepath.split('/')[-1].split('.')[0]}"),
     verbose=True,
@@ -103,6 +103,8 @@ tune.run(
         mode="min",
     ),
     log_to_file=True,
-    resume="AUTO+RESTART_ERRORED”"
+    resume= True,
+    name=f"hptuning_DA_CNN_long_{filepath.split('/')[-1].split('.')[0]}",
+
 
 )
