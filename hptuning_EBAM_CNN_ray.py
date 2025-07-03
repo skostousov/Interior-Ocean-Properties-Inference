@@ -10,6 +10,14 @@ from ray.tune.search import BasicVariantGenerator
 from ray.tune.search.optuna import OptunaSearch
 from sklearn.model_selection import GroupShuffleSplit
 from ray.tune import CLIReporter
+import tempfile
+import ray
+
+
+season = "autumn"
+
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_ebam_{season}_")
+ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
 import sys
@@ -27,12 +35,12 @@ root = Path(PROJECT_ROOT)
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
 # filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
 # filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
-filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
-
+# filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc"
 
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]), season=season)
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -80,12 +88,12 @@ search_space = {
     "num_heads": tune.choice([2, 3, 6]),
 }
 
-preset = {
-    "lr": 5.909729808291333e-05,
-    "batch_size": 10,
-    "grid_size": 21,
-    "num_heads": 6,
-}
+# preset = {
+#     "lr": 5.909729808291333e-05,
+#     "batch_size": 10,
+#     "grid_size": 21,
+#     "num_heads": 6,
+# }
 
 scheduler = ASHAScheduler(
     metric="val_loss",
@@ -101,13 +109,13 @@ tune.run(
     config=search_space,
     num_samples=10,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_EBAM_CNN_{filepath.split('/')[-1].split('.')[0]}"),
+    storage_path=str(root / "ray_results" / f"hptuning_EBAM_CNN_{filepath.split('/')[-1].split('.')[0]}+{season}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(
         metric="val_loss",
         mode="min",
-        points_to_evaluate=[preset],
+        # points_to_evaluate=[preset],
     ),
     log_to_file=True,
     resume="AUTO+RESTART_ERRORED”"
