@@ -11,11 +11,17 @@ from models.UNET_regressionSE import UNetRegressionSE
 from sklearn.model_selection import GroupShuffleSplit
 from ray.tune import CLIReporter
 import ray
+import tempfile
 import os
 
 print(os.getcwd())
 
-ray.init(ignore_reinit_error=True)
+season = "winter"
+
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_unetse_{season}_")
+ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
+
+
 
 print("Trial started:")
 import sys
@@ -34,12 +40,12 @@ root = Path(PROJECT_ROOT)
 # filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
 # filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
 # filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
-filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
-
+# filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc"
 
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]), season=season)
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -110,7 +116,7 @@ tune.run(
     config=search_space,
     num_samples=10,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_UNET_SE_{filepath.split('/')[-1].split('.')[0]}"),
+    storage_path=str(root / "ray_results" / f"hptuning_UNET_SE_{filepath.split('/')[-1].split('.')[0]}+{season}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(

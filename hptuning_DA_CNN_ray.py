@@ -10,6 +10,13 @@ from ray.tune.search import BasicVariantGenerator
 from ray.tune.schedulers import ASHAScheduler
 from sklearn.model_selection import GroupShuffleSplit
 from ray.tune import CLIReporter
+import ray
+import tempfile
+
+season = "winter"
+
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_{season}_")
+ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
 import sys
@@ -28,11 +35,12 @@ filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
 # filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
 # filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
-
+filepath = "data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc"
+season = "summer"
 
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]))
+    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]), season=season)
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -95,7 +103,7 @@ tune.run(
     config=search_space,
     num_samples=100,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_DA_CNN_{filepath.split('/')[-1].split('.')[0]}"),
+    storage_path=str(root / "ray_results" / f"hptuning_DA_CNN_{filepath.split('/')[-1].split('.')[0]}+{season}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(
