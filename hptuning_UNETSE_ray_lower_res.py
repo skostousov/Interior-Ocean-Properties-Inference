@@ -16,7 +16,7 @@ from data.argo.alternate_dataset import myDataset
 
 print(os.getcwd())
 
-season = "winter" #"summer" (4) 
+season = "autumn" #"summer" (4) 
 
 temp_dir = tempfile.mkdtemp(prefix=f"ray_job_unetse_full_grace_{season}_")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
