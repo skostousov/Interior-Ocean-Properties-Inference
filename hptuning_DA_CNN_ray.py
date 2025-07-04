@@ -36,7 +36,6 @@ filepath  = 'data/monthly/ten_sample_1993-2003.nc'
 # filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
 # filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
 # filepath = "data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc"
-season = "summer"
 
 def train_model(config):
     # Prepare dataset
