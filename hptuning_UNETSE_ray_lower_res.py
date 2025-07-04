@@ -99,7 +99,7 @@ scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
     max_t=20,
-    grace_period=10,
+    grace_period=20,
     reduction_factor=2
 )
 
