@@ -1,5 +1,4 @@
 from models.DA_CNN import DA_CNN
-from utils.datasettemporal import TemporalDataset
 from utils.config import PROJECT_ROOT
 from pathlib import Path
 import torch
@@ -12,10 +11,11 @@ from sklearn.model_selection import GroupShuffleSplit
 from ray.tune import CLIReporter
 import ray
 import tempfile
+from data.argo.alternate_dataset import myDataset
 
-season = "winter"
+season = "autumn"
 
-temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_{season}_")
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_20_pat_{season}")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
@@ -23,24 +23,17 @@ import sys
 sys.stdout.flush()
 
 reporter = CLIReporter(
-    parameter_columns=["lr", "batch_size", "grid_size", "first_layer_filters", "kernel_size"],
+    parameter_columns=["lr", "batch_size", "first_layer_filters", "kernel_size"],
     metric_columns=["val_loss", "training_iteration", "total_time_s"]
 )
+criterion = torch.nn.MSELoss()
+
 
 root = Path(PROJECT_ROOT)
 
-#filepath = 'data/daily_alternative_small/small_daily_alternative_sample_1993-1993.nc'
-filepath  = 'data/monthly/ten_sample_1993-2003.nc'
-# filepath = 'data/BoBDaily/BoBDaily_1993-1993.nc'
-# filepath= 'data/BoBMonthly/BoBMonthly_1993-2003.nc'
-# filepath = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
-# filepath = "data/WaterOnlyMonthly/WaterOnlyMonthly_1993-2003.nc"
-# filepath = "data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc"
-season = "summer"
-
 def train_model(config):
     # Prepare dataset
-    dataset = TemporalDataset(filepath=root / filepath, grid_size=int(config["grid_size"]), season=season)
+    dataset = myDataset(season=season)
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -51,22 +44,24 @@ def train_model(config):
     train_subset = Subset(dataset, train_idx)
     val_subset = Subset(dataset, val_idx)
     train_loader = DataLoader(train_subset, batch_size=int(config["batch_size"]), shuffle=True)
-    val_loader = DataLoader(val_subset, batch_size=int(config["batch_size"]), shuffle=False)
+    val_loader = DataLoader(val_subset, batch_size=1, shuffle=False)
 
-    model = DA_CNN(6, first_layer_filters=int(config["first_layer_filters"]), kernel_size=int(config['kernel_size']))
+    model = DA_CNN(dataset[0][0].shape[0], first_layer_filters=int(config["first_layer_filters"]), kernel_size=int(config['kernel_size']))
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model.to(device)
-    criterion = torch.nn.L1Loss()
+    # criterion = torch.nn.L1Loss()
+    criterion = torch.nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
-    for epoch in range(7):  # Use small number for tuning speed
+    best_val_loss = float('inf')
+    for epoch in range(20):
         model.train()
         for batch in train_loader:
-            inputs, targets = batch
+            inputs, targets, _ = batch
             inputs, targets = inputs.to(device), targets.to(device)
             optimizer.zero_grad()
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            loss = criterion(outputs, targets.unsqueeze(1))
             loss.backward()
             optimizer.step()
 
@@ -74,17 +69,19 @@ def train_model(config):
         val_loss = 0.0
         with torch.no_grad():
             for batch in val_loader:
-                inputs, targets = batch
+                inputs, targets, _ = batch
                 inputs, targets = inputs.to(device), targets.to(device)
                 outputs = model(inputs)
-                val_loss += criterion(outputs, targets).item()
+                val_loss += criterion(outputs, targets.unsqueeze(1)).item()
         val_loss /= len(val_loader)
         tune.report(val_loss=val_loss)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+        tune.report(val_loss=best_val_loss)
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
-    "batch_size": tune.choice([10, 32, 50, 100, 200]),
-    "grid_size": tune.choice([17, 21, 25]),
+    "batch_size": tune.choice([10, 50, 100, 200]),
     "first_layer_filters": tune.choice([8, 16, 32, 64]),
     "kernel_size": tune.choice([1, 3])
 }
@@ -92,8 +89,8 @@ search_space = {
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
-    max_t=7,
-    grace_period=2,
+    max_t=20,
+    grace_period=10,
     reduction_factor=2
 )
 
@@ -101,9 +98,9 @@ tune.run(
     train_model,
     resources_per_trial={"cpu": 2, "gpu": 1 if torch.cuda.is_available() else 0},
     config=search_space,
-    num_samples=100,
+    num_samples=70,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_DA_CNN_{filepath.split('/')[-1].split('.')[0]}+{season}"),
+    storage_path=str(root / "ray_results" / f"hptuning_extended_patience_DA_CNN_low_res_{season}_loss_{criterion.__class__.__name__}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(
@@ -111,8 +108,6 @@ tune.run(
         mode="min",
     ),
     log_to_file=True,
-    resume= "AUTO",
-    name=f"hptuning_DA_CNN_long_{filepath.split('/')[-1].split('.')[0]}",
-
+    resume="AUTO"
 
 )

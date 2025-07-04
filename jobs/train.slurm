@@ -21,11 +21,12 @@ data_processors=$3
 grid_size=$4
 lr=$5
 batch_size=$6
+season=$7
 
-shift 6
+shift 7
 
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py" --num_epochs "$num_epochs" --data_processors "$data_processors" --grid_size "$grid_size" --lr "$lr" --batch_size "$batch_size" "$model" "$@" \
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training.py" --num_epochs "$num_epochs" --data_processors "$data_processors" --grid_size "$grid_size" --lr "$lr" --batch_size "$batch_size" --season "$season" "$model" "$@" \
 && model="saved_models/$(ls -td -- $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/saved_models/*/*/ | head -1)" \
 && model=${model#*$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/} \
 && model=${model%/} \

@@ -33,13 +33,13 @@ def main(args):
 
     model = torch.load(model_path/'best_model', map_location=device, weights_only=False)
     model.eval()
-
+    season = info["season"]
     grid_size = int(info['grid_size'])
 
     downsample = info['downsample'] 
 
     print(f"Using data processor {info['data_processor']}")
-    data = fetch_data_processor(info['data_processor'])(filepath=data_file, grid_size=grid_size, downsample=downsample)
+    data = fetch_data_processor(info['data_processor'])(filepath=data_file, grid_size=grid_size, downsample=downsample, season=info["season"])
 
     # data = XArrayDataset(filepath=data_file)
     test_idx = test_indices(test_indices_file)
@@ -129,6 +129,7 @@ def main(args):
 
     fig, ax = plt.subplots(max(1, len(time_steps)), 2, figsize=(15, 8* len(time_steps)))
     ax = np.atleast_2d(ax)
+    total_rmse = 0
     for i, t in enumerate(time_steps):
         pred_map = pred_maps[i]
         label_map = label_maps[i]    
@@ -139,11 +140,14 @@ def main(args):
         fig.colorbar(im_0, label='Actual MLD (m)', ax=ax[i, 0])
         im_1 = ax[i, 1].imshow(pred_map, origin='lower', vmin=0, vmax=100, cmap='viridis')
         mae = mae_loss(torch.tensor(label_map), torch.tensor(pred_map)).item()
-        ax[i, 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}")
+        rmse = np.sqrt(np.mean((pred_map - label_map)**2))
+        total_rmse += rmse
+        ax[i, 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}" + " RMSE: " + f"{rmse:.2f}")
         ax[i, 1].set_xlabel('Longitude Index')
         ax[i, 1].set_ylabel('Latitude Index')
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
-    plt.suptitle(f"{model_name} \n Results")
+    total_rmse = total_rmse / len(time_steps)
+    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: f{total_rmse:.2f}")
     plt.subplots_adjust(hspace=0.5)
     fig.savefig(model_path / "results.png", dpi=300)
 

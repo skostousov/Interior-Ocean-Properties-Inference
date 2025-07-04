@@ -19,12 +19,14 @@ model=$1
 num_epochs=$2
 lr=$3
 batch_size=$4
+season=$5
+loss=$6
 
-shift 4
+shift 6
 
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training_lower_res.py" --num_epochs "$num_epochs" --lr "$lr" --batch_size "$batch_size" "$model" "$@" \
-&& model="saved_models/$(ls -td -- $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/saved_models/*/*/ | head -1)" \
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/begin_training_lower_res.py" --loss "$loss" --num_epochs "$num_epochs" --lr "$lr" --batch_size "$batch_size" --season "$season" "$model" "$@" \
+&& model="lower_res_models/$(ls -td -- $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/lower_res_models/* | head -1)" \
 && model=${model#*$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/} \
 && model=${model%/} \
 && echo "${model}" > "$SCRATCH/logs/${JOBID}_model_dir.txt"

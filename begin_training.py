@@ -108,9 +108,11 @@ def main(args):
     else:
         grid_size = cfg['data']['grid_size']
 
+    season =args.season
+
     data_aug = RescaledRotationTransform()
     print(args.downsample)
-    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size, downsample=bool(args.downsample))
+    data = fetch_data_processor(args.data_processors)(transform=data_aug, grid_size=grid_size, downsample=bool(args.downsample), season=season)
 
     batch_size = args.batch_size
     epochs = cfg['training']["epochs"]
@@ -121,7 +123,7 @@ def main(args):
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
     loss_fn = nn.L1Loss()
 
-    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', str(grid_size)+'.pt'))
+    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(grid_size)}+{str(season)}'+'.pt'))
     train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
     train_data, val_data, = Subset(data, train_idx), Subset(data, val_idx)
 
@@ -136,9 +138,9 @@ def main(args):
     best_epoch=0
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    model_name = f"MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{str(test_indices_path).replace('/', '_')}>"
+    model_name = f"SEASON:{args.season}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{str(test_indices_path).replace('/', '_')}>"
     model_dir = cfg["training"]["model_save_dest"]
-    save_dir = root / model_dir / model_name
+    save_dir = root / model_dir / season / model_name
     os.makedirs(save_dir, exist_ok=True)
 
     writer= SummaryWriter(save_dir / 'tensorboard_logs')
@@ -168,6 +170,7 @@ def main(args):
         "corresponding_train_loss": train_loss,
         "early_stopping_thresh": cfg["training"]["early_stopping_thresh"],
         "lr": args.lr,
+        "season": season,
         "model_specific_args": models[args.model][1],
         }
 
@@ -185,8 +188,16 @@ def main(args):
                 'optimizer_state': optimizer.state_dict(),
                 'scheduler_state': scheduler.state_dict(),
                 }
+    best_checkpoint = {
+                'best_model_state':model.state_dict(),
+                'best_optimizer_state': optimizer.state_dict(),
+                'best_scheduler_state': scheduler.state_dict(),
+                }
     torch.save(checkpoint, save_dir / 'checkpoint.pt')
+    torch.save(best_checkpoint, save_dir / 'best_checkpoint.pt')
     torch.save(model, save_dir / 'best_model')
+    torch.save(model, save_dir / 'model')
+
 
     # for epoch in range(0, epochs):
     for epoch in range(0, num_epochs):
@@ -201,16 +212,23 @@ def main(args):
         val_loss = val_loop(val_dataloader, model, loss_fn, device, scheduler)
         writer.add_scalars('Loss', {'val': val_loss, 'train': train_loss}, epoch)
         update_values(info_path, {'current_epoch': epoch})
+        checkpoint = {
+                    'model_state':model.state_dict(),
+                    'optimizer_state': optimizer.state_dict(),
+                    'scheduler_state': scheduler.state_dict(),
+                    }
+        torch.save(checkpoint, save_dir / 'checkpoint.pt')
+        torch.save(model, save_dir / 'model')
         if val_loss < best_loss:
             best_epoch = epoch
             best_loss = val_loss
             corresponding_train_loss = train_loss
-            checkpoint = {
-                'model_state':model.state_dict(),
-                'optimizer_state': optimizer.state_dict(),
-                'scheduler_state': scheduler.state_dict(),
+            best_checkpoint = {
+                'best_model_state':model.state_dict(),
+                'best_optimizer_state': optimizer.state_dict(),
+                'best_scheduler_state': scheduler.state_dict(),
                 }
-            torch.save(checkpoint, save_dir / 'checkpoint.pt')
+            torch.save(best_checkpoint, save_dir / 'best_checkpoint.pt')
             torch.save(model, save_dir / 'best_model')
         update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_train_loss": corresponding_train_loss})
         if epoch - best_epoch >= cfg["training"]["early_stopping_thresh"]:
@@ -250,5 +268,6 @@ if __name__ == "__main__":
     parser.add_argument('--downsample', default=False, type=bool)
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=50, type=int)
+    parser.add_argument('--season', default='all', type=str)
     args = parser.parse_args()
     main(args)

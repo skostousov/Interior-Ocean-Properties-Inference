@@ -9,7 +9,7 @@ prevJob_id=$(sbatch jobs/continue_train.slurm $MODEL 10 | awk '{print $4}')
 
 for i in {1..10}
 do
-    prevJob_id=$(sbatch --dependency=afterok:$prevJob_id jobs/continue_train.slurm $MODEL 10 | awk '{print $4}')
+    prevJob_id=$(sbatch --dependency=afterok:$prevJob_id jobs/continue_train.slurm $MODEL 5 | awk '{print $4}')
 done
 
 echo "model trained"

@@ -1,8 +1,9 @@
-from begin_training import train_loop, val_loop, update_values, fetch_data_processor
+from begin_training_lower_res import train_loop, val_loop, update_values
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from pathlib import Path
+from data.argo.alternate_dataset import myDataset, TestSubset
 from torch.utils.data import Subset, DataLoader
 from utils.transforms import RescaledRotationTransform
 from utils.config import PROJECT_ROOT
@@ -40,6 +41,7 @@ def main(args):
     info = fetch_info(info_path)
 
     training_completed = info["training_completed"]
+    print(training_completed)
     if not training_completed:
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         print(f"Using {device} device")
@@ -52,7 +54,9 @@ def main(args):
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         scheduler.load_state_dict(checkpoint['scheduler_state'])
 
-        loss_fn = nn.L1Loss()
+        loss_dict = {'L1' : nn.L1Loss, 'MSE' : nn.MSELoss}
+
+        loss_fn = loss_dict[info["loss_name"]]()
         assert info['loss_fn'] == loss_fn.__class__.__name__, f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__class__.__name__}"
 
         if info['transform']:
@@ -61,16 +65,11 @@ def main(args):
         else:
             data_aug = None
 
-        downsample = info['downsample'] 
-
-        grid_size = int(info['grid_size'])
-
-        data = fetch_data_processor(info['data_processor'])(filepath=project_root / info['data_file'], transform=data_aug, downsample=downsample, grid_size=grid_size, season=info["season"])
-
+        data = myDataset(transform=data_aug, season=info["season"])
 
         batch_size = int(info['batch_size']) 
         train_idx, val_idx, _ = train_val_test_split_temp(data, seed=42, test_indices_path=Path(info['test_indices']), gen_new=False)
-        train_data, val_data = Subset(data, train_idx), Subset(data, val_idx)
+        train_data, val_data = Subset(data, train_idx), TestSubset(data, val_idx)
         print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
 
         train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
