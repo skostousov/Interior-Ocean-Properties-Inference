@@ -1,0 +1,116 @@
+from utils.config import RAW_CONFIG, PROJECT_ROOT, RELEVANT_CONFIG
+from pathlib import Path
+from torch.utils.data import DataLoader
+from utils.splitter import test_indices
+import torch
+import pickle
+from pathlib import Path
+from utils.config import PROJECT_ROOT
+import matplotlib.pyplot as plt
+import numpy as np
+from continue_training import fetch_info
+import torch.nn as nn
+import os
+from data.argo.alternate_dataset import myDataset
+from data.argo.alternate_dataset import TestSubset
+import scipy.ndimage as ndimage
+
+
+def main(args):
+    project_root = Path(PROJECT_ROOT)
+    model_relative_path = args.model_relative_path
+    model_name = model_relative_path.split("/")[-1]
+    model_path = project_root / model_relative_path
+
+    info_path = model_path / "training_info.txt"
+    info = fetch_info(info_path)
+    test_indices_file = project_root / info['test_indices']
+
+    loss_fn = nn.L1Loss()
+    assert info['loss_fn'] == loss_fn.__class__.__name__, f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__class__.__name__}"
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model = torch.load(model_path/'best_model', map_location=device, weights_only=False)
+    model.eval()
+
+    season = info['season']
+
+    max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
+    vmax = max_dict[season]
+
+    dataset = myDataset(season=season)
+
+    # data = XArrayDataset(filepath=data_file)
+    test_idx = test_indices(test_indices_file)
+    test_data = TestSubset(dataset, test_idx)
+    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True,)
+    test_months = list(set([dataset.groups[i] for i in test_idx]))
+    loss = 0
+
+    mld_labels = np.zeros((len(test_months), len(dataset.argo_cut["latitude"]), len(dataset.argo_cut["longitude"])))
+    mld_preds = np.zeros((len(test_months), len(dataset.argo_cut["latitude"]), len(dataset.argo_cut["longitude"])))
+
+    for X, y, extra_info in test_dataloader:
+        X, y = X.to(device), y.to(device)
+        preds = model(X)
+        month_idx = int(extra_info[-1])
+        month_pos = test_months.index(month_idx)
+        lat = int((extra_info[0]).item() - dataset.argo_cut["latitude"].values.min())
+        lon = int((extra_info[1]).item() - dataset.argo_cut["longitude"].values.min())
+        time = extra_info[2]
+        print(f"Processing month {month_idx}, lat {lat}, lon {lon}, time {time}")
+        mld_labels[month_pos, lat, lon] = y.item() * (dataset.stds["mld"]) + dataset.means["mld"]
+        mld_preds[month_pos, lat, lon] = preds.item() * (dataset.stds["mld"]) + dataset.means["mld"]
+    mask = (mld_preds != 0).astype(float)
+    masked_data = mld_preds * mask
+    smoothed_data = ndimage.gaussian_filter(masked_data, sigma=(0, 1, 1), order=0)
+    weights = ndimage.gaussian_filter(mask, sigma=(0, 1, 1), order=0)
+    eps = 1e-8
+    normalized = np.zeros_like(mld_preds)
+    nonzero = mask.astype(bool)
+    normalized[nonzero] = smoothed_data[nonzero] / (weights[nonzero] + eps)
+    mld_preds_smoothed = normalized
+##-------------##-------------##--------------#########################
+    mae_loss = nn.L1Loss()
+    fig, axs = plt.subplots(len(test_months), 3, figsize=(16, 5 * len(test_months)), constrained_layout=True)
+    total_rmse = 0
+    for i, month in enumerate(test_months):
+        im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 0].set_title(f"Label - Month: {month}")
+        im_1 = axs[i, 1].imshow(mld_preds[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(im_1, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
+        rmse = np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2))
+        total_rmse += rmse
+        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}")
+        axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower'), ax=axs[i, 2], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 2].set_title(f"Smoothed Prediction - Month: {month}")
+    total_rmse = total_rmse / len(test_months)
+    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f}")
+
+    fig.savefig(model_path / "results.png", dpi=300)
+
+    fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
+    for i, month in enumerate(test_months):
+        if len(test_months) == 1:
+            ax = [ax]  # Ensure ax is iterable if there's only one time step
+        im_2 = axs[i, 0].imshow(abs(mld_labels[i] - mld_preds[i]), cmap='coolwarm', vmin=0, vmax=40, origin='lower')
+        fig.colorbar(im_2, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 0].set_title(f"Absolute Error - Month: {month}, RMSE: {np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2)):.2f}")
+        im_3 = axs[i, 1].imshow(abs(mld_labels[i] - mld_preds_smoothed[i]), cmap='coolwarm', vmin=0, vmax=40, origin='lower')
+        fig.colorbar(im_3, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 1].set_title(f"Absolute Error (smoothed) - Month: {month}, RMSE: {np.sqrt(np.mean((mld_labels[i] - mld_preds_smoothed[i])**2)):.2f}")
+    plt.suptitle(f"{model_name} \n Difference Results")
+    plt.subplots_adjust(hspace=0.3)
+    plt.show()
+    fig.savefig(model_path / "results_diff.png", dpi=600)
+
+if __name__ == "__main__":
+    import argparse
+    parser = argparse.ArgumentParser(description="Continue training a model.")
+    parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")
+    parser.add_argument('--recalculate', type=bool, default=True, help="recompute inference forward pass")
+    args = parser.parse_args()
+    main(args)
