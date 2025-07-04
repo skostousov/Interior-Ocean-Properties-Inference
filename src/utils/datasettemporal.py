@@ -3,7 +3,7 @@ from torch.utils.data import Subset
 from netCDF4 import Dataset as NETCDF4Dataset
 import numpy as np
 from pathlib import Path
-import copernicusmarine
+# import copernicusmarine
 from utils.config import RAW_CONFIG, RELEVANT_CONFIG, PROJECT_ROOT
 import torch
 from sklearn.preprocessing import RobustScaler
@@ -13,7 +13,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size']):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size'], season=None):
         self.cfg = cfg
         self.downsample = downsample
         self.features = cfg['data']['features']
@@ -22,6 +22,13 @@ class TemporalDataset(TorchDataset):
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
+        season_months = {
+                "winter": [12, 1, 2],
+                "spring": [3, 4, 5],
+                "summer": [6, 7, 8],
+                "autumn": [9, 10, 11]
+            }
+        self.relevant_months = season_months.get(season, range(1, 13))
         if filepath is not None:
             self.dataset = NETCDF4Dataset(filepath)
         else:
@@ -59,7 +66,7 @@ class TemporalDataset(TorchDataset):
         centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
-        self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
+        self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0]) if j%12 in self.relevant_months]
         self.groups = [datapoint[-1] for datapoint in self.grid_and_centre_coords_and_temp_unit]
 
         self.normalize = normalize
@@ -245,7 +252,7 @@ class TestSubsetRegression(Subset):
             return [self.__getitem__(idx) for idx in indices]
 
 if __name__ == "__main__":
-    dataset = TemporalDataset()
+    dataset = TemporalDataset(season="summer")
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset shape: {dataset[0][0].shape}, label shape: {dataset[0][1].shape}")
     print(dataset.grid_and_centre_coords_and_temp_unit[1])
