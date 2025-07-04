@@ -15,7 +15,7 @@ from data.argo.alternate_dataset import myDataset
 
 season = "autumn"
 
-temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_20_pat_{season}")
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_full_grace_{season}")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
@@ -100,7 +100,7 @@ tune.run(
     config=search_space,
     num_samples=70,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_extended_patience_DA_CNN_low_res_{season}_loss_{criterion.__class__.__name__}"),
+    storage_path=str(root / "ray_results" / f"full_grace_DA_CNN_low_res_{season}_loss_{criterion.__class__.__name__}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(

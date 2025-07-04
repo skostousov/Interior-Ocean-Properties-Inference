@@ -18,7 +18,7 @@ print(os.getcwd())
 
 season = "winter" #"summer" (4) 
 
-temp_dir = tempfile.mkdtemp(prefix=f"ray_job_unetse_20_{season}_")
+temp_dir = tempfile.mkdtemp(prefix=f"ray_job_unetse_full_grace_{season}_")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
@@ -109,7 +109,7 @@ tune.run(
     config=search_space,
     num_samples=70,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"hptuning_extended_patience_UNET_SE_low_res_{season}_loss_{criterion.__class__.__name__}"),
+    storage_path=str(root / "ray_results" / f"full_grace_UNET_SE_low_res_{season}_loss_{criterion.__class__.__name__}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(
