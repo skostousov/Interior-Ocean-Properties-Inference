@@ -20,6 +20,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import sys, importlib
 from data.argo.alternate_dataset import myDataset, TestSubset
+import scipy.ndimage as ndimage
+
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
@@ -121,13 +123,14 @@ def main(args):
     train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_frac=0.1, val_frac=0.135, gen_new=True)
 
 
-    train_data, val_data, = Subset(data, train_idx), TestSubset(data, val_idx)
+    train_data, val_data, test_data = Subset(data, train_idx), TestSubset(data, val_idx), TestSubset(data, test_idx)
 
     print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
     print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Val dataset shape: img: {val_data[0][0].shape}, lbl: {val_data[0][1].shape}")
 
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
     val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
+    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
 
     best_loss = float('inf')
     corresponding_train_loss = float('inf')
@@ -143,7 +146,6 @@ def main(args):
     info_path =  save_dir / 'training_info.txt'
     info_bef = {
         "start_time": start_timestamp,
-        "test_indices": f"{test_indices_path}",
         "total_epochs": epochs,
         "batch_size": batch_size,
         "model": model.__repr__().replace("\n", r"\n"),
@@ -234,6 +236,74 @@ def main(args):
 
     print(f"Best loss: {best_loss}")
     print(f"Training completed. Best model saved at {save_dir / 'best_model'}")
+
+    model = torch.load(save_dir / 'best_model', map_location=device, weights_only=False)
+
+    test_months = list(set([data.groups[i] for i in test_idx]))
+    loss = 0
+
+    max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
+    vmax = max_dict[season]
+
+    mld_labels = np.zeros((len(test_months), len(data.argo_cut["latitude"]), len(data.argo_cut["longitude"])))
+    mld_preds = np.zeros((len(test_months), len(data.argo_cut["latitude"]), len(data.argo_cut["longitude"])))
+
+    for X, y, extra_info in test_dataloader:
+        X, y = X.to(device), y.to(device)
+        preds = model(X)
+        month_idx = int(extra_info[-1])
+        month_pos = test_months.index(month_idx)
+        lat = int((extra_info[0]).item() - data.argo_cut["latitude"].values.min())
+        lon = int((extra_info[1]).item() - data.argo_cut["longitude"].values.min())
+        temp = extra_info[2]
+        print(f"Processing month {month_idx}, lat {lat}, lon {lon}, time {temp}")
+        mld_labels[month_pos, lat, lon] = y.item() * (data.stds["mld"]) + data.means["mld"]
+        mld_preds[month_pos, lat, lon] = preds.item() * (data.stds["mld"]) + data.means["mld"]
+    mask = (mld_preds != 0).astype(float)
+    masked_data = mld_preds * mask
+    smoothed_data = ndimage.gaussian_filter(masked_data, sigma=(0, 1, 1), order=0)
+    weights = ndimage.gaussian_filter(mask, sigma=(0, 1, 1), order=0)
+    eps = 1e-8
+    normalized = np.zeros_like(mld_preds)
+    nonzero = mask.astype(bool)
+    normalized[nonzero] = smoothed_data[nonzero] / (weights[nonzero] + eps)
+    mld_preds_smoothed = normalized
+##-------------##-------------##--------------#########################
+    mae_loss = nn.L1Loss()
+    fig, axs = plt.subplots(len(test_months), 3, figsize=(16, 5 * len(test_months)), constrained_layout=True)
+    total_rmse = 0
+    for i, month in enumerate(test_months):
+        im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 0].set_title(f"Label - Month: {month}")
+        im_1 = axs[i, 1].imshow(mld_preds[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(im_1, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
+        rmse = np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2))
+        total_rmse += rmse
+        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}")
+        axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        fig.colorbar(axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower'), ax=axs[i, 2], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 2].set_title(f"Smoothed Prediction - Month: {month}")
+    total_rmse = total_rmse / len(test_months)
+    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f}")
+
+    fig.savefig(save_dir / "results.png", dpi=300)
+
+    fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
+    for i, month in enumerate(test_months):
+        if len(test_months) == 1:
+            ax = [ax]  # Ensure ax is iterable if there's only one time step
+        im_2 = axs[i, 0].imshow(abs(mld_labels[i] - mld_preds[i]), cmap='coolwarm', vmin=0, vmax=40, origin='lower')
+        fig.colorbar(im_2, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 0].set_title(f"Absolute Error - Month: {month}, RMSE: {np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2)):.2f}")
+        im_3 = axs[i, 1].imshow(abs(mld_labels[i] - mld_preds_smoothed[i]), cmap='coolwarm', vmin=0, vmax=40, origin='lower')
+        fig.colorbar(im_3, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 1].set_title(f"Absolute Error (smoothed) - Month: {month}, RMSE: {np.sqrt(np.mean((mld_labels[i] - mld_preds_smoothed[i])**2)):.2f}")
+    plt.suptitle(f"{model_name} \n Difference Results")
+    plt.subplots_adjust(hspace=0.3)
+    plt.show()
+    fig.savefig(save_dir / "results_diff.png", dpi=600)
+
 
 if __name__ == "__main__":
     from utils.datasettemporalxarray import XArrayDataset
