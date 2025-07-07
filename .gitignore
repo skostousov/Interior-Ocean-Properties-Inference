@@ -1,4 +1,7 @@
-data/
+data/*
+!data/
+data/argo/*
+!data/argo/
 !data/argo/alternate_dataset.py
 sample_ds.ns
 src/__pycache__/
