@@ -109,7 +109,7 @@ tune.run(
         metric="val_loss",
         mode="min",
     ),
-    log_to_file=True,
+    log_to_file=False,
     resume= "AUTO",
     name=f"hptuning_DA_CNN_long_{filepath.split('/')[-1].split('.')[0]}",
 

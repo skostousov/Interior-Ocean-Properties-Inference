@@ -13,9 +13,9 @@ import ray
 import tempfile
 from data.argo.alternate_dataset import myDataset
 
-season = "autumn"
+season = "winter"
 
-temp_dir = tempfile.mkdtemp(prefix=f"ray_job_da_full_grace_{season}")
+temp_dir = tempfile.mkdtemp(prefix=f"coarsen_da_{season}")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
@@ -23,7 +23,7 @@ import sys
 sys.stdout.flush()
 
 reporter = CLIReporter(
-    parameter_columns=["lr", "batch_size", "first_layer_filters", "kernel_size"],
+    parameter_columns=["lr", "batch_size", "first_layer_filters", "kernel_size", "coarsen"],
     metric_columns=["val_loss", "training_iteration", "total_time_s"]
 )
 criterion = torch.nn.MSELoss()
@@ -33,7 +33,7 @@ root = Path(PROJECT_ROOT)
 
 def train_model(config):
     # Prepare dataset
-    dataset = myDataset(season=season)
+    dataset = myDataset(season=season, coarsen=config["coarsen"])
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -54,7 +54,7 @@ def train_model(config):
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
     best_val_loss = float('inf')
-    for epoch in range(20):
+    for epoch in range(15):
         model.train()
         for batch in train_loader:
             inputs, targets, _ = batch
@@ -74,23 +74,23 @@ def train_model(config):
                 outputs = model(inputs)
                 val_loss += criterion(outputs, targets.unsqueeze(1)).item()
         val_loss /= len(val_loader)
-        tune.report(val_loss=val_loss)
         if val_loss < best_val_loss:
             best_val_loss = val_loss
         tune.report(val_loss=best_val_loss)
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
-    "batch_size": tune.choice([10, 50, 100, 200]),
+    "batch_size": tune.choice([10, 32, 50, 100, 200]),
     "first_layer_filters": tune.choice([8, 16, 32, 64]),
-    "kernel_size": tune.choice([1, 3])
+    "kernel_size": tune.choice([1, 3]),
+    "coarsen": tune.choice([False, 2, 3, 4])
 }
 
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
-    max_t=20,
-    grace_period=20,
+    max_t=15,
+    grace_period=15,
     reduction_factor=2
 )
 
@@ -100,7 +100,7 @@ tune.run(
     config=search_space,
     num_samples=70,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"full_grace_DA_CNN_low_res_{season}_loss_{criterion.__class__.__name__}"),
+    storage_path=str(root / "ray_results" / f"coarsen_DA_CNN_low_res_{season}_loss_{criterion.__class__.__name__}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(

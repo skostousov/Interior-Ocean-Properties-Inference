@@ -93,7 +93,7 @@ def main(args):
     season = args.season
 
     data_aug = RescaledRotationTransform(scaling_interval=(1, 1.1))
-    data = myDataset(transform=data_aug, season=season)
+    data = myDataset(transform=data_aug, season=season, coarsen=args.coarsen)
 
     batch_size = args.batch_size
     epochs = 100
@@ -166,6 +166,7 @@ def main(args):
         "lr": args.lr,
         "season": season,
         "model_specific_args": models[args.model][1],
+        "coarsen":args.coarsen
         }
 
     with open(info_path, 'w') as f:
@@ -326,5 +327,6 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', default=50, type=int)
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--loss', type=str, default='L1', choices=['L1', 'MSE'])
+    parser.add_argument('--coarsen', type=int, default=1)
     args = parser.parse_args()
     main(args)

@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=hp_DA_low_res_ray
+#SBATCH --job-name=hp_c_DA_low_res_ray
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8

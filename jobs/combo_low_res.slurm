@@ -15,4 +15,4 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss MSE --num_epochs 60 --lr 1e-4 --batch_size 32 --season autumn DA_CNN --first_layer_filters 64 --kernel_size 3
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss MSE --num_epochs 60 --coarsen 2 --lr 0.008741764964168031 --batch_size 100 --season winter DA_CNN --first_layer_filters 32 --kernel_size 3
