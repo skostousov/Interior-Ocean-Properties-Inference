@@ -16,9 +16,9 @@ from data.argo.alternate_dataset import myDataset
 
 print(os.getcwd())
 
-season = "autumn" #"summer" (4) 
+season = "spring"
 
-temp_dir = tempfile.mkdtemp(prefix=f"ray_job_unetse_full_grace_{season}_")
+temp_dir = tempfile.mkdtemp(prefix=f"unetse_coarsen_{season}")
 ray.init(ignore_reinit_error=True, _temp_dir=temp_dir)
 
 print("Trial started:")
@@ -26,7 +26,7 @@ import sys
 sys.stdout.flush()
 
 reporter = CLIReporter(
-    parameter_columns=["lr", "batch_size", "base_filters", "reduction"],
+    parameter_columns=["lr", "batch_size", "base_filters", "reduction", "coarsen"],
     metric_columns=["val_loss", "training_iteration", "total_time_s"]
 )
 criterion = torch.nn.MSELoss()
@@ -35,7 +35,7 @@ root = Path(PROJECT_ROOT)
 
 def train_model(config):
     # Prepare dataset
-    dataset = myDataset(season=season)
+    dataset = myDataset(season=season, coarsen = config["coarsen"])
     groups = dataset.groups
 
     all_indices = list(range(len(dataset)))
@@ -56,7 +56,7 @@ def train_model(config):
     optimizer = torch.optim.Adam(model.parameters(), lr=config["lr"])
 
     best_val_loss = float('inf')
-    for epoch in range(20):  # Use small number for tuning speed
+    for epoch in range(15):  # Use small number for tuning speed
         model.train()
         for batch in train_loader:
             inputs, targets, _ = batch
@@ -82,9 +82,10 @@ def train_model(config):
 
 search_space = {
     "lr": tune.loguniform(1e-5, 1e-2),
-    "batch_size": tune.choice([10, 50, 100, 200]),
+    "batch_size": tune.choice([10, 32, 50, 100, 200]),
     "base_filters": tune.choice([8, 16, 32, 64]),
     "reduction": tune.choice([2, 4, 6, 8, 16]),
+    "coarsen": tune.choice([False, 2, 3, 4])
 }
 
 # preset = {
@@ -98,8 +99,8 @@ search_space = {
 scheduler = ASHAScheduler(
     metric="val_loss",
     mode="min",
-    max_t=20,
-    grace_period=20,
+    max_t=15,
+    grace_period=15,
     reduction_factor=2
 )
 
@@ -109,7 +110,7 @@ tune.run(
     config=search_space,
     num_samples=70,
     scheduler=scheduler,
-    storage_path=str(root / "ray_results" / f"full_grace_UNET_SE_low_res_{season}_loss_{criterion.__class__.__name__}"),
+    storage_path=str(root / "ray_results" / f"coarsen_UNETSE_low_res_{season}_loss_{criterion.__class__.__name__}"),
     verbose=True,
     progress_reporter=reporter,
     search_alg=OptunaSearch(
