@@ -190,11 +190,9 @@ def main(args):
     batch_size = args.batch_size
     G_lr = args.G_lr
     D_lr = args.D_lr
-    full_frames = args.full_frames
-
 
     data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
-    dataset = GANDataset(filepath = filepath, transform=data_aug, normalize=True, season=season, full_frames=full_frames)
+    dataset = GANDataset(filepath = filepath, transform=data_aug, normalize=True, season=season)
 
     epochs = 1000
     
@@ -265,8 +263,6 @@ def main(args):
         "G_lr": G_lr,
         "D_lr": D_lr,
         "season": season,
-        "full_frames": full_frames,
-        "season": season,
         }
 
     with open(info_path, 'w') as f:
@@ -334,7 +330,6 @@ def main(args):
             torch.save(G, save_dir / 'best_G_model.pt')
             torch.save(D, save_dir / 'best_D_model.pt')
         update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_G_train_loss": G_train_loss, "corresponding_D_train_loss": D_train_loss})
-        print(f"END OF EPOCH {epoch+1} | Average_D_loss: {total_loss_D:.4f} (Average_D_real: {total_real_loss_D:.4f}, Average_D_fake: {total_fake_loss_D:.4f}) | Average_G_loss: {total_loss_G:.4f} | Average_G_val_loss: {val_loss:.4f}\n")
         print(f"END OF EPOCH {epoch+1} \n| Average_D_loss: {total_loss_D:.4f} (Average_D_real: {total_real_loss_D:.4f}, Average_D_fake: {total_fake_loss_D:.4f}) |\n| Average_G_loss: {total_loss_G:.4f} | Normal_G_loss: {normal_loss_G:.4f} | Average_G_val_loss: {val_loss:.4f} |\n| BEST VAL LOSS: {best_loss:.4f}\n")
 
 
@@ -355,13 +350,11 @@ def main(args):
     max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
     vmax = getattr(max_dict, season, 100)
 
-    full_frames = dataset.full_frames
-
-    if not full_frames:
-        pred_map, mld_map = get_pred_and_mld_tensors(model, test_dataloader, dataset, device)
-        plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season)
-    else:
-        plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name)
+    # if not full_frames:
+    #     pred_map, mld_map = get_pred_and_mld_tensors(model, test_dataloader, dataset, device)
+    #     plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season)
+    # else:
+    plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name)
 
 
 
@@ -375,6 +368,5 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', default=10, type=int)
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--filepath', default='data/WaterOnlyMonthlySmall/WaterOnlyMonthlyExtendedSeasonalitySmall.nc', type=str, help="Path to the dataset file")
-    parser.add_argument('--full_frames', default=True, type=bool, help="Use full frames instead of patches")
     args = parser.parse_args()
     main(args)

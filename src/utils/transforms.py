@@ -17,7 +17,27 @@ class RescaledRotationTransform(object):
         else:
             return self.transform(image)
 
-    
+class GANTransform():
+    def __init__(self, size = 50):
+        self.random_crop = transforms.RandomResizedCrop(size)
+        self.random_h_flip = transforms.RandomHorizontalFlip(p=0.5)
+        self.random_v_flip = transforms.RandomVerticalFlip(p=0.5)
+        self.compose = transforms.Compose([
+            self.random_crop,
+            self.random_h_flip,
+            self.random_v_flip,
+        ])
+    def __call__(self, image, label=None):
+        img_features = image.shape[0]
+        if label is not None:
+            label_features = label.shape[0]
+            concatenated = torch.cat([image, label], axis=0)
+            output = self.compose(concatenated)
+            transformed_image, transformed_label = output[:img_features], output[img_features:label_features+img_features]
+            return transformed_image, transformed_label
+        else:
+            return self.compose(image)
+
     
 class ToTensor(object):
     def __call__(self, image, label=None):
