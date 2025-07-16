@@ -78,11 +78,12 @@ def plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season
     fig.savefig(save_dir / "results.png", dpi=300)
 
 def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name):
-    test_months = len(test_dataloader.dataset.indices)
-    fig, ax = plt.subplots(nrows=test_months, ncols=2, figsize=(15, 5 * test_months))
+    test_temp_units = len(test_dataloader.dataset.indices)
+    fig, ax = plt.subplots(nrows=test_temp_units, ncols=2, figsize=(15, 5 * test_temp_units))
     total_rmse = 0
     total_mae = 0
     for i, (X, y) in enumerate(test_dataloader):
+        real_idx = test_dataloader.dataset.indices[i]
         X, y = X.float().to(device), y.float()
         fake_y = G(X).detach().cpu().numpy()
         y, fake_y = dataset.std_label*y+dataset.mean_label, dataset.std_label*fake_y+dataset.mean_label
@@ -93,7 +94,7 @@ def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season,
         total_mae += mae
         vmin = 0
         ax[i, 0].imshow(y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
-        ax[i, 0].set_title("Real MLD | Season: {} | Model: {}".format(season, model_name))
+        ax[i, 0].set_title("Real MLD | Date: {} | Season: {} | Model: {}".format(dataset.full_dates[real_idx], season, model_name))
         ax[i, 1].imshow(fake_y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
         ax[i, 1].set_title("Generated MLD | RMSE: {:.2f}, MAE: {:.2f}".format(rmse, mae))
 
@@ -190,9 +191,10 @@ def main(args):
     batch_size = args.batch_size
     G_lr = args.G_lr
     D_lr = args.D_lr
+    groupby = args.groupby
 
     data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
-    dataset = GANDataset(filepath = filepath, transform=data_aug, normalize=True, season=season)
+    dataset = GANDataset(filepath = filepath, transform=data_aug, normalize=True, season=season, groupby=groupby)
 
     epochs = 1000
     
@@ -215,7 +217,7 @@ def main(args):
     opt_D = torch.optim.Adam(D.parameters(), lr=D_lr, betas=(0.5, 0.999))
 
     # test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(season)}'+'.pt'))
-    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{dataset.filepath.split("/")[-1].replace(".nc", "")}+{str(season)}'+'.pt'))
+    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{dataset.filepath.split("/")[-1].replace(".nc", "")}+_{str(season)}_{groupby}'+'.pt'))
     # train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
     train_idx, val_idx, test_idx = train_val_test_split_temp(dataset, seed=42, test_frac=0.1, val_frac=0.135, gen_new=True)
 
@@ -263,6 +265,7 @@ def main(args):
         "G_lr": G_lr,
         "D_lr": D_lr,
         "season": season,
+        "groupby": args.groupby,
         }
 
     with open(info_path, 'w') as f:
@@ -343,10 +346,6 @@ def main(args):
     model_name = model.name() if hasattr(model, 'name') else model.__class__.__name__
     print(f"Model name: {model_name}")
 
-
-    test_months = [dataset.indices_corresponding_months[i] for i in test_idx]
-    loss = 0
-
     max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
     vmax = getattr(max_dict, season, 100)
 
@@ -368,5 +367,6 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', default=10, type=int)
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--filepath', default='data/WaterOnlyMonthlySmall/WaterOnlyMonthlyExtendedSeasonalitySmall.nc', type=str, help="Path to the dataset file")
+    parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
     args = parser.parse_args()
     main(args)

@@ -23,6 +23,7 @@ class GANDataset(TemporalDataset):
         self.indices = range(len(self.data))
         assert len(self.indices) == len(self.groups), "Data and groups must have the same length"
         self.indices = [i for i in self.indices if (self.groupby_map["months"][i] % 12) + 1 in self.relevant_months]
+        self.full_dates = [self.dates[i] for i in self.indices]
         self.groups = [self.groups[i] for i in self.indices]
     def __len__(self):
        return len(self.indices)
