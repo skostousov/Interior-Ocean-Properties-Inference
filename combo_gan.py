@@ -116,6 +116,7 @@ def train_loop(G, D, train_dataloader, opt_G, opt_D, device):
     total_loss_D = 0
     total_fake_loss_D = 0
     total_real_loss_D = 0
+    normal_loss_G = 0  # Track the normal loss for G
     for i, (X, y) in enumerate(train_dataloader):
         X, y = X.float().to(device), y.float().to(device)
         fake_y = G(X)
@@ -136,6 +137,7 @@ def train_loop(G, D, train_dataloader, opt_G, opt_D, device):
 
         adv_loss = F.mse_loss(D_pred, torch.ones_like(D_pred))#How good is G at fooling D?
         l1_loss = F.mse_loss(fake_y, y)#`How close is G's prediction to the real value?
+        normal_loss_G += l1_loss.item()  # Track the normal loss for G
         loss_G = adv_loss + λ * l1_loss# Loss function for G combines ability to fool D and closeness to the real value
         
         total_loss_G += loss_G.item()
@@ -150,11 +152,13 @@ def train_loop(G, D, train_dataloader, opt_G, opt_D, device):
     total_loss_D /= size
     total_real_loss_D /= size
     total_fake_loss_D /= size
+    normal_loss_G /= size
     loss_dict = {
         'G_loss': total_loss_G,
         'D_loss': total_loss_D,
         'D_real_loss': total_real_loss_D,
-        'D_fake_loss': total_fake_loss_D
+        'D_fake_loss': total_fake_loss_D,
+        'normal_loss_G': normal_loss_G
     }
     return loss_dict
 
@@ -301,6 +305,7 @@ def main(args):
         total_loss_D = loss_dict['D_loss']
         total_real_loss_D = loss_dict['D_real_loss']
         total_fake_loss_D = loss_dict['D_fake_loss']
+        normal_loss_G= loss_dict["normal_loss_G"]
         val_loss = val_loop(G, val_dataloader, device)
         writer.add_scalars('Loss', {'val': val_loss, 'train_G': loss_dict['G_loss'], 'train_D': loss_dict['D_loss']}, epoch)
         update_values(info_path, {'current_epoch': epoch})
@@ -330,6 +335,8 @@ def main(args):
             torch.save(D, save_dir / 'best_D_model.pt')
         update_values(info_path, {"best_epoch": best_epoch, "best_val_loss": best_loss, "corresponding_G_train_loss": G_train_loss, "corresponding_D_train_loss": D_train_loss})
         print(f"END OF EPOCH {epoch+1} | Average_D_loss: {total_loss_D:.4f} (Average_D_real: {total_real_loss_D:.4f}, Average_D_fake: {total_fake_loss_D:.4f}) | Average_G_loss: {total_loss_G:.4f} | Average_G_val_loss: {val_loss:.4f}\n")
+        print(f"END OF EPOCH {epoch+1} \n| Average_D_loss: {total_loss_D:.4f} (Average_D_real: {total_real_loss_D:.4f}, Average_D_fake: {total_fake_loss_D:.4f}) |\n| Average_G_loss: {total_loss_G:.4f} | Normal_G_loss: {normal_loss_G:.4f} | Average_G_val_loss: {val_loss:.4f} |\n| BEST VAL LOSS: {best_loss:.4f}\n")
+
 
     update_values(info_path, {'training_completed': True})
     print(f"Best loss: {best_loss}")
