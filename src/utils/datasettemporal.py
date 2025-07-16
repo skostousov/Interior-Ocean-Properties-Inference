@@ -8,13 +8,17 @@ from utils.config import RAW_CONFIG, RELEVANT_CONFIG, PROJECT_ROOT
 import torch
 from sklearn.preprocessing import RobustScaler
 import torch.nn.functional as F
+import xarray as xr
 
 cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size'], season=None):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size'], season=None, data_processor="xarray", target_coarsen=None, feature_coarsen=None):
         self.cfg = cfg
+        self.target_coarsen = target_coarsen
+        self.feature_coarsen = feature_coarsen
+        self.data_processor = data_processor
         self.downsample = downsample
         self.features = cfg['data']['features']
         self.project_root = project_root
@@ -22,23 +26,49 @@ class TemporalDataset(TorchDataset):
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
-        season_months = {
+        self.grid_size = int(grid_size)
+        self.filepath = filepath
+        self.season_months = {
                 "winter": [12, 1, 2],
                 "spring": [3, 4, 5],
                 "summer": [6, 7, 8],
                 "autumn": [9, 10, 11]
             }
-        self.relevant_months = season_months.get(season, range(1, 13))
+        self.relevant_months = self.season_months.get(season, range(1, 13))
         if filepath is not None:
-            self.dataset = NETCDF4Dataset(filepath)
+            if self.data_processor == "netcdf4":
+                self.dataset = NETCDF4Dataset(filepath)
+            elif self.data_processor == "xarray":
+                self.dataset = xr.open_dataset(filepath)
+            else:
+                raise ValueError(f"Unsupported data processor: {self.data_processor}")
+
         else:
-            self.dataset = NETCDF4Dataset(Path(self._download()))
+            if self.data_processor == "netcdf4":
+                self.dataset = NETCDF4Dataset(Path(self._download()))
+            elif self.data_processor == "xarray":
+                self.dataset = xr.open_dataset(Path(self._download()))
+
+        if self.data_processor == "xarray" and self.feature_coarsen is not None:
+            self.dataset = self.dataset.coarsen(latitude=self.feature_coarsen, longitude=self.feature_coarsen, boundary="trim").mean()
+            self.grid_size = self.grid_size // self.feature_coarsen
+        
+        if self.data_processor == "xarray" and self.target_coarsen is not None:
+            mlotst_coarse = self.dataset["mlotst"].coarsen(latitude=self.target_coarsen, longitude=self.target_coarsen, boundary="pad").mean()
+            self.dataset["mlotst"] = mlotst_coarse.interp_like(self.dataset["mlotst"], method="nearest")
+
 
         self.relevant_variables = {k:v[:] for (k, v) in self.dataset.variables.items() if k in self.features}
         # delete dimensional variables
-        for key, _ in self.dataset.dimensions.items():
-            if key in self.relevant_variables.keys():
-                del self.relevant_variables[key]
+        if self.data_processor == "netcdf4":
+            for key, _ in self.dataset.dimensions.items():
+                if key in self.relevant_variables.keys():
+                    del self.relevant_variables[key]
+        elif self.data_processor == "xarray":
+            for key, _ in self.dataset.dims.items():
+                if key in self.relevant_variables.keys():
+                    del self.relevant_variables[key]
+
         # reshape variables into (months, 1, long, lat)
         for key, value in self.relevant_variables.items():
             if len (self.relevant_variables[key].shape) != 4: self.relevant_variables[key] = np.expand_dims(value, 1)
@@ -49,19 +79,9 @@ class TemporalDataset(TorchDataset):
         #creation of feature_map
         self.feature_map = np.concatenate(list(self.relevant_variables.values()), axis=1)
 
-        self.grid_size = int(grid_size)
-        if self.downsample:
-            self.grid_size = self.grid_size / 3
-            self.feature_map = F.avg_pool2d(torch.tensor(self.feature_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
-            self.annotations_map = F.avg_pool2d(torch.tensor(self.annotations_map, dtype=torch.float32), kernel_size=3, stride=3).numpy()
-
         lat_range = self.feature_map.shape[-2]
         lon_range = self.feature_map.shape[-1]
 
-        print(lat_range)
-        print(lon_range)
-        print(self.grid_size)
-        print(self.downsample)
         grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
@@ -203,7 +223,9 @@ class TemporalDataset(TorchDataset):
     def __getitem__(self, index):
         grid_coords, centre_coords, temp_unit = self.grid_and_centre_coords_and_temp_unit[index]
         image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
-        label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
+        # label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
+        label = self.annotations_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size].mean(axis=(1, 2))  
+
 
         image = torch.from_numpy(image).float()
         label = torch.from_numpy(label).float()
@@ -221,9 +243,8 @@ class TemporalDataset(TorchDataset):
     def __len__(self):
         return len(self.grid_and_centre_coords_and_temp_unit)
 
-    @staticmethod
-    def name():
-        return "netcdf4"
+    def name(self):
+        return self.data_processor
 
 class TestSubsetRegression(Subset):
     def __init__(self, dataset, indices):
@@ -252,10 +273,10 @@ class TestSubsetRegression(Subset):
             return [self.__getitem__(idx) for idx in indices]
 
 if __name__ == "__main__":
-    dataset = TemporalDataset(season="summer")
+    dataset = TemporalDataset(season="summer", data_processor="xarray", feature_coarsen=None, target_coarsen=None)
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset shape: {dataset[0][0].shape}, label shape: {dataset[0][1].shape}")
     print(dataset.grid_and_centre_coords_and_temp_unit[1])
     print(dataset[1][1])
-    print(dataset.grid_and_centre_coords_and_temp_unit[0])
-    print(dataset[0][1])
+    print(dataset.grid_and_centre_coords_and_temp_unit[100])
+    print(dataset[100][1])

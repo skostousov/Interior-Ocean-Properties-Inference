@@ -25,7 +25,7 @@ class UNetRegressionSE(nn.Module):
         self.up_3  = UpSample(base_filters * 4, base_filters * 2)
         self.se_up3 = SqueezeExcitation(base_filters * 2, max(1, base_filters * 2 // reduction))
         self.up_4  = UpSample(base_filters * 2, base_filters)
-        self.se_up4 = SqueezeExcitation(base_filters,     max(1, base_filters // reduction))
+        self.se_up4 = SqueezeExcitation(base_filters, max(1, base_filters // reduction))
         self.output = OutputConv(base_filters, out_channels, grid_size)
     def name(self):
         return "UNetRegressionSE"
