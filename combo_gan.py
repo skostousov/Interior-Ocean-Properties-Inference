@@ -6,7 +6,7 @@ from pathlib import Path
 import os
 from models.GAN import PatchDiscriminatorConditional, GeneratorUNetRegressionSEConditional, GeneratorUNetRegressionSEConditional2, GeneratorUNetRegressionRandom, PatchDiscriminatorRegressionRandom, DCGANGenerator, DCGANDiscriminator
 from torch.utils.data import Subset, DataLoader
-from utils.transforms import RescaledRotationTransform, ToTensor 
+from utils.transforms import RescaledRotationTransform, ToTensor, GANTransform
 from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
 from torch.optim import AdamW
 import time
@@ -75,11 +75,11 @@ def plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season
     total_rmse = total_rmse / len(time_steps)
     plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: f{total_rmse:.2f}")
     plt.subplots_adjust(hspace=0.5)
-    fig.savefig(save_dir / "results.png", dpi=300)
+    fig.savefig(save_dir / "results.png", dpi=600)
 
 def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name):
     test_temp_units = len(test_dataloader.dataset.indices)
-    fig, ax = plt.subplots(nrows=test_temp_units, ncols=2, figsize=(15, 5 * test_temp_units))
+    fig, ax = plt.subplots(nrows=test_temp_units, ncols=2, figsize=(12, 4 * test_temp_units))
     total_rmse = 0
     total_mae = 0
     for i, (X, y) in enumerate(test_dataloader):
@@ -103,7 +103,7 @@ def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season,
     fig.suptitle(f"Test Results | Average RMSE: {total_rmse:.2f}, Average MAE: {total_mae:.2f}", fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.98])
 
-    plt.savefig(save_dir / "results.png")
+    plt.savefig(save_dir / "results.png", dpi=300)
     plt.show()
 
 
@@ -193,9 +193,11 @@ def main(args):
     D_lr = args.D_lr
     groupby = args.groupby
 
-    data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
-    dataset = GANDataset(filepath = filepath, transform=data_aug, normalize=True, season=season, groupby=groupby)
-
+    # data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
+    dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby)
+    sample_image = dataset[0][0]
+    dataset_aug = GANTransform(size=sample_image[0][0].shape)
+    dataset.transform = dataset_aug
     epochs = 1000
     
     D = PatchDiscriminatorConditional(in_channels=dataset[0][0].shape[0] + dataset[0][1].shape[0]).to(device)
@@ -364,7 +366,7 @@ if __name__ == "__main__":
     parser.add_argument('--num_epochs', default = 1000, type=int, help="number of epochs to train for")
     parser.add_argument('--G_lr', default = 1e-4, type=float)
     parser.add_argument('--D_lr', default = 1e-6, type=float)
-    parser.add_argument('--batch_size', default=10, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--filepath', default='data/WaterOnlyMonthlySmall/WaterOnlyMonthlyExtendedSeasonalitySmall.nc', type=str, help="Path to the dataset file")
     parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
