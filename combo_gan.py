@@ -18,7 +18,7 @@ import sys, importlib
 from utils.gandataset import GANDataset, TestSubset
 import scipy.ndimage as ndimage
 import torch.nn.functional as F
-
+from combo_gan_eval import plot_from_test_dataloader
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
@@ -77,34 +77,34 @@ def plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season
     plt.subplots_adjust(hspace=0.5)
     fig.savefig(save_dir / "results.png", dpi=600)
 
-def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name):
-    test_temp_units = len(test_dataloader.dataset.indices)
-    fig, ax = plt.subplots(nrows=test_temp_units, ncols=2, figsize=(12, 4 * test_temp_units))
-    total_rmse = 0
-    total_mae = 0
-    for i, (X, y) in enumerate(test_dataloader):
-        real_idx = test_dataloader.dataset.indices[i]
-        X, y = X.float().to(device), y.float()
-        fake_y = G(X).detach().cpu().numpy()
-        y, fake_y = dataset.std_label*y+dataset.mean_label, dataset.std_label*fake_y+dataset.mean_label
-        y, fake_y = y.numpy(), fake_y.numpy()
-        rmse = np.sqrt(np.mean((y[0][0] - fake_y[0][0])**2, dtype=np.float32))
-        mae = np.mean(np.abs(y[0][0] - fake_y[0][0]))
-        total_rmse += rmse
-        total_mae += mae
-        vmin = 0
-        ax[i, 0].imshow(y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
-        ax[i, 0].set_title("Real MLD | Date: {} | Season: {} | Model: {}".format(dataset.full_dates[real_idx], season, model_name))
-        ax[i, 1].imshow(fake_y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
-        ax[i, 1].set_title("Generated MLD | RMSE: {:.2f}, MAE: {:.2f}".format(rmse, mae))
+# def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name):
+#     test_temp_units = len(test_dataloader.dataset.indices)
+#     fig, ax = plt.subplots(nrows=test_temp_units, ncols=2, figsize=(3, 1 * test_temp_units))
+#     total_rmse = 0
+#     total_mae = 0
+#     for i, (X, y) in enumerate(test_dataloader):
+#         real_idx = test_dataloader.dataset.indices[i]
+#         X, y = X.float().to(device), y.float()
+#         fake_y = G(X).detach().cpu().numpy()
+#         y, fake_y = dataset.std_label*y+dataset.mean_label, dataset.std_label*fake_y+dataset.mean_label
+#         y, fake_y = y.numpy(), fake_y.numpy()
+#         rmse = np.sqrt(np.mean((y[0][0] - fake_y[0][0])**2, dtype=np.float32))
+#         mae = np.mean(np.abs(y[0][0] - fake_y[0][0]))
+#         total_rmse += rmse
+#         total_mae += mae
+#         vmin = 0
+#         ax[i, 0].imshow(y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
+#         ax[i, 0].set_title("Real MLD | Date: {} | Season: {} | Model: {}".format(dataset.full_dates[real_idx], season, model_name))
+#         ax[i, 1].imshow(fake_y[0][0], cmap='viridis', vmin=vmin, vmax=vmax)
+#         ax[i, 1].set_title("Generated MLD | RMSE: {:.2f}, MAE: {:.2f}".format(rmse, mae))
 
-    total_rmse /= len(test_dataloader)
-    total_mae /= len(test_dataloader)
-    fig.suptitle(f"Test Results | Average RMSE: {total_rmse:.2f}, Average MAE: {total_mae:.2f}", fontsize=16)
-    plt.tight_layout(rect=[0, 0.03, 1, 0.98])
+#     total_rmse /= len(test_dataloader)
+#     total_mae /= len(test_dataloader)
+#     fig.suptitle(f"Test Results | Average RMSE: {total_rmse:.2f}, Average MAE: {total_mae:.2f}", fontsize=16)
+#     plt.tight_layout(rect=[0, 0.03, 1, 0.98])
 
-    plt.savefig(save_dir / "results.png", dpi=300)
-    plt.show()
+#     plt.savefig(save_dir / "results.png", dpi=300)
+#     plt.show()
 
 
 
@@ -195,7 +195,7 @@ def main(args):
 
     # data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
     dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby)
-    sample_image = dataset[0][0]
+    sample_image = dataset[200][0]
     dataset_aug = GANTransform(size=sample_image[0][0].shape)
     dataset.transform = dataset_aug
     epochs = 1000
@@ -228,9 +228,9 @@ def main(args):
     print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
     print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Val dataset shape: img: {val_data[0][0].shape}, lbl: {val_data[0][1].shape}")
 
-    train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
-    val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
-    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
+    train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=0)
+    val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=0)
+    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, num_workers=0)
 
     best_loss = float('inf')
     G_train_loss = float('inf')
@@ -355,7 +355,7 @@ def main(args):
     #     pred_map, mld_map = get_pred_and_mld_tensors(model, test_dataloader, dataset, device)
     #     plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season)
     # else:
-    plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season, save_dir, model_name)
+    plot_from_test_dataloader(model, test_dataloader, dataset, device, vmax, season, save_dir, model_name, 50)
 
 
 
