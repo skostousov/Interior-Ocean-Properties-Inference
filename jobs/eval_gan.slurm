@@ -17,4 +17,4 @@ export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSat
 
 filepath=$1
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_gan_eval.py" --filepath "gan_models/SEASON:all>G:UNetRegressionSE>D:PatchDiscriminatorConditional>TRAINSTART:20250716_161603>DATAFILE:WaterOnlyDailyExtendedSeasonalitySmall>"
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_gan_eval.py" --filepath $filepath
