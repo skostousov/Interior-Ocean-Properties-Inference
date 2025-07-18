@@ -1,10 +1,11 @@
 from torchvision import transforms, utils
 import torch
-import match
+import math
+import random
 from torchvision.transforms import functional as F
 
 class RescaledRotationTransform(object):
-    def __init__(self, degree_range = 180, scaling_interval = (1, 2)):
+    def __init__(self, degree_range = 180, scaling_interval = (math.sqrt(2), 2)):
         self.degrees = degree_range
         self.scale = scaling_interval
         self.transform = transforms.RandomAffine(self.degrees, scale=self.scale)
@@ -46,12 +47,16 @@ class GANTransformRotate:
         self.interpolation = interpolation
     def __call__(self, img):
         scale = random.uniform(*self.scale_range)
-        if scale <=1:
-            angle_deg = 0
+        w, h = img.shape[-2], img.shape[-1]
+        L = min(w, h)
+        val = 1/(scale*math.sqrt(2))
+        if val >= 1:
+            max_deg = 0
         else:
-            max_angle_rad = math.asin(1/scale)
+            delta = math.acos(val)
+            max_angle_rad = abs(math.pi/4 - delta)
             max_angle_deg = math.degrees(max_angle_rad)
-            angle_deg = random.unform(-max_angle_deg, max_angle_deg)
+            angle_deg = random.uniform(-max_angle_deg, max_angle_deg)
 
         return F.affine(
             img,
