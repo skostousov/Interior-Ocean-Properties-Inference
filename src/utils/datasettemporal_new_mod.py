@@ -14,8 +14,9 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days"):
         self.cfg = cfg
+        self.groupby = groupby
         self.mld_res = mld_res
         self.feature_res = feature_res
         self.target_coarsen = int(self.mld_res / self.feature_res)
@@ -92,12 +93,31 @@ class TemporalDatasetNewMod(TorchDataset):
         print(lat_list)
         print(lon_list)
         print(self.feature_map.shape)
+
+        if self.groupby not in ["days", "months", "years"]:
+            raise ValueError("groupby must be one of 'days', 'months', or 'years'")
+        self.dates = self.dataset.time.values
+        self.groupby_map = {
+            "days": [dt.astype('datetime64[D]').astype(int) for dt in self.dates],
+            "months": [dt.astype('datetime64[M]').astype(int) for dt in self.dates],
+            "years": [dt.astype('datetime64[Y]').astype(int) + 1970 for dt in self.dates]
+        }
+        self.groups = self.groupby_map[self.groupby]
+
+
         grid_coords = [(i, j) for i in lat_list for j in lon_list]
         centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in lat_list for j in lon_list]
         assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
         self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
-        self.grid_and_centre_coords_and_temp_unit = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0]) if (j%12)+1 in self.relevant_months]
-        self.groups = [datapoint[-1] for datapoint in self.grid_and_centre_coords_and_temp_unit]
+        self.grid_and_centre_coords_and_temp_unit_full = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
+        self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit_full]
+        self.grid_and_centre_coords_and_temp_unit = [datapoint for datapoint in self.grid_and_centre_coords_and_temp_unit_full if (datapoint[2]%12)+1 in self.relevant_months]
+        self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit]
+        # self.groups = [datapoint[-1] for datapoint in self.grid_and_centre_coords_and_temp_unit]
+
+        self.indices = range(len(self.grid_and_centre_coords_and_temp_unit))
+
+        
 
         self.normalize = normalize
         if self.normalize:
@@ -284,7 +304,7 @@ class TestSubsetRegressionNewMod(Subset):
             return [self.__getitem__(idx) for idx in indices]
 
 if __name__ == "__main__":
-    dataset = TemporalDatasetNewMod(season="summer", mld_res=1/4, feature_res=1/12)
+    dataset = TemporalDatasetNewMod(season="summer", mld_res=1/4, feature_res=1/12, groupby="months", )
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset shape: {dataset[0][0].shape}, label shape: {dataset[0][1].shape}")
     print(dataset.grid_and_centre_coords_and_temp_unit[1])
