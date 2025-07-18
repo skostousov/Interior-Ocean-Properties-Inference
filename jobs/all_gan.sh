@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# filepath="data/WaterOnlyDailyLarge/WaterOnlyDailyExtendedSeasonalityLarge.nc"
+filepath="data/WaterOnlyDailyLarge/WaterOnlyDailyExtendedSeasonalityLarge.nc"
 # filepath="data/WaterOnlyDailySlightlyLarger/WaterOnlyDailyExtendedSeasonalitySlightlyLarger.nc"
-filepath="data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc"
+# filepath="data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc"
 
 lat_lon=False
 

@@ -194,11 +194,13 @@ def main(args):
     groupby = args.groupby
     lat_lon = args.lat_lon
 
-    # data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
-    dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby, lat_lon=lat_lon)
-    sample_image = dataset[200][0]
-    dataset_aug = GANTransform(size=sample_image[0][0].shape)
-    dataset.transform = dataset_aug
+    data_aug = RescaledRotationTransform()
+    dataset = GANDataset(filepath = filepath, normalize=True, transform = data_aug, season=season, groupby=groupby, lat_lon=lat_lon)
+
+    # dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby, lat_lon=lat_lon)
+    # sample_image = dataset[200][0]
+    # dataset_aug = GANTransform(size=sample_image[0][0].shape)
+    # dataset.transform = dataset_aug
     epochs = 1000
     
     D = PatchDiscriminatorConditional(in_channels=dataset[0][0].shape[0] + dataset[0][1].shape[0]).to(device)
@@ -240,8 +242,9 @@ def main(args):
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{season}>G:{G.name()}>D:{D.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
+    datafile_name = dataset.filepath.split("/")[-1].replace(".nc", "")
     model_dir = 'gan_models'
-    save_dir = root / model_dir / model_name
+    save_dir = root / model_dir / datafile_name / season / model_name
     os.makedirs(save_dir, exist_ok=True)
 
     writer= SummaryWriter(save_dir / 'tensorboard_logs')

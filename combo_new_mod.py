@@ -97,7 +97,7 @@ def main(args):
     mld_res = args.mld_res
     feature_res = args.feature_res
 
-    data_aug = RescaledRotationTransform(scaling_interval=(1, 1.1))
+    data_aug = RescaledRotationTransform()
     data = TemporalDataset(transform=data_aug, season=season, mld_res=mld_res, feature_res=feature_res)
 
     batch_size = args.batch_size

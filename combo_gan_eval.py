@@ -68,7 +68,7 @@ def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season,
     fig.suptitle(f"Test Results | Average RMSE: {total_rmse:.2f}, Average MAE: {total_mae:.2f}", fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.98])
 
-    plt.savefig(save_dir / "results.png", dpi=200)
+    plt.savefig(save_dir / f"results_rmse:{total_rmse}_mae:{total_mae}.png", dpi=200)
     plt.show()
     return total_rmse, total_mae
 
