@@ -61,13 +61,16 @@ def plot_from_test_dataloader(G, test_dataloader, dataset, device, vmax, season,
         if i == num_plots-1:
             break
 
-    total_rmse /= len(test_dataloader)
-    total_mae /= len(test_dataloader)
+    # total_rmse /= len(test_dataloader)
+    # total_mae /= len(test_dataloader)
+    total_rmse /= num_plots
+    total_mae /= num_plots
     fig.suptitle(f"Test Results | Average RMSE: {total_rmse:.2f}, Average MAE: {total_mae:.2f}", fontsize=16)
     plt.tight_layout(rect=[0, 0.03, 1, 0.98])
 
     plt.savefig(save_dir / "results.png", dpi=200)
     plt.show()
+    return total_rmse, total_mae
 
 def fetch_info(info_path):
     with open(info_path, "r") as f:
@@ -130,7 +133,8 @@ def main(args):
     #     pred_map, mld_map = get_pred_and_mld_tensors(model, test_dataloader, dataset, device)
     #     plot_pred_and_mld_maps(pred_map, mld_map, save_dir, model_name, vmax, season)
     # else:
-    plot_from_test_dataloader(model, test_dataloader, dataset, device, vmax, season, save_dir, model_name, 30)
+    total_rmse, total_mae = plot_from_test_dataloader(model, test_dataloader, dataset, device, vmax, season, save_dir, model_name, 30)
+    update_values(info_path, {"rmse":total_rmse, "mae":total_mae})
 
 
 

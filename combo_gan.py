@@ -192,9 +192,10 @@ def main(args):
     G_lr = args.G_lr
     D_lr = args.D_lr
     groupby = args.groupby
+    lat_lon = args.lat_lon
 
     # data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2), degree_range=0)
-    dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby)
+    dataset = GANDataset(filepath = filepath, normalize=True, season=season, groupby=groupby, lat_lon=lat_lon)
     sample_image = dataset[200][0]
     dataset_aug = GANTransform(size=sample_image[0][0].shape)
     dataset.transform = dataset_aug
@@ -267,7 +268,8 @@ def main(args):
         "G_lr": G_lr,
         "D_lr": D_lr,
         "season": season,
-        "groupby": args.groupby,
+        "groupby": groupby,
+        "lat_lon": lat_lon
         }
 
     with open(info_path, 'w') as f:
@@ -370,5 +372,6 @@ if __name__ == "__main__":
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--filepath', default='data/WaterOnlyMonthlySmall/WaterOnlyMonthlyExtendedSeasonalitySmall.nc', type=str, help="Path to the dataset file")
     parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
+    parser.add_argument('--lat_lon', default=True, type=bool)
     args = parser.parse_args()
     main(args)

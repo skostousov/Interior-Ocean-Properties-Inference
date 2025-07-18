@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH --job-name=combo_gan
+#SBATCH --job-name=updated_Transform_combo_gan
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=4
 #SBATCH --partition=compute_full_node
@@ -19,5 +19,6 @@ export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSat
 groupby=$1
 season=$2
 filepath=$3
+lat_lon=$4
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_gan.py" --groupby $groupby --season $season --filepath $filepath
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_gan.py" --groupby $groupby --season $season --filepath $filepath --lat_lon $lat_lon

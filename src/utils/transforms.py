@@ -1,5 +1,7 @@
 from torchvision import transforms, utils
 import torch
+import match
+from torchvision.transforms import functional as F
 
 class RescaledRotationTransform(object):
     def __init__(self, degree_range = 180, scaling_interval = (1, 2)):
@@ -17,9 +19,9 @@ class RescaledRotationTransform(object):
         else:
             return self.transform(image)
 
-class GANTransform():
+class GANTransform:
     def __init__(self, size = 50):
-        self.random_crop = transforms.RandomResizedCrop(size)
+        self.random_crop = transforms.RandomResizedCrop(size, scale=(0.6, 1))
         self.random_h_flip = transforms.RandomHorizontalFlip(p=0.5)
         self.random_v_flip = transforms.RandomVerticalFlip(p=0.5)
         self.compose = transforms.Compose([
@@ -37,6 +39,30 @@ class GANTransform():
             return transformed_image, transformed_label
         else:
             return self.compose(image)
+
+class GANTransformRotate:
+    def __init__(self, scale_range=(1.0, 1.5), interpolation=F.InterpolationMode.BILINEAR):
+        self.scale_range = scale_range
+        self.interpolation = interpolation
+    def __call__(self, img):
+        scale = random.uniform(*self.scale_range)
+        if scale <=1:
+            angle_deg = 0
+        else:
+            max_angle_rad = math.asin(1/scale)
+            max_angle_deg = math.degrees(max_angle_rad)
+            angle_deg = random.unform(-max_angle_deg, max_angle_deg)
+
+        return F.affine(
+            img,
+            angle=angle_deg,
+            translate=[0, 0],
+            scale=scale,
+            shear=[0.0, 0.0],
+            interpolation=self.interpolation
+        )
+
+
 
     
 class ToTensor(object):

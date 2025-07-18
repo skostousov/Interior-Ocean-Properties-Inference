@@ -14,8 +14,9 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDataset(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size'], season=None, data_processor="xarray", target_coarsen=None, feature_coarsen=None):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, downsample=False, grid_size = cfg['data']['grid_size'], season=None, data_processor="xarray", target_coarsen=None, feature_coarsen=None, lat_lon=True):
         self.cfg = cfg
+        self.lat_lon=lat_lon
         self.target_coarsen = target_coarsen
         self.feature_coarsen = feature_coarsen
         self.data_processor = data_processor
@@ -82,8 +83,9 @@ class TemporalDataset(TorchDataset):
         lat_range = self.feature_map.shape[-2]
         lon_range = self.feature_map.shape[-1]
 
-        lat_grid, lon_grid = np.meshgrid(range(lat_range), range(lon_range), indexing='ij')
-        self.feature_map = np.concatenate((self.feature_map, np.repeat(lat_grid[np.newaxis, np.newaxis, ...], self.feature_map.shape[0], axis=0), np.repeat(lon_grid[np.newaxis, np.newaxis, ...], self.feature_map.shape[0], axis=0)), axis=1)
+        if self.lat_lon: 
+            lat_grid, lon_grid = np.meshgrid(range(lat_range), range(lon_range), indexing='ij')
+            self.feature_map = np.concatenate((self.feature_map, np.repeat(lat_grid[np.newaxis, np.newaxis, ...], self.feature_map.shape[0], axis=0), np.repeat(lon_grid[np.newaxis, np.newaxis, ...], self.feature_map.shape[0], axis=0)), axis=1)
 
         grid_coords = [(i, j) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
         centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in range(0, lat_range-self.grid_size) for j in range(0, lon_range-self.grid_size)]
