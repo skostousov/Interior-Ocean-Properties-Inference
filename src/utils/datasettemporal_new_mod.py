@@ -14,9 +14,10 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days"):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True):
         self.cfg = cfg
         self.groupby = groupby
+        self.lat_lon = lat_lon
         self.mld_res = mld_res
         self.feature_res = feature_res
         self.target_coarsen = int(self.mld_res / self.feature_res)
@@ -28,6 +29,7 @@ class TemporalDatasetNewMod(TorchDataset):
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
+        self.filepath=filepath
         if restrict_to_single_mld:
             self.grid_size = int(self.mld_res / self.feature_res)
             # self.grid_size = self.grid_size // self.feature_coarsen
@@ -75,7 +77,8 @@ class TemporalDatasetNewMod(TorchDataset):
         print(self.lat_grid.shape, self.lon_grid.shape)
         self.feature_map = np.concatenate(list(self.relevant_variables.values()), axis=1)
         print(self.feature_map.shape)
-        self.feature_map = np.concatenate((self.feature_map, self.lat_grid, self.lon_grid), axis=1)
+        if self.lat_lon:
+            self.feature_map = np.concatenate((self.feature_map, self.lat_grid, self.lon_grid), axis=1)
 
 
         lat_range = self.feature_map.shape[-2]

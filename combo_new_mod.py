@@ -96,9 +96,11 @@ def main(args):
     season = args.season
     mld_res = args.mld_res
     feature_res = args.feature_res
+    filepath = root / args.filepath
+    groupby=args.groupby
 
     data_aug = RescaledRotationTransform()
-    data = TemporalDataset(transform=data_aug, season=season, mld_res=mld_res, feature_res=feature_res)
+    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby)
 
     batch_size = args.batch_size
     epochs = 100
@@ -122,7 +124,7 @@ def main(args):
     loss_fn = loss_dict[args.loss]()
 
     # test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(season)}'+'.pt'))
-    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(data.grid_size)}+{str(mld_res)}+{str(feature_res)}+{str(season)}'+'.pt'))
+    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(data.grid_size)}+{mld_res:.2f}+{feature_res:.2f}+{str(season)}'+'.pt'))
     # train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
     train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_frac=0.1, val_frac=0.135, gen_new=True)
 
@@ -141,16 +143,17 @@ def main(args):
     best_epoch=0
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    model_name = f"SEASON:{season}>MLDRES:{mld_res}>FTRRES:{feature_res}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{(cfg['data'][submode]['output_file']).replace('/', '_')}>STRAT:{str(test_indices_path).replace('/', '_')}>"
+    model_name = f"SEASON:{season}>MLDRES:{mld_res:.2f}>FTRRES:{feature_res:.2f}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
     model_dir = 'dynamic_res_models'
-    save_dir = root / model_dir / model_name
+    datafile_name = data.filepath.split("/")[-1].replace(".nc", "")
+    save_dir = root / model_dir / datafile_name / season / model_name
     os.makedirs(save_dir, exist_ok=True)
 
     writer= SummaryWriter(save_dir / 'tensorboard_logs')
     info_path =  save_dir / 'training_info.txt'
     info_bef = {
         "start_time": start_timestamp,
-        "data_file": f"{cfg['data']['data_dir']}/{cfg['data'][submode]['output_file']}",
+        "data_file": f"{filepath}",
         "test_indices": f"{test_indices_path}",
         "total_epochs": epochs,
         "batch_size": batch_size,
@@ -175,6 +178,7 @@ def main(args):
         "model_specific_args": models[args.model][1],
         "mld_res": mld_res,
         "feature_res": feature_res,
+        "groupby":groupby
         }
 
     with open(info_path, 'w') as f:
@@ -332,12 +336,14 @@ if __name__ == "__main__":
     m4.add_argument('--first_layer_filters', type=int, default=64, help='Number of filters in the first layer of DA_CNN')
     m4.add_argument('--kernel_size', type=int, default=3, choices=[1, 3], help='Kernel size for DA_CNN')
     # parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
-    parser.add_argument('--num_epochs', default = 10, type=int, help="number of epochs to train for")
+    parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=32, type=int)
     parser.add_argument('--season', default='all', type=str)
-    parser.add_argument('--mld_res', default=1, type=float, help='Resolution of MLD data')
+    parser.add_argument('--mld_res', default=1/3, type=float, help='Resolution of MLD data')
     parser.add_argument('--feature_res', default=1/12, type=float, help='Resolution of feature data')
     parser.add_argument('--loss', default='MSE', type=str, choices=['MSE', 'L1'], help='Loss function to use for training')
+    parser.add_argument('--filepath', type=str, default = "data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc")
+    parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
     args = parser.parse_args()
     main(args)
