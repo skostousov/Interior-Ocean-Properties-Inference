@@ -5,12 +5,12 @@ from torch import nn
 from pathlib import Path
 import os
 from models.UNET_regression import UNetRegression
-from models.UNET_regressionSE import UNetRegressionSE
+from models.downscaledUNetSE import UNetRegressionSE
 from models.simple_CNN_regression import PixelWiseRegressor
 from models.DA_CNN import DA_CNN
 from torch.utils.data import Subset, DataLoader
 from torchvision.transforms import Normalize, Compose
-from utils.transforms import RescaledRotationTransform, ToTensor 
+from utils.transforms import RescaledRotationTransform, ToTensor, GANTransformRotate
 from utils.config import PROJECT_ROOT, RELEVANT_CONFIG, RAW_CONFIG
 from torch.optim import AdamW
 import time
@@ -57,7 +57,7 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         total_loss += loss.item()
         if batch % 50 == 0:
             loss, current = loss.item(), batch * batch_size + len(images)
-            print(f"loss: {loss:>12f} [{current:>6d}/{total_size:>5d}]")
+            print(f"loss: {loss:>12f} [{current:>7d}/{total_size:>7d}]")
     total_loss /= size
     print(f"Train Loss: {total_loss:>12f}")
     return total_loss
@@ -98,9 +98,11 @@ def main(args):
     feature_res = args.feature_res
     filepath = root / args.filepath
     groupby=args.groupby
+    lat_lon=args.lat_lon
 
     data_aug = RescaledRotationTransform()
-    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby)
+    # data_aug = GANTransformRotate()
+    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon)
 
     batch_size = args.batch_size
     epochs = 100
@@ -136,7 +138,7 @@ def main(args):
 
     train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
     val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
-    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
+    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, num_workers=6, pin_memory=True)
 
     best_loss = float('inf')
     corresponding_train_loss = float('inf')
@@ -145,7 +147,7 @@ def main(args):
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{season}>MLDRES:{mld_res:.2f}>FTRRES:{feature_res:.2f}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
     model_dir = 'dynamic_res_models'
-    datafile_name = data.filepath.split("/")[-1].replace(".nc", "")
+    datafile_name = args.filepath.split("/")[-1].replace(".nc", "")
     save_dir = root / model_dir / datafile_name / season / model_name
     os.makedirs(save_dir, exist_ok=True)
 
@@ -178,7 +180,8 @@ def main(args):
         "model_specific_args": models[args.model][1],
         "mld_res": mld_res,
         "feature_res": feature_res,
-        "groupby":groupby
+        "groupby":groupby,
+        "lat_lon":lat_lon
         }
 
     with open(info_path, 'w') as f:
@@ -254,14 +257,14 @@ def main(args):
     model.eval()
 
 
-    test_months = list(set([data.groups[i] for i in test_idx]))
+    test_temps = list(set([data.grid_and_centre_coords_and_temp_unit[i][-1] for i in test_idx]))
     loss = 0
 
-    max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
+    max_dict = {"summer" : 50, "spring" : 70, "winter" : 100, "autumn" : 100}
     vmax = getattr(max_dict, season, 100)
 
-    mld_labels = np.zeros((len(test_months), data.feature_map.shape[-2], data.feature_map.shape[-1]))
-    mld_preds = np.zeros((len(test_months), data.feature_map.shape[-2], data.feature_map.shape[-1]))
+    mld_labels = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
+    mld_preds = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
 
     time_steps = set()
 
@@ -269,22 +272,27 @@ def main(args):
         X, y = X.to(device), y.to(device)
         preds = model(X)
         month_idx = int(extra_info[-1])
-        month_pos = test_months.index(month_idx)
+        month_pos = test_temps.index(month_idx)
         lat = int((extra_info[1][0]).item())
         lon = int((extra_info[1][1]).item())
-        temp = extra_info[2]
-        time_steps.add(temp.item())
-        print(f"Processing month {month_idx}, lat {lat}, lon {lon}, time {temp}")
+        # temp = extra_info[2]
+        # time_steps.add(temp.item())
+        print(f"Processing lat {lat}, lon {lon}, temp {month_idx}")
         mld_labels[month_pos, extra_info[0][0]:extra_info[0][0]+data.grid_size, extra_info[0][1]:extra_info[0][1]+data.grid_size] = y.item() * (data.std_label) + data.mean_label
         mld_preds[month_pos, extra_info[0][0]:extra_info[0][0]+data.grid_size, extra_info[0][1]:extra_info[0][1]+data.grid_size] = preds.item() * (data.std_label) + data.mean_label
 ##-------------##-------------##--------------#########################
-    time_steps = tuple(sorted(time_steps))
+    # time_steps = tuple(sorted(time_steps))
     mae_loss = nn.L1Loss()
+    num_to_plot = 20
 
-    fig, ax = plt.subplots(max(1, len(time_steps)), 2, figsize=(15, 8* len(time_steps)))
+
+    # fig, ax = plt.subplots(max(1, len(test_temps)), 2, figsize=(15, 8* len(test_temps)))
+    fig, ax = plt.subplots(max(1, num_to_plot), 2, figsize=(15, 8* num_to_plot))    
     ax = np.atleast_2d(ax)
     total_rmse = 0
-    for i, t in enumerate(time_steps):
+    total_mae = 0
+
+    for i, t in enumerate(test_temps[:num_to_plot]):
         pred_map = mld_preds[i]
         label_map = mld_labels[i]    
         im_0 = ax[i, 0].imshow(label_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
@@ -296,18 +304,21 @@ def main(args):
         mae = mae_loss(torch.tensor(label_map), torch.tensor(pred_map)).item()
         rmse = np.sqrt(np.mean((pred_map - label_map)**2))
         total_rmse += rmse
+        total_mae += mae
         ax[i, 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}" + " RMSE: " + f"{rmse:.2f}")
         ax[i, 1].set_xlabel('Longitude Index')
         ax[i, 1].set_ylabel('Latitude Index')
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
-    total_rmse = total_rmse / len(time_steps)
-    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: f{total_rmse:.2f}")
+    total_rmse = total_rmse / num_to_plot
+    total_mae = total_mae / num_to_plot
+    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {total_rmse:.2f} | MAE: {total_mae:.2f}")
     plt.subplots_adjust(hspace=0.5)
-    fig.savefig(save_dir / "results.png", dpi=300)
+    # fig.savefig(save_dir / "results.png", dpi=300)
+    plt.savefig(save_dir / f"results_rmse:{total_rmse:.2f}_mae:{total_mae:.2f}.png", dpi=200)
 
-    fig, ax = plt.subplots(max(1, len(time_steps)), 1, figsize=(6, 5* len(time_steps)))
-    for i, t in enumerate(time_steps):
-        if len(time_steps) == 1:
+    fig, ax = plt.subplots(max(1, num_to_plot), 1, figsize=(6, 5* num_to_plot))
+    for i, t in enumerate(test_temps[:num_to_plot]):
+        if len(test_temps) == 1:
             ax = [ax]  # Ensure ax is iterable if there's only one time step
         pred_map = mld_preds[i]
         label_map = mld_labels[i]
@@ -319,7 +330,7 @@ def main(args):
     plt.suptitle(f"{model_name} \n Difference Results")
     plt.subplots_adjust(hspace=0.3)
     plt.show()
-    fig.savefig(save_dir / "results_diff.png", dpi=600)
+    fig.savefig(save_dir / "results_diff.png", dpi=300)
 
 
 
@@ -338,12 +349,13 @@ if __name__ == "__main__":
     # parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)
-    parser.add_argument('--batch_size', default=32, type=int)
+    parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--mld_res', default=1/3, type=float, help='Resolution of MLD data')
     parser.add_argument('--feature_res', default=1/12, type=float, help='Resolution of feature data')
     parser.add_argument('--loss', default='MSE', type=str, choices=['MSE', 'L1'], help='Loss function to use for training')
     parser.add_argument('--filepath', type=str, default = "data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc")
     parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
+    parser.add_argument('--lat_lon', default=True, type=bool)
     args = parser.parse_args()
     main(args)
