@@ -1,75 +1,35 @@
 import torch
-
+from UNET_regression import OutputConv, ConvReluBlock, SkipAndDownSample, UpSample
 import torch.nn as nn
 import torch.nn.functional as F
 
-class DoubleConv(nn.Module):
-    def __init__(self, in_channels, out_channels):
-        super(DoubleConv, self).__init__()
-        self.double_conv = nn.Sequential(
-            nn.Conv2d(in_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True),
-            nn.Conv2d(out_channels, out_channels, 3, padding=1),
-            nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
-        )
-
-    def forward(self, x):
-        return self.double_conv(x)
-
 class UNet(nn.Module):
-    def __init__(self, in_channels, base_channels=64):
-        super(UNet, self).__init__()
-        self.in_channels = in_channels
+    def __init__(self, in_channels, out_channels=1, grid_size=21, base_channels=64):
+        super().__init__()
+        self.grid_size = grid_size
+        self.down1 = SkipAndDownSample(in_channels, base_channels)
+        self.down2 = SkipAndDownSample(base_channels, base_channels*2)
+        self.down3 = SkipAndDownSample(base_channels*2, base_channels*4)
+        self.down4 = SkipAndDownSample(base_channels*4, base_channels*8)
 
-        self.enc1 = DoubleConv(in_channels, base_channels)
-        self.enc2 = DoubleConv(base_channels, base_channels*2)
-        self.enc3 = DoubleConv(base_channels*2, base_channels*4)
-        self.enc4 = DoubleConv(base_channels*4, base_channels*8)
+        self.bottleneck = ConvReluBlock(base_channels*8, base_channels*16)
 
-        self.pool = nn.MaxPool2d(2)
-
-        self.bottleneck = DoubleConv(base_channels*8, base_channels*16)
-
-        self.up4 = nn.ConvTranspose2d(base_channels*16, base_channels*8, 2, stride=2)
-        self.dec4 = DoubleConv(base_channels*16, base_channels*8)
-        self.up3 = nn.ConvTranspose2d(base_channels*8, base_channels*4, 2, stride=2)
-        self.dec3 = DoubleConv(base_channels*8, base_channels*4)
-        self.up2 = nn.ConvTranspose2d(base_channels*4, base_channels*2, 2, stride=2)
-        self.dec2 = DoubleConv(base_channels*4, base_channels*2)
-        self.up1 = nn.ConvTranspose2d(base_channels*2, base_channels, 2, stride=2)
-        self.dec1 = DoubleConv(base_channels*2, base_channels)
-
-        self.out_conv = nn.Conv2d(base_channels, 1, kernel_size=1)
-
+        self.up_1 = UpSample(base_channels*16, base_channels*8)
+        self.up_2 = UpSample(base_channels*8, base_channels*4)
+        self.up_3 = UpSample(base_channels*4, base_channels*2)
+        self.up_4 = UpSample(base_channels*2, base_channels)
+        self.output = nn.Conv2d(base_channels, out_channels, kernel_size=1)
     def forward(self, x):
-        enc1 = self.enc1(x)
-        enc2 = self.enc2(self.pool(enc1))
-        enc3 = self.enc3(self.pool(enc2))
-        enc4 = self.enc4(self.pool(enc3))
-
-        bottleneck = self.bottleneck(self.pool(enc4))
-
-        dec4 = self.up4(bottleneck)
-        dec4 = torch.cat([dec4, enc4], dim=1)
-        dec4 = self.dec4(dec4)
-
-        dec3 = self.up3(dec4)
-        dec3 = torch.cat([dec3, enc3], dim=1)
-        dec3 = self.dec3(dec3)
-
-        dec2 = self.up2(dec3)
-        dec2 = torch.cat([dec2, enc2], dim=1)
-        dec2 = self.dec2(dec2)
-
-        dec1 = self.up1(dec2)
-        dec1 = torch.cat([dec1, enc1], dim=1)
-        dec1 = self.dec1(dec1)
-
-        out = self.out_conv(dec1)
-        return out
-
-# Example usage:
-# model = UNet(in_channels=5)  # for input images with 5 channels
-# output = model(torch.randn(1, 5, 256, 256))  # output shape: (1, 1, 256, 256)
+        x_down1, x_skip1 = self.down1(x)
+        x_down2, x_skip2 = self.down2(x_down1)
+        x_down3, x_skip3 = self.down3(x_down2)
+        x_down4, x_skip4 = self.down4(x_down3)
+        x_bottleneck = self.bottleneck(x_down4)
+        x_up1 = self.up_1(x_bottleneck, x_skip4)
+        x_up2 = self.up_2(x_up1, x_skip3)
+        x_up3 = self.up_3(x_up2, x_skip2)
+        x_up4 = self.up_4(x_up3, x_skip1)
+        x_out = self.output(x_up4)
+        return x_out
+    def name(self):
+        return "UNetRegressionFull"
