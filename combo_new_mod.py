@@ -22,6 +22,7 @@ import sys, importlib
 from utils.datasettemporal_new_mod import TestSubsetRegressionNewMod as TestSubset
 from utils.datasettemporal_new_mod import TemporalDatasetNewMod as TemporalDataset
 import scipy.ndimage as ndimage
+from models.UNetfullimageoutput import UNet
 
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
@@ -186,6 +187,7 @@ def main(args):
         "UNetRegressionSE": (UNetRegressionSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16)}),
         "PixelWiseRegressor": (PixelWiseRegressor, {}),
         "DA_CNN": (DA_CNN, {"first_layer_filters": getattr(args, "first_layer_filters", 64), "kernel_size": getattr(args, "kernel_size", 3)}),
+        "UNetFull": (UNet, {})
     }
 
     cfg = RELEVANT_CONFIG
@@ -378,6 +380,7 @@ if __name__ == "__main__":
     m1 = subs.add_parser('UNetRegression', help='Train UNetRegression model')
     m2 = subs.add_parser('UNetRegressionSE', help='Train UNetRegressionSE model')
     m4 = subs.add_parser('DA_CNN', help='Train DA_CNN model')
+    m3= subs.add_parser('UNetFull', help='Train UNet model')
     m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
     m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
     m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
