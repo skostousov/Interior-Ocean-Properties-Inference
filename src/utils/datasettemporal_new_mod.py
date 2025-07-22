@@ -261,22 +261,22 @@ class TemporalDatasetNewMod(TorchDataset):
             image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
 
             label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
-
-            image = torch.from_numpy(image).float()
-            label = torch.from_numpy(label).float()
-
-            if self.normalize:
-                image = (image - self.mean) / self.std
-                label = (label - self.mean_label) / self.std_label
-            if self.transform:
-                image = self.transform(image)
-            if self.target_transform:
-                label = self.target_transform(label)
         else:
-            index = self.indices[index]
+            # index = self.indices[index]
             image = self.feature_map[index]
 
             label = self.annotations_map[index]
+
+        image = torch.from_numpy(image).float()
+        label = torch.from_numpy(label).float()
+
+        if self.normalize:
+            image = (image - self.mean) / self.std
+            label = (label - self.mean_label) / self.std_label
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
 
         return image, label
         
@@ -291,9 +291,16 @@ class TestSubsetRegressionNewMod(Subset):
         super().__init__(dataset, indices)
     def __getitem__(self, idx):
         original_idx = self.indices[idx]
-        grid_coords, centre_coords, temp_unit = self.dataset.grid_and_centre_coords_and_temp_unit[original_idx]
-        image = self.dataset.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size, grid_coords[1]:grid_coords[1]+self.dataset.grid_size]
-        label = self.dataset.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
+
+        if not self.dataset.full:
+            grid_coords, centre_coords, temp_unit = self.dataset.grid_and_centre_coords_and_temp_unit[original_idx]
+            image = self.dataset.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size, grid_coords[1]:grid_coords[1]+self.dataset.grid_size]
+            label = self.dataset.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
+        else:
+            # temp_unit = original_idx
+            # index = self.dataset.indices[original_idx]
+            image = self.dataset.feature_map[original_idx]
+            label = self.dataset.annotations_map[original_idx]
         # label = self.dataset.annotations_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size, grid_coords[1]:grid_coords[1]+self.dataset.grid_size].mean(axis=(1, 2))
 
 
@@ -303,8 +310,10 @@ class TestSubsetRegressionNewMod(Subset):
         if self.dataset.normalize:
             image = (image - self.dataset.mean) / self.dataset.std
             label = (label - self.dataset.mean_label) / self.dataset.std_label
-
-        return image, label, (grid_coords, centre_coords, temp_unit)
+        if not self.dataset.full:
+            return image, label, (grid_coords, centre_coords, temp_unit)
+        else:
+            return image, label,
 
     def __getitems__(self, indices: list[int]):
         # add batched sampling support when parent dataset supports it.
