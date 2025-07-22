@@ -307,6 +307,9 @@ class TestSubsetRegressionNewMod(Subset):
         image = torch.from_numpy(image).float()
         label = torch.from_numpy(label).float()
 
+        image = torch.nan_to_num(image, nan=0.0)
+        label = torch.nan_to_num(label, nan=0.0)
+
         if self.dataset.normalize:
             image = (image - self.dataset.mean) / self.dataset.std
             label = (label - self.dataset.mean_label) / self.dataset.std_label
