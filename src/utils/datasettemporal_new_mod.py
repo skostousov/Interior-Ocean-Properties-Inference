@@ -14,8 +14,9 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True, full=False):
         self.cfg = cfg
+        self.full = full
         self.groupby = groupby
         self.lat_lon = lat_lon
         self.mld_res = mld_res
@@ -107,18 +108,19 @@ class TemporalDatasetNewMod(TorchDataset):
         }
         self.groups = self.groupby_map[self.groupby]
 
-
-        grid_coords = [(i, j) for i in lat_list for j in lon_list]
-        centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in lat_list for j in lon_list]
-        assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
-        self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
-        self.grid_and_centre_coords_and_temp_unit_full = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
-        self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit_full]
-        self.grid_and_centre_coords_and_temp_unit = [datapoint for datapoint in self.grid_and_centre_coords_and_temp_unit_full if (datapoint[2]%12)+1 in self.relevant_months]
-        self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit]
-        # self.groups = [datapoint[-1] for datapoint in self.grid_and_centre_coords_and_temp_unit]
-
-        self.indices = range(len(self.grid_and_centre_coords_and_temp_unit))
+        if not self.full:
+            grid_coords = [(i, j) for i in lat_list for j in lon_list]
+            centre_coords = [(i+self.grid_size//2, j+self.grid_size//2) for i in lat_list for j in lon_list]
+            assert len(grid_coords) == len(centre_coords), "Grid coordinates and centre coordinates do not match in length"
+            self.grid_and_centre_coords = [(grid_coords[i], centre_coords[i]) for i in range(len(grid_coords))]
+            self.grid_and_centre_coords_and_temp_unit_full = [(grid_coords[i], centre_coords[i], j) for i in range(len(grid_coords)) for j in range(self.feature_map.shape[0])]
+            self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit_full]
+            self.grid_and_centre_coords_and_temp_unit = [datapoint for datapoint in self.grid_and_centre_coords_and_temp_unit_full if (datapoint[2]%12)+1 in self.relevant_months]
+            self.groups = [self.groups[i[-1]] for i in self.grid_and_centre_coords_and_temp_unit]
+            self.indices = range(len(self.grid_and_centre_coords_and_temp_unit))
+        else:
+            self.indices = range(len(self.feature_map))
+            self.groups = self.groups
 
         
 
@@ -254,26 +256,32 @@ class TemporalDatasetNewMod(TorchDataset):
         return mean.astype(np.float32), std.astype(np.float32)
         
     def __getitem__(self, index):
-        grid_coords, centre_coords, temp_unit = self.grid_and_centre_coords_and_temp_unit[index]
-        image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
+        if not self.full:
+            grid_coords, centre_coords, temp_unit = self.grid_and_centre_coords_and_temp_unit[index]
+            image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
 
-        label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
+            label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
 
-        image = torch.from_numpy(image).float()
-        label = torch.from_numpy(label).float()
+            image = torch.from_numpy(image).float()
+            label = torch.from_numpy(label).float()
 
-        if self.normalize:
-            image = (image - self.mean) / self.std
-            label = (label - self.mean_label) / self.std_label
-        if self.transform:
-            image = self.transform(image)
-        if self.target_transform:
-            label = self.target_transform(label)
+            if self.normalize:
+                image = (image - self.mean) / self.std
+                label = (label - self.mean_label) / self.std_label
+            if self.transform:
+                image = self.transform(image)
+            if self.target_transform:
+                label = self.target_transform(label)
+        else:
+            index = self.indices[index]
+            image = self.feature_map[index]
+
+            label = self.annotations_map[index]
 
         return image, label
-    
+        
     def __len__(self):
-        return len(self.grid_and_centre_coords_and_temp_unit)
+        return len(self.indices)
 
     def name(self):
         return self.data_processor
