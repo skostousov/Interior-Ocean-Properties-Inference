@@ -7,6 +7,7 @@ import os
 from models.UNET_regression import UNetRegression
 from models.downscaledUNetSE import UNetRegressionSE
 from models.simple_CNN_regression import PixelWiseRegressor
+from models.GAN import GeneratorUNetRegressionSEConditional
 from models.DA_CNN import DA_CNN
 from torch.utils.data import Subset, DataLoader
 from torchvision.transforms import Normalize, Compose
@@ -28,7 +29,9 @@ from models.UNetfullimageoutput import UNet
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
 
-def plot_grids(test_dataloader, model):
+def plot_grids(test_dataloader, model, device):
+    test_idx = test_dataloader.dataset.dataset.indices
+
     test_temps = list(set([data.grid_and_centre_coords_and_temp_unit[i][-1] for i in test_idx]))
 
     mld_labels = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
@@ -50,7 +53,7 @@ def plot_grids(test_dataloader, model):
 
     return mld_labels, mld_preds, test_temps
 
-def general_plot(mld_labels, mld_preds, test_temps, num_to_plot):
+def general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model_name, save_dir):
     loss = 0
 
     max_dict = {"summer" : 50, "spring" : 70, "winter" : 100, "autumn" : 100}
@@ -103,8 +106,14 @@ def general_plot(mld_labels, mld_preds, test_temps, num_to_plot):
     plt.show()
     fig.savefig(save_dir / "results_diff.png", dpi=300)
 
-def plot_full(test_dataloader, model):
-    test_temps = list(set([data.indices[i] for i in test_idx]))
+def plot_full(test_dataloader, model, device):
+    test_idx = test_dataloader.dataset.dataset.indices
+
+
+    # test_temps = list(set([data.indices[i] for i in test_idx]))
+    test_temps = list(set(test_dataloader.dataset.indices))
+
+    data = test_dataloader.dataset.dataset
 
     mld_labels = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
     mld_preds = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
@@ -117,8 +126,10 @@ def plot_full(test_dataloader, model):
         # lat = int((extra_info[1][0]).item())
         # lon = int((extra_info[1][1]).item())
         # print(f"Processing lat {lat}, lon {lon}, temp {month_idx}")
-        mld_labels[i] = y.item() * (data.std_label) + data.mean_label
-        mld_preds[i] = preds.item() * (data.std_label) + data.mean_label
+        y, preds = y.cpu(), preds.cpu()
+        preds = preds.detach()
+        mld_labels[i] = y * (data.std_label) + data.mean_label
+        mld_preds[i] = preds * (data.std_label) + data.mean_label
     
     return mld_labels, mld_preds, test_temps
 
@@ -148,6 +159,8 @@ def train_loop(model, train_dataloader, optimizer, loss_fn, device):
         images, labels = images.to(device), labels.to(device)
         optimizer.zero_grad()
         pred = model(images)
+        # print(images.shape, pred.shape, labels.shape)
+        # print(torch.isnan(images).sum().item(), torch.isnan(pred).sum().item(), torch.isnan(labels).sum().item())
         loss = loss_fn(pred, labels)
         loss.backward()
         optimizer.step()
@@ -187,7 +200,8 @@ def main(args):
         "UNetRegressionSE": (UNetRegressionSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16)}),
         "PixelWiseRegressor": (PixelWiseRegressor, {}),
         "DA_CNN": (DA_CNN, {"first_layer_filters": getattr(args, "first_layer_filters", 64), "kernel_size": getattr(args, "kernel_size", 3)}),
-        "UNetFull": (UNet, {})
+        "UNetFull": (UNet, {"base_channels": getattr(args, "base_channels", 64)}),
+        "GANGenerator": (GeneratorUNetRegressionSEConditional, {})
     }
 
     cfg = RELEVANT_CONFIG
@@ -365,11 +379,11 @@ def main(args):
     num_to_plot = 20
 
     if full:
-        mld_labels, mld_preds, test_temps = plot_full(test_dataloader, model)
+        mld_labels, mld_preds, test_temps = plot_full(test_dataloader, model, device)
     else:
-        mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model)
+        mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
 
-    general_plot(mld_labels, mld_preds, test_temps, num_to_plot)
+    general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model.name(), save_dir)
 
 
 
@@ -381,11 +395,13 @@ if __name__ == "__main__":
     m2 = subs.add_parser('UNetRegressionSE', help='Train UNetRegressionSE model')
     m4 = subs.add_parser('DA_CNN', help='Train DA_CNN model')
     m3= subs.add_parser('UNetFull', help='Train UNet model')
+    m5 = subs.add_parser('GANGenerator')
     m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
     m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
     m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
     m4.add_argument('--first_layer_filters', type=int, default=64, help='Number of filters in the first layer of DA_CNN')
     m4.add_argument('--kernel_size', type=int, default=3, choices=[1, 3], help='Kernel size for DA_CNN')
+    m3.add_argument('--base_channels', type=int, default=64)
     # parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
     parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)

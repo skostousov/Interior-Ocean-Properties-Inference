@@ -26,8 +26,9 @@ lat_lon=$3
 groupby=$4
 model=$5
 filepath=$6
+full=$7
 
 
-python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_new_mod.py --num_epochs $num_epochs --season $season --lat_lon $lat_lon --groupby $groupby --filepath $filepath $model
+python -u $SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_new_mod.py --num_epochs $num_epochs --season $season --lat_lon $lat_lon --groupby $groupby --filepath $filepath --full $full $model
 
 echo "combo_new_mod.slurm executed"

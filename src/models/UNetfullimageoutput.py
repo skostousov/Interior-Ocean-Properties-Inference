@@ -1,5 +1,5 @@
 import torch
-from UNET_regression import OutputConv, ConvReluBlock, SkipAndDownSample, UpSample
+from models.UNET_regression import OutputConv, ConvReluBlock, SkipAndDownSample, UpSample
 import torch.nn as nn
 import torch.nn.functional as F
 

@@ -92,7 +92,7 @@ def main(args):
 
     season = args.season
 
-    data_aug = RescaledRotationTransform(scaling_interval=(1, 1.1))
+    data_aug = RescaledRotationTransform(scaling_interval=(1, 1.2))
     data = myDataset(transform=data_aug, season=season, coarsen=args.coarsen)
 
     batch_size = args.batch_size
