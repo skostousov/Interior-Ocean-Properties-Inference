@@ -139,7 +139,8 @@ def main(args):
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{args.season}>LOSS:{args.loss}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>"
     model_dir = 'lower_res_models'
-    save_dir = root / model_dir / model_name
+    
+    save_dir = root / model_dir / season / model.name() / model_name
     os.makedirs(save_dir, exist_ok=True)
 
     writer= SummaryWriter(save_dir / 'tensorboard_logs')
@@ -166,8 +167,8 @@ def main(args):
         "lr": args.lr,
         "season": season,
         "model_specific_args": models[args.model][1],
-        "coarsen":args.coarsen
-        }
+        "coarsen":args.coarsen,
+                }
 
     with open(info_path, 'w') as f:
         for key, value in info_bef.items():
@@ -273,6 +274,7 @@ def main(args):
     mae_loss = nn.L1Loss()
     fig, axs = plt.subplots(len(test_months), 3, figsize=(16, 5 * len(test_months)), constrained_layout=True)
     total_rmse = 0
+    total_mae = 0
     for i, month in enumerate(test_months):
         im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
@@ -280,15 +282,20 @@ def main(args):
         im_1 = axs[i, 1].imshow(mld_preds[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(im_1, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
         rmse = np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2))
+        mae= np.mean(np.abs(mld_labels[i] - mld_preds[i]))
         total_rmse += rmse
-        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}")
+        total_mae += mae
+        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}, MAE: {mae:.2f}")
         axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower'), ax=axs[i, 2], orientation='vertical', fraction=0.02, pad=0.04)
         axs[i, 2].set_title(f"Smoothed Prediction - Month: {month}")
     total_rmse = total_rmse / len(test_months)
-    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f}")
+    total_mae = total_mae / len(test_months)
+    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f} total MAE: {total_mae:.2f}")
+    update_values(info_path, {"rmse": total_rmse, "mae": total_mae})
 
-    fig.savefig(save_dir / "results.png", dpi=300)
+
+    fig.savefig(save_dir / f"rmse:{total_rmse:.2f}.png", dpi=300)
 
     fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
     for i, month in enumerate(test_months):

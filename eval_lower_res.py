@@ -14,6 +14,9 @@ import os
 from data.argo.alternate_dataset import myDataset
 from data.argo.alternate_dataset import TestSubset
 import scipy.ndimage as ndimage
+from combo_low_res import update_values
+from utils.splitter import train_val_test_split_temp
+
 
 
 def main(args):
@@ -24,9 +27,13 @@ def main(args):
 
     info_path = model_path / "training_info.txt"
     info = fetch_info(info_path)
-    test_indices_file = project_root / info['test_indices']
 
-    loss_fn = nn.L1Loss()
+    loss_dict = {'L1' : nn.L1Loss(), 'MSE' : nn.MSELoss()}
+    loss_dict[loss_dict['L1'].__class__.__name__] = loss_dict['L1']
+    loss_dict[loss_dict['MSE'].__class__.__name__] = loss_dict['MSE']
+
+    loss_fn = loss_dict[info['loss_fn']]
+
     assert info['loss_fn'] == loss_fn.__class__.__name__, f"Loss function mismatch: {info['loss_fn']} != {loss_fn.__class__.__name__}"
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -37,12 +44,23 @@ def main(args):
     season = info['season']
 
     max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
-    vmax = max_dict[season]
+    vmax = getattr(max_dict, season, 90)
+    # vmax = max_dict[season]
 
-    dataset = myDataset(season=season)
+    coarsen = getattr(info, "coarsen", 1)
+
+    dataset = myDataset(season=season, coarsen=coarsen)
 
     # data = XArrayDataset(filepath=data_file)
-    test_idx = test_indices(test_indices_file)
+
+    test_indices_file = getattr(info, 'test_indices', None)
+    if test_indices_file:
+        test_indices_file = project_root / info['test_indices']
+        test_idx = test_indices(test_indices_file)
+    else:
+        _, _, test_idx = train_val_test_split_temp(dataset, seed=42, test_frac=0.1, val_frac=0.135, gen_new=True)
+
+
     test_data = TestSubset(dataset, test_idx)
     test_dataloader = DataLoader(test_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True,)
     test_months = list(set([dataset.groups[i] for i in test_idx]))
@@ -75,6 +93,7 @@ def main(args):
     mae_loss = nn.L1Loss()
     fig, axs = plt.subplots(len(test_months), 3, figsize=(16, 5 * len(test_months)), constrained_layout=True)
     total_rmse = 0
+    total_mae = 0
     for i, month in enumerate(test_months):
         im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
@@ -82,15 +101,20 @@ def main(args):
         im_1 = axs[i, 1].imshow(mld_preds[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(im_1, ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
         rmse = np.sqrt(np.mean((mld_labels[i] - mld_preds[i])**2))
+        mae= np.mean(np.abs(mld_labels[i] - mld_preds[i]))
         total_rmse += rmse
-        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}")
+        total_mae += mae
+        axs[i, 1].set_title(f"Prediction - Month: {month}, RMSE: {rmse:.2f}, MAE: {mae:.2f}")
         axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(axs[i, 2].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower'), ax=axs[i, 2], orientation='vertical', fraction=0.02, pad=0.04)
         axs[i, 2].set_title(f"Smoothed Prediction - Month: {month}")
     total_rmse = total_rmse / len(test_months)
-    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f}")
+    total_mae = total_mae / len(test_months)
+    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f} total MAE: {total_mae:.2f}")
+    update_values(info_path, {"rmse": total_rmse, "mae": total_mae})
 
-    fig.savefig(model_path / "results.png", dpi=300)
+
+    fig.savefig(model_path / f"rmse:{total_rmse:.2f}.png", dpi=300)
 
     fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
     for i, month in enumerate(test_months):

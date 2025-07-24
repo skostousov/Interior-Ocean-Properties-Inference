@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=0-10:00:00
+#SBATCH --time=0-7:00:00
 #SBATCH --output=/scratch/n/ngrisoua/kostouso/logs/%x_%j.out
 
 JOBID=$SLURM_JOB_ID
@@ -30,4 +30,4 @@ lr=$4
 batch_size=$5
 season=$6
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss $loss --num_epochs $num_epochs --coarsen $coarsen --lr $lr --batch_size $batch_size --season $season DA_CNN --first_layer_filters 8 --kernel_size 1
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss $loss --num_epochs $num_epochs --coarsen $coarsen --lr $lr --batch_size $batch_size --season $season DA_CNN --first_layer_filters 16 --kernel_size 3

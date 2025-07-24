@@ -407,7 +407,7 @@ if __name__ == "__main__":
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=64, type=int)
     parser.add_argument('--season', default='all', type=str)
-    parser.add_argument('--mld_res', default=1/3, type=float, help='Resolution of MLD data')
+    parser.add_argument('--mld_res', default=1, type=float, help='Resolution of MLD data')
     parser.add_argument('--feature_res', default=1/12, type=float, help='Resolution of feature data')
     parser.add_argument('--loss', default='MSE', type=str, choices=['MSE', 'L1'], help='Loss function to use for training')
     parser.add_argument('--filepath', type=str, default = "data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc")
