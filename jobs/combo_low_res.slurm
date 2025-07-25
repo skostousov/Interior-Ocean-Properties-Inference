@@ -29,5 +29,7 @@ coarsen=$3
 lr=$4
 batch_size=$5
 season=$6
+base_filters=$7
+reduction=$8
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss $loss --num_epochs $num_epochs --coarsen $coarsen --lr $lr --batch_size $batch_size --season $season DA_CNN --first_layer_filters 16 --kernel_size 3
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/combo_low_res.py" --loss $loss --num_epochs $num_epochs --coarsen $coarsen --lr $lr --batch_size $batch_size --season $season UNetRegressionSE --base_filters $base_filters --reduction $reduction

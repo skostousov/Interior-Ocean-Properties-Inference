@@ -245,7 +245,7 @@ def main(args):
     loss = 0
 
     max_dict = {"summer" : 70, "spring" : 70, "winter" : 100, "autumn" : 100}
-    vmax = max_dict[season]
+    vmax = getattr(max_dict, season, 90)
 
     mld_labels = np.zeros((len(test_months), len(data.argo_cut["latitude"]), len(data.argo_cut["longitude"])))
     mld_preds = np.zeros((len(test_months), len(data.argo_cut["latitude"]), len(data.argo_cut["longitude"])))

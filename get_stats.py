@@ -1,4 +1,8 @@
 import os
+from utils.config import RAW_CONFIG, PROJECT_ROOT, RELEVANT_CONFIG
+from pathlib import Path
+
+root = Path(PROJECT_ROOT)
 
 def get_all_txt_contents(root_folder):
     txt_paths = []
@@ -36,23 +40,26 @@ for path in paths:
 
 
 for key, value in mega_dict.items():
-    best_infos = []
     max_rmse_dict = {'rmse': float('inf')}
-    print(f"{key}: {len(value)} entries")
+    best_infos = [max_rmse_dict]
+    print(f"\n{key}: {len(value)} entries")
     for entry in value:
+        if 'rmse' not in entry:
+            continue
         if  len(best_infos) < 10:
             best_infos.append(entry)
-            if float(entry['rmse']) > max_rmse_dict['rmse']:
+            if float(entry['rmse']) > float(max_rmse_dict['rmse']):
                 max_rmse_dict = entry
-        elif float(entry['rmse']) < max_rmse_dict['rmse']:
+        elif float(entry['rmse']) < float(max_rmse_dict['rmse']):
             best_infos.remove(max_rmse_dict)
             best_infos.append(entry)
             max_rmse_dict=entry
             for info in best_infos:
-                if float(info['rmse']) > max_rmse_dict['rmse']:
+                if float(info['rmse']) > float(max_rmse_dict['rmse']):
                     max_rmse_dict = info
+    best_infos = sorted(best_infos, key=lambda item: item['rmse'])
     for entry in best_infos:
-        print(f"{entry['loss_fn']}, {entry['season']}, {entry['lr']}, {entry['batch_size']}, {entry['rmse']}, {entry['model_specific_args']}, {getattr(entry, 'coarsen', 1)}")
+        print(f"{float(entry['rmse']):.2f}, {entry['loss_fn']}, {float(entry['lr']):.5f}, {entry['batch_size']}, {entry['model_specific_args']}, {getattr(entry, 'coarsen', 1)}")
 
             
             
