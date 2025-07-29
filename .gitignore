@@ -22,3 +22,5 @@ low_res_indices/
 ray_results/
 results/
 *.nc
+__pycache__*
+.ipynb_checkpoints*
