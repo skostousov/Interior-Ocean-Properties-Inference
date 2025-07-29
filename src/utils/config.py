@@ -10,8 +10,8 @@ with open(cfg_path, "r") as f:
 
 RAW_CONFIG["project_root"] = str(_REPO_ROOT)
 
-with cfg_path.open("w") as f:
-    yaml.safe_dump(RAW_CONFIG, f, sort_keys=False)
+# with cfg_path.open("w") as f:
+#    yaml.safe_dump(RAW_CONFIG, f, sort_keys=False)
 
 PROJECT_ROOT = RAW_CONFIG["project_root"]
 FEATURES = RAW_CONFIG["features"]
