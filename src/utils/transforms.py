@@ -8,7 +8,14 @@ class RescaledRotationTransform(object):
     def __init__(self, degree_range = 180, scaling_interval = (math.sqrt(2), 2)):
         self.degrees = degree_range
         self.scale = scaling_interval
-        self.transform = transforms.RandomAffine(self.degrees, scale=self.scale)
+        self.random_h_flip = transforms.RandomHorizontalFlip(p=0.5)
+        self.random_v_flip = transforms.RandomVerticalFlip(p=0.5)
+        self.randomaffine = transforms.RandomAffine(self.degrees, scale=self.scale)
+        self.transform = transforms.Compose([
+            self.random_h_flip,
+            self.random_v_flip,
+            self.randomaffine
+        ])
     def __call__(self, image, label=None):
         img_features = image.shape[0]
         if label is not None:

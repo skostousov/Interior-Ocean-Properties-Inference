@@ -7,7 +7,7 @@ lr=0.0001
 batch_sizes=("32" "64" "16")
 seasons=("all" "autumn" "spring" "winter" "summer")
 base_filters=32
-reduction=4
+reduction=8
 
 echo "hello"
 

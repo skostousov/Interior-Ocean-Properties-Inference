@@ -29,6 +29,20 @@ from models.UNetfullimageoutput import UNet
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True
 
+def update_values(info_path, key_values):
+    info = {}
+    with open(info_path, 'r') as f:
+        for line in f:
+            if ':: ' not in line:
+                continue
+            key, val = line.rstrip('\n').split(':: ', 1)
+            info[key.strip()] = val.strip()
+    for key, value in key_values.items():
+        info[key] = value
+    with open(info_path, 'w') as f:
+        for key, val in info.items():
+            f.write(f"{key}:: {val}\n")
+
 def plot_grids(test_dataloader, model, device):
     test_idx = test_dataloader.dataset.dataset.indices
 
@@ -56,8 +70,8 @@ def plot_grids(test_dataloader, model, device):
 def general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model_name, save_dir):
     loss = 0
 
-    max_dict = {"summer" : 50, "spring" : 70, "winter" : 100, "autumn" : 100}
-    vmax = getattr(max_dict, season, 100)
+    max_dict = {"summer" : 50, "spring" : 70, "winter" : 90, "autumn" : 90}
+    vmax = getattr(max_dict, season, 90)
 
     mae_loss = nn.L1Loss()
 
@@ -106,6 +120,8 @@ def general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model_n
     plt.show()
     fig.savefig(save_dir / "results_diff.png", dpi=300)
 
+    return total_mae, total_rmse
+
 def plot_full(test_dataloader, model, device):
     test_idx = test_dataloader.dataset.dataset.indices
 
@@ -132,22 +148,6 @@ def plot_full(test_dataloader, model, device):
         mld_preds[i] = preds * (data.std_label) + data.mean_label
     
     return mld_labels, mld_preds, test_temps
-
-
-
-def update_values(info_path, key_values):
-    info = {}
-    with open(info_path, 'r') as f:
-        for line in f:
-            if ':: ' not in line:
-                continue
-            key, val = line.rstrip('\n').split(':: ', 1)
-            info[key.strip()] = val.strip()
-    for key, value in key_values.items():
-        info[key] = value
-    with open(info_path, 'w') as f:
-        for key, val in info.items():
-            f.write(f"{key}:: {val}\n")
 
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
     size = len(train_dataloader)
@@ -383,8 +383,8 @@ def main(args):
     else:
         mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
 
-    general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model.name(), save_dir)
-
+    total_mae, total_rmse = general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model.name(), save_dir)
+    update_values(info_path, {'rmse': total_rmse, 'mae': total_mae})
 
 
 if __name__ == "__main__":

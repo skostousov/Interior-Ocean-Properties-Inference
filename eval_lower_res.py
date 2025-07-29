@@ -116,6 +116,29 @@ def main(args):
 
     fig.savefig(model_path / f"rmse:{total_rmse:.2f}.png", dpi=300)
 
+    fig, axs = plt.subplots(len(test_months), 2, figsize=(12, 5 * len(test_months)), constrained_layout=False)
+
+    for i, month in enumerate(test_months):
+        im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        # fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 1].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
+        # fig.colorbar(axs[i, 1].imshow(mld_preds_smoothed[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower'), ax=axs[i, 1], orientation='vertical', fraction=0.02, pad=0.04)
+        axs[i, 0].set_xticks([])
+        axs[i, 0].set_yticks([])
+        axs[i, 0].set_xticklabels([])
+        axs[i, 0].set_yticklabels([])
+        axs[i, 1].set_xticks([])
+        axs[i, 1].set_yticks([])
+        axs[i, 1].set_xticklabels([])
+        axs[i, 1].set_yticklabels([])
+        axs[i, 0].axis('off')
+        axs[i, 1].axis('off') 
+    plt.subplots_adjust(wspace=0.2)
+    plt.subplots_adjust(hspace=0.05)
+
+    fig.savefig(model_path / f"rmse:{total_rmse:.2f}_poster.png", dpi=300)
+
+
     fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
     for i, month in enumerate(test_months):
         if len(test_months) == 1:
