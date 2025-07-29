@@ -1,4 +1,4 @@
-mode: BoBMonthly
+mode: WaterOnlyDailySlightlyLarger
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models
@@ -56,7 +56,7 @@ daily_alternative_small:
   training:
     epochs: 100
     batch_size: 50
-    early_stopping_thresh: 5
+    early_stopping_thresh: 10
     model_save_dest: saved_models/saved_daily_alternative_small_models
     immediate_test: true
   eval:
@@ -245,4 +245,249 @@ BoBDaily:
       output_file: BoBDaily_1993-1993.nc
       test_indices: test_indices/BoBDaily/small_01.pt
       stats: stats/BoBDaily/small_01.pt
-project_root: /mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg
+WaterOnlyDaily:
+  submode: small
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_daily_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyDaily
+    latitude_range:
+    - 45
+    - 57
+    longitude_range:
+    - -153
+    - -136
+    grid_size: 21
+    small:
+      start_date: 1993-01-01
+      end_date: 1993-01-30
+      output_file: WaterOnlyDaily_1993-1993.nc
+      test_indices: test_indices/WaterOnlyDaily/small_01.pt
+      stats: stats/WaterOnlyDaily/small_01.pt
+WaterOnlyMonthly:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_monthly_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1M-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyMonthly
+    latitude_range:
+    - 45
+    - 57
+    longitude_range:
+    - -153
+    - -136
+    grid_size: 21
+    ten:
+      start_date: 1993-01-01
+      end_date: 2003-01-30
+      output_file: WaterOnlyMonthly_1993-2003.nc
+      test_indices: test_indices/WaterOnlyMonthly/small_01.pt
+      stats: stats/WaterOnlyMonthly/small_01.pt
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-01
+      output_file: WaterOnlyMonthlyExtendedSeasonality.nc
+      test_indices: test_indices/WaterOnlyMonthlyExtendedSeasonality/small_01.pt
+      stats: stats/WaterOnlyMonthlyExtendedSeasonality/small_01.pt
+WaterOnlyMonthlySmall:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_monthly_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1M-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyMonthlySmall
+    latitude_range:
+    - 45
+    - 50
+    longitude_range:
+    - -153
+    - -148
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-01
+      output_file: WaterOnlyMonthlyExtendedSeasonalitySmall.nc
+      test_indices: test_indices/WaterOnlyMonthlyExtendedSeasonalitySmall/small_01.pt
+      stats: stats/WaterOnlyMonthlyExtendedSeasonalitySmall/small_01.pt
+WaterOnlyMonthlySlightlyLarger:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_monthly_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1M-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyMonthlySlightlyLarger
+    latitude_range:
+    - 40
+    - 50
+    longitude_range:
+    - -153
+    - -143
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-01
+      output_file: WaterOnlyMonthlyExtendedSeasonalitySlightlyLarger.nc
+      test_indices: test_indices/WaterOnlyMonthlyExtendedSeasonalitySlightlyLarger/small_01.pt
+      stats: stats/WaterOnlyMonthlyExtendedSeasonalitySlightlyLarger/small_01.pt
+WaterOnlyDailySlightlyLarger:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_daily_slightly_larger_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyDailySlightlyLarger
+    latitude_range:
+    - 40
+    - 50
+    longitude_range:
+    - -153
+    - -143
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-30
+      output_file: WaterOnlyDailyExtendedSeasonalitySlightlyLarger.nc
+      test_indices: test_indices/WaterOnlyDailyExtendedSeasonalitySlightlyLarger/small_01.pt
+      stats: stats/WaterOnlyDailyExtendedSeasonalitySlightlyLarger/small_01.pt
+WaterOnlyDailyLarge:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_daily_large_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyDailyLarge
+    latitude_range:
+    - 45
+    - 57
+    longitude_range:
+    - -153
+    - -136
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-30
+      output_file: WaterOnlyDailyExtendedSeasonalityLarge.nc
+      test_indices: test_indices/WaterOnlyDailyExtendedSeasonalityLarge/small_01.pt
+      stats: stats/WaterOnlyDailyExtendedSeasonalityLarge/small_01.pt
+WaterOnlyDailySmall:
+  submode: large
+  training:
+    epochs: 300
+    batch_size: 50
+    early_stopping_thresh: 10
+    model_save_dest: saved_models/saved_water_only_daily_small_models
+    immediate_test: true
+  eval:
+    results_dir: results
+  data:
+    dataset_id: cmems_mod_glo_phy_my_0.083deg_P1D-m
+    features:
+    - bottomT
+    - so
+    - thetao
+    - uo
+    - vo
+    - zos
+    - mlotst
+    data_dir: data/WaterOnlyDailySmall
+    latitude_range:
+    - 45
+    - 50
+    longitude_range:
+    - -153
+    - -148
+    grid_size: 21
+    large:
+      start_date: 1993-01-01
+      end_date: 2021-06-30
+      output_file: WaterOnlyDailyExtendedSeasonalitySmall.nc
+      test_indices: test_indices/WaterOnlyDailyExtendedSeasonalitySmall/small_01.pt
+      stats: stats/WaterOnlyDailyExtendedSeasonalitySmall/small_01.pt
+project_root: /scratch/n/ngrisoua/kostouso/OceanPropInfSatImgScratch/OceanPropInfSatImg
+HPCONFIG: null
