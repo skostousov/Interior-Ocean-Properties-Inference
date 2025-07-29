@@ -24,3 +24,9 @@ results/
 *.nc
 __pycache__*
 .ipynb_checkpoints*
+cluster_ray_results/
+fetched_results/
+local_ray_results/
+*.png
+*.pt
+models/

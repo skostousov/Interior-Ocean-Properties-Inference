@@ -13,9 +13,11 @@ root = Path(PROJECT_ROOT)
 
 relative_file = "data/WaterOnlyDaily/WaterOnlyDaily_1993-1993.nc"
 filepath = root / relative_file
-filepath_no_nc = root/relative_file.replace(".nc", f"_{data_class.name()}.png")
+feature_coarsen = 2
+target_coarsen = 6
+ds = data_class(filepath=filepath, data_processor="xarray", target_coarsen=target_coarsen, feature_coarsen=feature_coarsen)
+filepath_no_nc = root/relative_file.replace(".nc", f"_{ds.name()}_feature_coar_{feature_coarsen}_target_coar_{target_coarsen}.png")
 
-ds = data_class(filepath=filepath)
 
 
 annotation_map, feature_map = ds.annotations_map, ds.feature_map
@@ -33,7 +35,7 @@ ax = np.atleast_2d(ax)
 
 for month, image in enumerate(annotation_map_to_plot):
     im = ax[month//unit, month%unit].imshow(image, cmap='viridis', vmax=100, vmin=0, origin='lower')
-    ax[month//unit, month%unit].set_title(f"Temporal Unit {month+1} ")
+    ax[month//unit, month%unit].set_title(f"Temporal Unit {month+1} Image Shape: {image.shape}")
     ax[month//unit, month%unit].axis('off')
     fig.colorbar(im, label='MLD (m)', ax=ax[month//unit, month%unit])
 plt.savefig(filepath_no_nc, dpi=300)
