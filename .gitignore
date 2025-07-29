@@ -15,3 +15,10 @@ sync_from_remote.sh
 sync_from_mist.sh
 recieved_data/*
 recieved_data
+dynamic_res_models/
+gan_models/
+lower_res_models/
+low_res_indices/
+ray_results/
+results/
+*.nc
