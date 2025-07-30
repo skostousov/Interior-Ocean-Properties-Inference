@@ -14,9 +14,10 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True, full=False):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True, full=False, rim=0):
         self.cfg = cfg
         self.full = full
+        self.rim = rim
         self.groupby = groupby
         self.lat_lon = lat_lon
         self.mld_res = mld_res
@@ -107,6 +108,9 @@ class TemporalDatasetNewMod(TorchDataset):
             "years": [dt.astype('datetime64[Y]').astype(int) + 1970 for dt in self.dates]
         }
         self.groups = self.groupby_map[self.groupby]
+
+        lat_list = lat_list[self.rim:-self.rim]
+        lon_list = lon_list[self.rim:-self.rim]
 
         if not self.full:
             grid_coords = [(i, j) for i in lat_list for j in lon_list]
@@ -258,8 +262,8 @@ class TemporalDatasetNewMod(TorchDataset):
     def __getitem__(self, index):
         if not self.full:
             grid_coords, centre_coords, temp_unit = self.grid_and_centre_coords_and_temp_unit[index]
-            image = self.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.grid_size, grid_coords[1]:grid_coords[1]+self.grid_size]
 
+            image = self.feature_map[temp_unit, :, grid_coords[0]-self.rim:grid_coords[0]+self.grid_size+self.rim, grid_coords[1]-self.rim:grid_coords[1]+self.grid_size+self.rim]
             label = self.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
         else:
             # index = self.indices[index]
@@ -331,7 +335,7 @@ class TestSubsetRegressionNewMod(Subset):
             return [self.__getitem__(idx) for idx in indices]
 
 if __name__ == "__main__":
-    dataset = TemporalDatasetNewMod(season="summer", mld_res=1/4, feature_res=1/12, groupby="months", )
+    dataset = TemporalDatasetNewMod(season="summer", mld_res=1, feature_res=1/12, groupby="months", rim=True, filepath="/mnt/c/Users/samue/SynologyDrive/OceanPropInfSatImg/data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc")
     print(f"Dataset size: {len(dataset)}")
     print(f"Dataset shape: {dataset[0][0].shape}, label shape: {dataset[0][1].shape}")
     print(dataset.grid_and_centre_coords_and_temp_unit[1])

@@ -232,10 +232,11 @@ def main(args):
     groupby=args.groupby
     lat_lon=args.lat_lon
     full=args.full
+    rim = args.rim
 
     data_aug = RescaledRotationTransform(scaling_interval = (1, 1.4))
     # data_aug = GANTransformRotate()
-    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon, full=full)
+    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim)
 
     batch_size = args.batch_size
     epochs = 100
@@ -319,6 +320,7 @@ def main(args):
         "groupby":groupby,
         "lat_lon":lat_lon,
         "full": full,
+        "rim": rim
         }
 
     with open(info_path, 'w') as f:
@@ -439,5 +441,6 @@ if __name__ == "__main__":
     parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
     parser.add_argument('--lat_lon', default=True, type=bool)
     parser.add_argument('--full', default=False, type=bool, help="Whether to use full dataset or not")
+    parser.add_argument('--rim', default=0, type=int, help="Rim padding size")
     args = parser.parse_args()
     main(args)
