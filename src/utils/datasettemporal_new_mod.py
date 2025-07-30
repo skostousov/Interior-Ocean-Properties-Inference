@@ -301,7 +301,7 @@ class TestSubsetRegressionNewMod(Subset):
 
         if not self.dataset.full:
             grid_coords, centre_coords, temp_unit = self.dataset.grid_and_centre_coords_and_temp_unit[original_idx]
-            image = self.dataset.feature_map[temp_unit, :, grid_coords[0]:grid_coords[0]+self.dataset.grid_size, grid_coords[1]:grid_coords[1]+self.dataset.grid_size]
+            image = self.dataset.feature_map[temp_unit, :, grid_coords[0]-self.dataset.rim:grid_coords[0]+self.grid_size+self.dataset.rim, grid_coords[1]-self.dataset.rim:grid_coords[1]+self.grid_size+self.dataset.rim]
             label = self.dataset.annotations_map[temp_unit, :, centre_coords[0], centre_coords[1]]
         else:
             # temp_unit = original_idx
