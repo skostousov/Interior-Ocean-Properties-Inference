@@ -5,7 +5,9 @@ from torch import nn
 from pathlib import Path
 import os
 from models.UNET_regression import UNetRegression
-from models.downscaledUNetSE import UNetRegressionSE
+from models.UNET_regressionSE import UNetRegressionSE
+from models.downscaledUNetSE import UNetRegressionSE as downscaledUNetSE
+from models.downscaledUNet import UNetRegression as downscaledUNet
 from models.simple_CNN_regression import PixelWiseRegressor
 from models.GAN import GeneratorUNetRegressionSEConditional
 from models.DA_CNN import DA_CNN
@@ -209,9 +211,11 @@ def main(args):
         "UNetRegression": (UNetRegression, {"first_out": getattr(args, "first_out", 64)}),
         "UNetRegressionSE": (UNetRegressionSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16)}),
         "PixelWiseRegressor": (PixelWiseRegressor, {}),
-        "DA_CNN": (DA_CNN, {"first_layer_filters": getattr(args, "first_layer_filters", 64), "kernel_size": getattr(args, "kernel_size", 3)}),
+        "DA_CNN": (DA_CNN, {"first_layer_filters": getattr(args, "first_layer_filters", 64), "kernel_size": getattr(args, "kernel_size", 3), "dropout": getattr(args, "dropout", 0.0), "dropout2": getattr(args, "dropout2", 0.0)}),
         "UNetFull": (UNet, {"base_channels": getattr(args, "base_channels", 64)}),
-        "GANGenerator": (GeneratorUNetRegressionSEConditional, {})
+        "GANGenerator": (GeneratorUNetRegressionSEConditional, {}),
+        "downscaledUNetSE": (downscaledUNetSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16), "dropout": getattr(args, "dropout", 0.0)}),
+        "downscaledUNet": (downscaledUNet, {"first_out": getattr(args, "first_out", 64)}),
     }
 
     cfg = RELEVANT_CONFIG
@@ -260,7 +264,7 @@ def main(args):
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{season}>MLDRES:{mld_res:.2f}>FTRRES:{feature_res:.2f}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
-    model_dir = 'dynamic_res_models'
+    model_dir = 'new_mod_model_results'
     save_dir = root / model_dir / datafile_name / season / model_name
     os.makedirs(save_dir, exist_ok=True)
     
@@ -409,13 +413,21 @@ if __name__ == "__main__":
     m4 = subs.add_parser('DA_CNN', help='Train DA_CNN model')
     m3= subs.add_parser('UNetFull', help='Train UNet model')
     m5 = subs.add_parser('GANGenerator')
+    m6 = subs.add_parser('downscaledUNetSE', help='Train downscaled UNetSE model')
+    m7 = subs.add_parser('downscaledUNet', help='Train downscaled UNet model')
     m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
     m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
     m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
     m4.add_argument('--first_layer_filters', type=int, default=64, help='Number of filters in the first layer of DA_CNN')
     m4.add_argument('--kernel_size', type=int, default=3, choices=[1, 3], help='Kernel size for DA_CNN')
+    m4.add_argument('--dropout', type=float, default=0.0, help='Dropout rate for DA_CNN')
+    m4.add_argument('--dropout2', type=float, default=0.0, help='Second dropout rate for DA_CNN')
     m3.add_argument('--base_channels', type=int, default=64)
     # parser.add_argument('--model', type=str, default='UNetRegressionSE', choices=['UNetRegression', 'UNetRegressionSE', 'PixelWiseRegressor', 'DA_CNN', 'EBAM_CNN'], help='Model to train')
+    m6.add_argument('--base_filters', type=int, default=64, help='Base filters for downscaled UNetSE')
+    m6.add_argument('--reduction', type=int, default=16, help='Reduction factor for downscaled UNetSE')
+    m6.add_argument('--dropout', type=float, default=0.0, help='Dropout rate for downscaled UNetSE')
+    m7.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of downscaled UNet')
     parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=64, type=int)
