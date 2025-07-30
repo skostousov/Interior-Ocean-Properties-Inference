@@ -44,9 +44,15 @@ def update_values(info_path, key_values):
             f.write(f"{key}:: {val}\n")
 
 def plot_grids(test_dataloader, model, device):
-    test_idx = test_dataloader.dataset.dataset.indices
+    # test_idx = test_dataloader.dataset.dataset.indices
+    test_idx = test_dataloader.dataset.indices
+
+
+    data = test_dataloader.dataset.dataset
+
 
     test_temps = list(set([data.grid_and_centre_coords_and_temp_unit[i][-1] for i in test_idx]))
+    print(len(test_temps))
 
     mld_labels = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
     mld_preds = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
@@ -67,13 +73,17 @@ def plot_grids(test_dataloader, model, device):
 
     return mld_labels, mld_preds, test_temps
 
-def general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model_name, save_dir):
+def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir, num_to_plot=None,):
     loss = 0
-
-    max_dict = {"summer" : 50, "spring" : 70, "winter" : 90, "autumn" : 90}
-    vmax = getattr(max_dict, season, 90)
+    print(season)
+    max_dict = {"summer":40, "spring":70, "winter":90, "autumn":70}
+    vmax = max_dict.get(season, 70)
+    print(vmax)
 
     mae_loss = nn.L1Loss()
+
+    if not num_to_plot:
+        num_to_plot = len(test_temps)
 
     fig, ax = plt.subplots(max(1, num_to_plot), 2, figsize=(15, 8* num_to_plot))    
     ax = np.atleast_2d(ax)
@@ -219,7 +229,7 @@ def main(args):
     lat_lon=args.lat_lon
     full=args.full
 
-    data_aug = RescaledRotationTransform()
+    data_aug = RescaledRotationTransform(scaling_interval = (1, 1.4))
     # data_aug = GANTransformRotate()
     data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon, full=full)
 
@@ -245,9 +255,19 @@ def main(args):
     loss_fn = loss_dict[args.loss]()
 
     # test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(season)}'+'.pt'))
-    test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(data.grid_size)}+{mld_res:.2f}+{feature_res:.2f}+{str(season)}'+'.pt'))
+    
+    datafile_name = args.filepath.split("/")[-1].replace(".nc", "")
+
+    start_timestamp = time.strftime('%Y%m%d_%H%M%S')
+    model_name = f"SEASON:{season}>MLDRES:{mld_res:.2f}>FTRRES:{feature_res:.2f}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
+    model_dir = 'dynamic_res_models'
+    save_dir = root / model_dir / datafile_name / season / model_name
+    os.makedirs(save_dir, exist_ok=True)
+    
+    # test_indices_path = Path(root/f"test_indices/{datafile_name}/{str(data.grid_size)}+{mld_res:.2f}+{feature_res:.2f}+{str(season)}"+".pt")
+    test_indices_path = save_dir/'test_indices.pt'
     # train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_indices_path=test_indices_path, gen_new=True)
-    train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_frac=0.1, val_frac=0.135, gen_new=True)
+    train_idx, val_idx, test_idx = train_val_test_split_temp(data, seed=42, test_frac=0.1, val_frac=0.135, test_indices_path=test_indices_path)
 
 
     train_data, val_data, test_data = Subset(data, train_idx), TestSubset(data, val_idx), TestSubset(data, test_idx)
@@ -262,13 +282,6 @@ def main(args):
     best_loss = float('inf')
     corresponding_train_loss = float('inf')
     best_epoch=0
-
-    start_timestamp = time.strftime('%Y%m%d_%H%M%S')
-    model_name = f"SEASON:{season}>MLDRES:{mld_res:.2f}>FTRRES:{feature_res:.2f}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>DATAFILE:{str(filepath).split('/')[-1].replace('.nc', '')}>"
-    model_dir = 'dynamic_res_models'
-    datafile_name = args.filepath.split("/")[-1].replace(".nc", "")
-    save_dir = root / model_dir / datafile_name / season / model_name
-    os.makedirs(save_dir, exist_ok=True)
 
     writer= SummaryWriter(save_dir / 'tensorboard_logs')
     info_path =  save_dir / 'training_info.txt'
@@ -376,14 +389,14 @@ def main(args):
     model = torch.load(save_dir / 'best_model', map_location=device, weights_only=False)
     model.eval()
 
-    num_to_plot = 20
+    num_to_plot = None
 
     if full:
         mld_labels, mld_preds, test_temps = plot_full(test_dataloader, model, device)
     else:
         mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
 
-    total_mae, total_rmse = general_plot(mld_labels, mld_preds, test_temps, num_to_plot, season, model.name(), save_dir)
+    total_mae, total_rmse = general_plot(mld_labels, mld_preds, test_temps, season, model.name(), save_dir, num_to_plot=num_to_plot)
     update_values(info_path, {'rmse': total_rmse, 'mae': total_mae})
 
 

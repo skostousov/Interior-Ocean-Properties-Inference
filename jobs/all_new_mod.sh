@@ -11,10 +11,11 @@
 # )
 
 filepath=data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc
-num_epochs=70
+num_epochs=60
 lat_lon=(True)
 # seasons=("all" "autumn" "spring" "winter" "summer")
-seasons=("autumn" "spring" "winter" "summer")
+# seasons=("autumn" "spring" "winter" "summer")
+seasons=("all")
 
 groupbys=("months")
 models=("DA_CNN")

@@ -32,7 +32,8 @@ def fetch_info(info_path):
         return info
 
 # paths = get_all_txt_contents(root/'lower_res_models')
-paths = get_all_txt_contents(root/'dynamic_res_models')
+model_mode = 'dynamic_res_models'
+paths = get_all_txt_contents(root/model_mode)
 
 
 mega_dict = {"spring": [], "summer": [], "autumn": [], "winter": [], "all": []}
@@ -47,7 +48,7 @@ for key, value in mega_dict.items():
     best_infos = [max_rmse_dict]
     print(f"\n{key}: {len(value)} entries")
     for entry in value:
-        if 'rmse' not in entry:
+        if 'rmse' not in entry or (('mld_res' not in entry or float(entry['mld_res'])!=1) and model_mode=='dynamic_res_models'):
             continue
         if  len(best_infos) < 20:
             best_infos.append(entry)
@@ -62,7 +63,7 @@ for key, value in mega_dict.items():
                     max_rmse_dict = info
     best_infos = sorted(best_infos, key=lambda item: float(item['rmse']))
     for entry in best_infos:
-        print(f"{float(entry['rmse']):.2f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}")
+        print(f"{float(entry['rmse']):.2f}, {float(entry.get('mld_res', 000000)):.3f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}")
 
             
             

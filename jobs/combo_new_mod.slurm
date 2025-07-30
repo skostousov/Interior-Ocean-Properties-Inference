@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --gpus-per-node=1
 #SBATCH --cpus-per-task=8
-#SBATCH --time=0-08:00:00
+#SBATCH --time=0-05:30:00
 #SBATCH --output=/scratch/n/ngrisoua/kostouso/logs/%x_%j.out
 
 module load anaconda3
