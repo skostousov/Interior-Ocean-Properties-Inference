@@ -90,8 +90,8 @@ class TemporalDatasetNewMod(TorchDataset):
         print(lon_range)
         print(self.grid_size)
 
-        lat_list = range(0, lat_range-lat_range%self.grid_size, self.grid_size)
-        lon_list = range(0, lon_range-lon_range%self.grid_size, self.grid_size)
+        lat_list = range(self.rim, lat_range-lat_range%self.grid_size-self.rim, self.grid_size)
+        lon_list = range(self.rim, lon_range-lon_range%self.grid_size-self.rim, self.grid_size)
         # lat_list = range(0, lat_range, self.grid_size)
         # lon_list = range(0, lon_range, self.grid_size)
         print(len(lat_list), len(lon_list))
@@ -109,8 +109,8 @@ class TemporalDatasetNewMod(TorchDataset):
         }
         self.groups = self.groupby_map[self.groupby]
 
-        lat_list = lat_list[self.rim:-self.rim]
-        lon_list = lon_list[self.rim:-self.rim]
+        # lat_list = lat_list[self.rim:-self.rim]
+        # lon_list = lon_list[self.rim:-self.rim]
 
         if not self.full:
             grid_coords = [(i, j) for i in lat_list for j in lon_list]
