@@ -39,6 +39,7 @@ def main(args):
     groupby=info["groupby"]
     lat_lon=info["lat_lon"]
     full=info["full"]
+    num_to_plot = info["num_to_plot"] if info["num_to_plot"] is not None else None
 
     rim = int(info.get("rim", 0))
 
@@ -119,13 +120,14 @@ def main(args):
     else:
         mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
 
-    total_mae, total_rmse = general_plot(mld_labels, mld_preds, test_temps, season, model.name(), model_path)
-    update_values(info_path, {'rmse': total_rmse, 'mae': total_mae})
+    total_mae, total_rmse, r2 = general_plot(mld_labels, mld_preds, test_temps, season, model.name(), model_path, num_to_plot=num_to_plot)
+    update_values(info_path, {'rmse': total_rmse, 'mae': total_mae, 'r2': r2})
 
 if __name__ == "__main__":
     import argparse
     parser = argparse.ArgumentParser(description="Continue training a model.")
     parser.add_argument('--model_relative_path', type=str, default="saved_models/saved_daily_alternative_small_models/MODEL:UNetRegressionSE>TRAINSTART:20250603_220037>DATAFILE:small_daily_alternative_sample_1993-1993.nc>STRAT:test_indices_daily_alternative_small_small_01.pt>", help="Relative path to the model directory.")
     parser.add_argument('--recalculate', type=bool, default=True, help="recompute inference forward pass")
+    parser.add_argument('--num_to_plot', type=int, default=None, help="Number of time steps to plot. If None, all time steps will be plotted.")
     args = parser.parse_args()
     main(args)
