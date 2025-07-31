@@ -19,7 +19,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, importlib
-from data.argo.alternate_dataset import myDataset, TestSubset
+from src.utils.alternate_dataset import myDataset, TestSubset
 import scipy.ndimage as ndimage
 
 
@@ -138,7 +138,7 @@ def main(args):
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{args.season}>LOSS:{args.loss}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>"
-    model_dir = 'lower_res_models'
+    model_dir = 'lower_res_model_results'
     
     save_dir = root / model_dir / season / model.name() / model_name
     os.makedirs(save_dir, exist_ok=True)
@@ -275,6 +275,21 @@ def main(args):
     fig, axs = plt.subplots(len(test_months), 3, figsize=(16, 5 * len(test_months)), constrained_layout=True)
     total_rmse = 0
     total_mae = 0
+
+    y_true_flat = mld_labels.flatten()
+    y_pred_flat = mld_preds.flatten()
+
+    mass_mae = np.mean(np.abs(y_true_flat - y_pred_flat))
+
+    mass_rmse = np.sqrt(np.mean((y_true_flat - y_pred_flat) ** 2))
+
+    ss_res = np.sum((y_true_flat - y_pred_flat) ** 2)
+    ss_tot = np.sum((y_true_flat - np.mean(y_true_flat)) ** 2)
+    mass_r2 = 1 - ss_res / ss_tot if ss_tot != 0 else float('nan')
+
+    print(f"MAE: {mass_mae:.4f}, RMSE: {mass_rmse:.4f}, R^2: {mass_r2:.4f}")
+
+
     for i, month in enumerate(test_months):
         im_0 = axs[i, 0].imshow(mld_labels[i], cmap='inferno', vmin=0, vmax=vmax, origin='lower')
         fig.colorbar(im_0, ax=axs[i, 0], orientation='vertical', fraction=0.02, pad=0.04)
@@ -291,11 +306,11 @@ def main(args):
         axs[i, 2].set_title(f"Smoothed Prediction - Month: {month}")
     total_rmse = total_rmse / len(test_months)
     total_mae = total_mae / len(test_months)
-    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {total_rmse:.2f} total MAE: {total_mae:.2f}")
-    update_values(info_path, {"rmse": total_rmse, "mae": total_mae})
+    plt.suptitle(f" {season} \n {model_name} \n \n total RMSE: {mass_rmse:.2f} total MAE: {mass_mae:.2f}")
+    update_values(info_path, {"rmse": mass_rmse, "mae": mass_mae, "r2": mass_r2,})
 
 
-    fig.savefig(save_dir / f"rmse:{total_rmse:.2f}.png", dpi=300)
+    fig.savefig(save_dir / f"rmse:{mass_rmse:.2f}_mae:{mass_mae:.2f}_r2:{mass_r2:.2f}.png", dpi=300)
 
     fig, axs = plt.subplots(len(test_months), 2, figsize=(10, 5 * len(test_months)), constrained_layout=True)
     for i, month in enumerate(test_months):
