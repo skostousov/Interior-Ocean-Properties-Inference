@@ -40,11 +40,13 @@ def main(args):
     lat_lon=info["lat_lon"]
     full=info["full"]
 
+    rim = int(info.get("rim", 0))
+
 
     mld_res = float(info["mld_res"])
     feature_res = float(info["feature_res"])
 
-    data = TemporalDataset(filepath=data_file, mld_res=mld_res, feature_res=feature_res, season=season, groupby=groupby, lat_lon=lat_lon, full=full)
+    data = TemporalDataset(filepath=data_file, mld_res=mld_res, feature_res=feature_res, season=season, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim)
 
     test_idx = test_indices(test_indices_file)
     test_data = TestSubsetRegression(data, test_idx)
