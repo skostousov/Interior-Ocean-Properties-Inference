@@ -92,11 +92,19 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
     total_rmse = 0
     total_mae = 0
 
-    y_true = np.array(mld_labels).flatten()
-    y_pred = np.array(mld_preds).flatten()
-    ss_res = np.sum((y_true - y_pred) ** 2)
-    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
-    r2 = 1 - ss_res / ss_tot if ss_tot != 0 else float('nan')
+    y_true_flat = mld_labels.flatten()
+    y_pred_flat = mld_preds.flatten()
+
+    mass_mae = np.mean(np.abs(y_true_flat - y_pred_flat))
+
+    mass_rmse = np.sqrt(np.mean((y_true_flat - y_pred_flat) ** 2))
+
+    ss_res = np.sum((y_true_flat - y_pred_flat) ** 2)
+    ss_tot = np.sum((y_true_flat - np.mean(y_true_flat)) ** 2)
+    mass_r2 = 1 - ss_res / ss_tot if ss_tot != 0 else float('nan')
+
+    print(f"MAE: {mass_mae:.4f}, RMSE: {mass_rmse:.4f}, R^2: {mass_r2:.4f}")
+
 
     for i, t in enumerate(test_temps[:num_to_plot]):
         pred_map = mld_preds[i]
@@ -117,10 +125,10 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
     total_rmse = total_rmse / num_to_plot
     total_mae = total_mae / num_to_plot
-    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {total_rmse:.2f} | MAE: {total_mae:.2f} | R2: {r2:.2f}")
+    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {mass_rmse:.2f} | MAE: {mass_mae:.2f} | R2: {mass_r2:.2f}")
     plt.subplots_adjust(hspace=0.5)
     # fig.savefig(save_dir / "results.png", dpi=300)
-    plt.savefig(save_dir / f"results_rmse:{total_rmse:.2f}_mae:{total_mae:.2f}_r2:{r2:.2f}.png", dpi=200)
+    plt.savefig(save_dir / f"results_rmse:{mass_rmse:.2f}_mae:{mass_mae:.2f}_r2:{mass_r2:.2f}.png", dpi=200)
 
     fig, ax = plt.subplots(max(1, num_to_plot), 1, figsize=(6, 5* num_to_plot))
     for i, t in enumerate(test_temps[:num_to_plot]):
@@ -138,7 +146,7 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
     plt.show()
     fig.savefig(save_dir / "results_diff.png", dpi=300)
 
-    return total_mae, total_rmse, r2
+    return mass_mae, mass_rmse, mass_r2
 
 def plot_full(test_dataloader, model, device):
     test_idx = test_dataloader.dataset.dataset.indices

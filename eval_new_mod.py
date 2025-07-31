@@ -39,7 +39,9 @@ def main(args):
     groupby=info["groupby"]
     lat_lon=info["lat_lon"]
     full=info["full"]
-    num_to_plot = info["num_to_plot"] if info["num_to_plot"] is not None else None
+    num_to_plot = info.get("num_to_plot", None)
+    if num_to_plot == "None":
+        num_to_plot = None
 
     rim = int(info.get("rim", 0))
 

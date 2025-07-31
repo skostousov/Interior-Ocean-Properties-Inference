@@ -17,7 +17,19 @@ class myDataset(Dataset):
                 "winter": [12, 1, 2],
                 "spring": [3, 4, 5],
                 "summer": [6, 7, 8],
-                "autumn": [9, 10, 11]
+                "autumn": [9, 10, 11],
+                "Jan":[1],
+                "Feb":[2],
+                "Mar":[3],
+                "Apr":[4],
+                "May":[5],
+                "Jun":[6],
+                "Jul":[7],
+                "Aug":[8],
+                "Sep":[9],
+                "Oct":[10],
+                "Nov":[11],
+                "Dec":[12],
             }
         self.relevant_months = season_months.get(season, range(1, 13))
         self.ds_merged = xr.merge([self.glorys, self.argo, self.sla, self.sst])
