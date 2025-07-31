@@ -90,8 +90,23 @@ class TemporalDatasetNewMod(TorchDataset):
         print(lon_range)
         print(self.grid_size)
 
-        lat_list = range(self.rim, lat_range-lat_range%self.grid_size-self.rim, self.grid_size)
-        lon_list = range(self.rim, lon_range-lon_range%self.grid_size-self.rim, self.grid_size)
+        lat_list = range(self.rim, lat_range-lat_range%(self.grid_size), self.grid_size)
+        lon_list = range(self.rim, lon_range-lon_range%(self.grid_size), self.grid_size)
+
+        # lat_list = range(self.rim, (lat_range)-(lat_range)%self.grid_size, self.grid_size)
+        # lon_list = range(self.rim, (lon_range)-(lon_range)%self.grid_size, self.grid_size)
+
+        lat_list_list = [i for i in lat_list]
+        lon_list_list = [j for j in lon_list]
+        print(f"Lat list: {max(lat_list_list), min(lat_list_list)}  Lon list: {max(lon_list_list), min(lon_list_list)}")
+        print(f"Lat range: {lat_range}, Lon range: {lon_range}")
+
+        # self.feature_map = F.pad(self.feature_map, (self.rim, self.rim, self.rim, self.rim), mode='replicate')
+        # self.annotations_map = F.pad(self.annotations_map, (self.rim, self.rim, self.rim, self.rim), mode='replicate')
+
+        self.feature_map = np.pad(self.feature_map, ((0, 0), (0, 0), (self.rim, self.rim), (self.rim, self.rim)), mode='edge')
+        self.annotations_map = np.pad(self.annotations_map, ((0, 0), (0, 0), (self.rim, self.rim), (self.rim, self.rim)), mode='edge')
+
         # lat_list = range(0, lat_range, self.grid_size)
         # lon_list = range(0, lon_range, self.grid_size)
         print(len(lat_list), len(lon_list))
