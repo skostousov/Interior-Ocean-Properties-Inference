@@ -19,7 +19,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, importlib
-from src.utils.alternate_dataset import myDataset, TestSubset
+from data.argo.alternate_dataset import myDataset, TestSubset
 import scipy.ndimage as ndimage
 
 
@@ -138,7 +138,7 @@ def main(args):
 
     start_timestamp = time.strftime('%Y%m%d_%H%M%S')
     model_name = f"SEASON:{args.season}>LOSS:{args.loss}>MODEL:{model.name()}>TRAINSTART:{start_timestamp}>"
-    model_dir = 'lower_res_model_results'
+    model_dir = 'lower_res_models'
     
     save_dir = root / model_dir / season / model.name() / model_name
     os.makedirs(save_dir, exist_ok=True)

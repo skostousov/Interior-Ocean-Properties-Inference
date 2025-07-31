@@ -11,8 +11,8 @@ import numpy as np
 from continue_training import fetch_info
 import torch.nn as nn
 import os
-from src.utils.alternate_dataset import myDataset
-from src.utils.alternate_dataset import TestSubset
+from data.argo.alternate_dataset import myDataset
+from data.argo.alternate_dataset import TestSubset
 import scipy.ndimage as ndimage
 from combo_low_res import update_values
 from utils.splitter import train_val_test_split_temp

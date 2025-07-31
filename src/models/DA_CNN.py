@@ -106,7 +106,11 @@ class DA_CNN(nn.Module):
         x_fuse = self.fuseconv(x_fuse)
         x_pool = self.pool(x_fuse)
         x_flat = self.flatten(x_pool)
-        x_drop = self.dropout(x_flat)
+        # x_drop = self.dropout(x_flat)
+        # x_out = self.linear(x_drop)
+        dropout_layer = getattr(self, 'dropout', nn.Identity())
+        x_drop = dropout_layer(x_flat)
+
         x_out = self.linear(x_drop)
         return x_out
     def name(self):
