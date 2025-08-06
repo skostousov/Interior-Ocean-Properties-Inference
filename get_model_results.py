@@ -32,39 +32,44 @@ def fetch_info(info_path):
         return info
 
 # paths = get_all_txt_contents(root/'lower_res_models')
-model_mode = 'new_mod_model_results'
-# model_mode = 'lower_res_models'
+# model_mode = 'new_mod_model_results'
+model_mode = 'lower_res_models'
 paths = get_all_txt_contents(root/model_mode)
 
 
 mega_dict = {"spring": [], "summer": [], "autumn": [], "winter": [], "all": []}
 for path in paths:
     info = fetch_info(path)
+    season = info.get('season', None)
+    if season is None:
+        continue
     mega_dict[info['season']].append(info)
 
-mld_res=1
+mld_res=1/3
+#metric="r2"
+metric="rmse"
 
 for key, value in mega_dict.items():
-    max_rmse_dict = {'rmse': float('inf')}
+    max_rmse_dict = {metric: float('inf')}
     best_infos = [max_rmse_dict]
     print(f"\n{key}: {len(value)} entries")
     for entry in value:
-        if 'rmse' not in entry or (('mld_res' not in entry or float(entry['mld_res'])!=mld_res) and model_mode=='new_mod_model_results'):
+        if metric not in entry or (('mld_res' not in entry or float(entry['mld_res'])!=mld_res) and model_mode=='new_mod_model_results'):
             continue
         if  len(best_infos) < 20:
             best_infos.append(entry)
-            if float(entry['rmse']) > float(max_rmse_dict['rmse']):
+            if float(entry[metric]) > float(max_rmse_dict[metric]):
                 max_rmse_dict = entry
-        elif float(entry['rmse']) < float(max_rmse_dict['rmse']):
+        elif float(entry[metric]) < float(max_rmse_dict[metric]):
             best_infos.remove(max_rmse_dict)
             best_infos.append(entry)
             max_rmse_dict=entry
             for info in best_infos:
-                if float(info['rmse']) > float(max_rmse_dict['rmse']):
+                if float(info[metric]) > float(max_rmse_dict[metric]):
                     max_rmse_dict = info
-    best_infos = sorted(best_infos, key=lambda item: float(item['rmse']))
+    best_infos = sorted(best_infos, key=lambda item: float(item[metric]))
     for entry in best_infos:
-        print(f"{float(entry['rmse']):.2f}, {float(entry.get('r2', 00000000)):.2f}, {float(entry.get('mae', 00000000)):.2f} {float(entry.get('mld_res', 000000)):.3f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}")
+        print(f"{float(entry.get('rmse', 000000000000)):.2f}, {float(entry.get('r2', 00000000)):.2f}, {float(entry.get('mae', 00000000)):.2f} {float(entry.get('mld_res', 000000)):.3f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}")
 
             
             

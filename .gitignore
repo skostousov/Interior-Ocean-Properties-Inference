@@ -30,3 +30,8 @@ local_ray_results/
 *.png
 *.pt
 models/
+new_mod_model_results
+lower_res_model_results
+gan_model_results
+fetched_hp_tuning_results
+fetched_gan_results
