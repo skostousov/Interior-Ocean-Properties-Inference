@@ -14,7 +14,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, restrict_to_single_mld = True, analysis = False, pad = 0, groupby="days", lat_lon=True, full=False, rim=0):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, weird_param_not_sure_what_it_does = True, include_mld_in_input = False, groupby="days", lat_lon=True, full=False, rim=0, custom_features=None):
         self.cfg = cfg
         self.full = full
         self.rim = rim
@@ -25,14 +25,17 @@ class TemporalDatasetNewMod(TorchDataset):
         self.target_coarsen = int(self.mld_res / self.feature_res)
         self.feature_coarsen = int(12*self.feature_res)
 
-        self.features = cfg['data']['features']
+        if custom_features is not None:
+            self.features = custom_features
+        else:
+            self.features = cfg['data']['features']
         self.project_root = project_root
         self.transform = transform
         self.submode = cfg['submode']
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
         self.filepath=filepath
-        if restrict_to_single_mld:
+        if weird_param_not_sure_what_it_does:
             self.grid_size = int(self.mld_res / self.feature_res)
             # self.grid_size = self.grid_size // self.feature_coarsen
 
@@ -67,7 +70,7 @@ class TemporalDatasetNewMod(TorchDataset):
         self.all_variables = self.relevant_variables.copy()
         #creation of label_map
         self.annotations_map = self.relevant_variables.pop("mlotst_2")
-        if not analysis:
+        if not include_mld_in_input:
             self.relevant_variables.pop("mlotst")
         #creation of feature_map
 
@@ -296,7 +299,12 @@ class TemporalDatasetNewMod(TorchDataset):
             image = (image - self.mean) / self.std
             label = (label - self.mean_label) / self.std_label
         if self.transform:
-            image = self.transform(image)
+            if self.full:
+                combined = torch.cat((image, label), dim=0)
+                combined_transformed = self.transform(combined)
+                image, label = combined_transformed[:-1], combined_transformed[-1].squeeze()
+            else:
+                image = self.transform(image)
         if self.target_transform:
             label = self.target_transform(label)
 

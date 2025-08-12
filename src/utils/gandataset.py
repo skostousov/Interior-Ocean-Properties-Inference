@@ -58,6 +58,40 @@ class TestSubset(Subset):
         X, y = super().__getitem__(idx)
         self.dataset.transform = old_transform
         return X, y
+    
+    def __getitems__(self, indices: list[int]):
+        # add batched sampling support when parent dataset supports it.
+        # see torch.utils.data._utils.fetch._MapDatasetFetcher
+        if callable(getattr(self.dataset, "__getitems__", None)):
+            return self.dataset.__getitems__([self.indices[idx] for idx in indices])  # type: ignore[attr-defined]
+        else:
+            return [self.__getitem__(idx) for idx in indices]
+        
+class DepthAnythingTestSubset(TestSubset):
+    def __init__(self, dataset, indices):
+        super().__init__(dataset, indices)
+        self.dataset = dataset
+
+    def __getitem__(self, idx):
+        old_transform = self.dataset.transform
+        self.dataset.transform = None
+        X, y = super().__getitem__(idx)
+        self.dataset.transform = old_transform
+        # Crop X and y so their last two dimensions are multiples of 14
+        h, w = X.shape[-2], X.shape[-1]
+        new_h = (h // 14) * 14
+        new_w = (w // 14) * 14
+        X = X[..., :new_h, :new_w]
+        y = y[..., :new_h, :new_w]
+        return X, y
+    
+    def __getitems__(self, indices: list[int]):
+        # add batched sampling support when parent dataset supports it.
+        # see torch.utils.data._utils.fetch._MapDatasetFetcher
+        if callable(getattr(self.dataset, "__getitems__", None)):
+            return self.dataset.__getitems__([self.indices[idx] for idx in indices])  # type: ignore[attr-defined]
+        else:
+            return [self.__getitem__(idx) for idx in indices]
 
 
 if __name__ == "__main__":

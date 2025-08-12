@@ -188,7 +188,7 @@ def test_indices(test_indices_path):
     return test_idx
 
 if __name__ == "__main__":
-    from data.argo.alternate_dataset import myDataset
+    from src.utils.alternate_dataset import myDataset
     dataset = myDataset(season="Summer")
     train_idx, val_idx, test_idx = train_val_test_split_temp(dataset, gen_new=True)
     print(train_idx)

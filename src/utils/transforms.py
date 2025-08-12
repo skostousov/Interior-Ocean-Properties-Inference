@@ -5,16 +5,19 @@ import random
 from torchvision.transforms import functional as F
 
 class RescaledRotationTransform(object):
-    def __init__(self, degree_range = 180, scaling_interval = (math.sqrt(2), 2)):
+    def __init__(self, degree_range = 180, scaling_interval = (math.sqrt(2), 2), size = 50, rand_crop=False):
         self.degrees = degree_range
         self.scale = scaling_interval
+        if rand_crop:
+            self.random_crop = transforms.RandomResizedCrop(size, scale=(0.6, 1))
         self.random_h_flip = transforms.RandomHorizontalFlip(p=0.5)
         self.random_v_flip = transforms.RandomVerticalFlip(p=0.5)
         self.randomaffine = transforms.RandomAffine(self.degrees, scale=self.scale)
         self.transform = transforms.Compose([
             self.random_h_flip,
             self.random_v_flip,
-            self.randomaffine
+            self.random_crop if rand_crop else transforms.Lambda(lambda x: x),
+            self.randomaffine,
         ])
     def __call__(self, image, label=None):
         img_features = image.shape[0]
@@ -26,6 +29,22 @@ class RescaledRotationTransform(object):
             return transformed_image, transformed_label
         else:
             return self.transform(image)
+        
+class RandomCrop:
+    def __init__(self, size):
+        self.size = size
+        self.random_crop = transforms.RandomResizedCrop(size, scale=(0.6, 1))
+        
+    def __call__(self, image, label=None):
+        img_features = image.shape[0]
+        if label is not None:
+            label_features = label.shape[0]
+            concatenated = torch.cat([image, label], axis=0)
+            output = self.random_crop(concatenated)
+            transformed_image, transformed_label = output[:img_features], output[img_features:label_features+img_features]
+            return transformed_image, transformed_label
+        else:
+            return self.random_crop(image)
 
 class GANTransform:
     def __init__(self, size = 50):

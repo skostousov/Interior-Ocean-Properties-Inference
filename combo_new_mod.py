@@ -79,8 +79,8 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
     loss = 0
     print(season)
     max_dict = {"summer":40, "spring":70, "winter":90, "autumn":70}
-    vmax = max_dict.get(season, 70)
-    print(vmax)
+    # vmax = max_dict.get(season, 70)
+    # print(vmax)
 
     mae_loss = nn.L1Loss()
 
@@ -107,8 +107,11 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
 
 
     for i, t in enumerate(test_temps[:num_to_plot]):
+        vmax = max_dict.get(season, False)
         pred_map = mld_preds[i]
         label_map = mld_labels[i]    
+        if not vmax:
+            vmax = np.max([np.max(pred_map), np.max(label_map)])
         im_0 = ax[i, 0].imshow(label_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
         ax[i, 0].set_title('Target Map for Time Step ' + str(t))
         ax[i, 0].set_xlabel('Longitude Index')
@@ -247,10 +250,13 @@ def main(args):
     lat_lon=args.lat_lon
     full=args.full
     rim = args.rim
+    custom_features = args.custom_features
 
-    data_aug = RescaledRotationTransform(scaling_interval = (1, 1.4))
+    # data_aug = RescaledRotationTransform(scaling_interval = (1, 1.4))
+    data_aug = RescaledRotationTransform(scaling_interval = (1, 1.6))
+
     # data_aug = GANTransformRotate()
-    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim)
+    data = TemporalDataset(transform=data_aug, filepath=filepath, season=season, mld_res=mld_res, feature_res=feature_res, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim, custom_features=custom_features)
 
     batch_size = args.batch_size
     epochs = 100
@@ -294,9 +300,9 @@ def main(args):
     print(f"Train dataset size: {len(train_data)}, Val dataset size: {len(val_data)}")
     print(f"Train dataset shape: img: {train_data[0][0].shape}, lbl: {train_data[0][1].shape}, Val dataset shape: img: {val_data[0][0].shape}, lbl: {val_data[0][1].shape}")
 
-    train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=6, pin_memory=True)
-    val_dataloader = DataLoader(val_data, batch_size=1, shuffle=False, num_workers=6, pin_memory=True)
-    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, num_workers=6, pin_memory=True)
+    train_dataloader = DataLoader(train_data, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
+    val_dataloader = DataLoader(val_data, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
+    test_dataloader = DataLoader(test_data, batch_size=1, shuffle=True, num_workers=0, pin_memory=True)
 
     best_loss = float('inf')
     corresponding_train_loss = float('inf')
@@ -315,6 +321,7 @@ def main(args):
         "loss_fn": loss_fn.__class__.__name__,
         "loss_name": args.loss,
         "scheduler": scheduler.__class__.__name__,
+        "features": data.features,
         "train_dataset_size": len(train_data),
         "val_dataset_size": len(val_data),
         "test_dataset_size": len(test_idx),
@@ -457,5 +464,6 @@ if __name__ == "__main__":
     parser.add_argument('--full', default=False, type=bool, help="Whether to use full dataset or not")
     parser.add_argument('--rim', default=0, type=int, help="Rim padding size")
     parser.add_argument('--num_to_plot', default=None, type=int, help="Number of time steps to plot. If None, all time steps will be plotted.")
+    parser.add_argument('--custom_features', default=False, type=str, nargs='+', help="List of custom features to use. If None, all features will be used.")
     args = parser.parse_args()
     main(args)
