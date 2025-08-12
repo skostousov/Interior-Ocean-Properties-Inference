@@ -69,7 +69,7 @@ for key, value in mega_dict.items():
                     max_rmse_dict = info
     best_infos = sorted(best_infos, key=lambda item: float(item[metric]))
     for entry in best_infos:
-        print(f"{float(entry.get('rmse', 000000000000)):.2f}, {float(entry.get('r2', 00000000)):.2f}, {float(entry.get('mae', 00000000)):.2f} {float(entry.get('mld_res', 000000)):.3f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}")
+        print(f"{float(entry.get('rmse', 000000000000)):.2f}, {float(entry.get('r2', 00000000)):.2f}, {float(entry.get('mae', 00000000)):.2f} {float(entry.get('mld_res', 000000)):.3f}, {entry.get('loss_fn', 'NA')}, {float(entry.get('lr', 000000)):.5f}, {entry.get('batch_size', 000000)}, {entry.get('model_specific_args', 'Model_sepcific_args_unavailable')}, {entry.get('coarsen', 1)}, {entry.get('rim', 'NO RIM')}")
 
             
             
