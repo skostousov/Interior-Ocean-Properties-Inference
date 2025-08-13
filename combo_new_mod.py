@@ -9,6 +9,7 @@ from models.UNET_regressionSE import UNetRegressionSE
 from models.downscaledUNetSE import UNetRegressionSE as downscaledUNetSE
 from models.downscaledUNet import UNetRegression as downscaledUNet
 from models.simple_CNN_regression import PixelWiseRegressor
+from models.CNN_EBAM import EBAM_CNN
 from models.GAN import GeneratorUNetRegressionSEConditional
 from models.DA_CNN import DA_CNN
 from torch.utils.data import Subset, DataLoader
@@ -233,6 +234,7 @@ def main(args):
         "GANGenerator": (GeneratorUNetRegressionSEConditional, {}),
         "downscaledUNetSE": (downscaledUNetSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16), "dropout": getattr(args, "dropout", 0.0)}),
         "downscaledUNet": (downscaledUNet, {"first_out": getattr(args, "first_out", 64)}),
+        "EBAM_CNN": (EBAM_CNN, {"num_heads": getattr(args, "num_heads", 4)}),
     }
 
     cfg = RELEVANT_CONFIG
@@ -438,6 +440,7 @@ if __name__ == "__main__":
     m5 = subs.add_parser('GANGenerator')
     m6 = subs.add_parser('downscaledUNetSE', help='Train downscaled UNetSE model')
     m7 = subs.add_parser('downscaledUNet', help='Train downscaled UNet model')
+    m8 = subs.add_parser('EBAM_CNN', help='Train EBAM_CNN model')
     m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
     m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
     m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
@@ -451,6 +454,7 @@ if __name__ == "__main__":
     m6.add_argument('--reduction', type=int, default=16, help='Reduction factor for downscaled UNetSE')
     m6.add_argument('--dropout', type=float, default=0.0, help='Dropout rate for downscaled UNetSE')
     m7.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of downscaled UNet')
+    m8.add_argument('--num_heads', type=int, default=4, help='Number of attention heads for EBAM_CNN')
     parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=64, type=int)
