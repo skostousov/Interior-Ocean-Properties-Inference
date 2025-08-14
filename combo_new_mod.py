@@ -254,6 +254,9 @@ def main(args):
     rim = args.rim
     custom_features = args.custom_features
 
+    if custom_features:
+        custom_features = list(custom_features.split(" "))
+
     # data_aug = RescaledRotationTransform(scaling_interval = (1, 1.4))
     data_aug = RescaledRotationTransform(scaling_interval = (1, 1.6))
 
@@ -468,6 +471,6 @@ if __name__ == "__main__":
     parser.add_argument('--full', default=False, type=bool, help="Whether to use full dataset or not")
     parser.add_argument('--rim', default=0, type=int, help="Rim padding size")
     parser.add_argument('--num_to_plot', default=None, type=int, help="Number of time steps to plot. If None, all time steps will be plotted.")
-    parser.add_argument('--custom_features', default=False, type=str, nargs='+', help="List of custom features to use. If None, all features will be used.")
+    parser.add_argument('--custom_features', default=False, type=str, help="List of custom features to use. If None, all features will be used.")
     args = parser.parse_args()
     main(args)
