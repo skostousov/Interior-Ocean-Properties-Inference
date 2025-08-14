@@ -152,6 +152,72 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
 
     return mass_mae, mass_rmse, mass_r2
 
+def display_general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir, num_to_plot=None):
+    loss = 0
+    print(season)
+    max_dict = {"summer":40, "spring":70, "winter":90, "autumn":70}
+    # vmax = max_dict.get(season, 70)
+    # print(vmax)
+
+    mae_loss = nn.L1Loss()
+
+    if not num_to_plot:
+        num_to_plot = len(test_temps)
+
+    total_rmse = 0
+    total_mae = 0
+
+    y_true_flat = mld_labels.flatten()
+    y_pred_flat = mld_preds.flatten()
+
+    mass_mae = np.mean(np.abs(y_true_flat - y_pred_flat))
+
+    mass_rmse = np.sqrt(np.mean((y_true_flat - y_pred_flat) ** 2))
+
+    ss_res = np.sum((y_true_flat - y_pred_flat) ** 2)
+    ss_tot = np.sum((y_true_flat - np.mean(y_true_flat)) ** 2)
+    mass_r2 = 1 - ss_res / ss_tot if ss_tot != 0 else float('nan')
+
+    print(f"MAE: {mass_mae:.4f}, RMSE: {mass_rmse:.4f}, R^2: {mass_r2:.4f}")
+
+    fig, ax = plt.subplots(max(1, num_to_plot//2 + 1), 4, figsize=(30, 8* (num_to_plot//2 + 1)))
+    ax = np.atleast_2d(ax)
+
+    for i, t in enumerate(test_temps[:num_to_plot]):
+        vmax = max_dict.get(season, False)
+        pred_map = mld_preds[i]
+        label_map = mld_labels[i]    
+        col_start = (i % 2) * 2
+        print(f"Processing time step {t} with index {i}, row {i//2}, and column start {col_start}")
+
+        if not vmax:
+            vmax = np.max([np.max(pred_map), np.max(label_map)])
+        im_0 = ax[i//2, col_start + 0].imshow(label_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
+        ax[i//2, col_start + 0].set_title('Target Map for Time Step ' + str(t))
+        ax[i//2, col_start + 0].set_xlabel('Longitude Index')
+        ax[i//2, col_start + 0].set_ylabel('Latitude Index')
+        # fig.colorbar(im_0, label='Actual MLD (m)', ax=ax[i//2, col_start + 0])
+        im_1 = ax[i//2, col_start + 1].imshow(pred_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
+        mae = mae_loss(torch.tensor(label_map), torch.tensor(pred_map)).item()
+        rmse = np.sqrt(np.mean((pred_map - label_map)**2))
+        total_rmse += rmse
+        total_mae += mae
+        ax[i//2, col_start + 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}" + " RMSE: " + f"{rmse:.2f}")
+        ax[i//2, col_start + 1].set_xlabel('Longitude Index')
+        ax[i//2, col_start + 1].set_ylabel('Latitude Index')
+        # fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i//2, col_start + 1])
+    # fig.colorbar(im_0, label='MLD (m)', ax=ax, location='right', shrink=0.6)
+    fig.subplots_adjust(right=0.7)
+    cbar_ax = fig.add_axes([0.88, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
+    fig.colorbar(im_0, cax=cbar_ax, label='MLD (m)')
+
+    total_rmse = total_rmse / num_to_plot
+    total_mae = total_mae / num_to_plot
+    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {mass_rmse:.2f} | MAE: {mass_mae:.2f} | R2: {mass_r2:.2f}")
+    plt.subplots_adjust(hspace=0.5)
+    plt.tight_layout()
+    plt.savefig(save_dir / f"results_to_display_rmse:{mass_rmse:.2f}_mae:{mass_mae:.2f}_r2:{mass_r2:.2f}.png", dpi=600)
+
 def plot_full(test_dataloader, model, device):
     test_idx = test_dataloader.dataset.dataset.indices
 
@@ -429,6 +495,7 @@ def main(args):
         mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
 
     total_mae, total_rmse, r2 = general_plot(mld_labels, mld_preds, test_temps, season, model.name(), save_dir, num_to_plot=num_to_plot)
+    display_general_plot(mld_labels, mld_preds, test_temps, season, model.name(), save_dir, num_to_plot=num_to_plot)
     update_values(info_path, {'rmse': total_rmse, 'mae': total_mae, 'r2': r2})
 
 
@@ -439,7 +506,7 @@ if __name__ == "__main__":
     m1 = subs.add_parser('UNetRegression', help='Train UNetRegression model')
     m2 = subs.add_parser('UNetRegressionSE', help='Train UNetRegressionSE model')
     m4 = subs.add_parser('DA_CNN', help='Train DA_CNN model')
-    m3= subs.add_parser('UNetFull', help='Train UNet model')
+    m3 = subs.add_parser('UNetFull', help='Train UNet model')
     m5 = subs.add_parser('GANGenerator')
     m6 = subs.add_parser('downscaledUNetSE', help='Train downscaled UNetSE model')
     m7 = subs.add_parser('downscaledUNet', help='Train downscaled UNet model')
