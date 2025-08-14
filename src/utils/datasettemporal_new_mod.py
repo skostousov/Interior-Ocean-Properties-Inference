@@ -14,7 +14,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, weird_param_not_sure_what_it_does = True, include_mld_in_input = False, groupby="days", lat_lon=True, full=False, rim=0, custom_features=None):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, weird_param_not_sure_what_it_does = True, include_mld_in_input = False, groupby="days", lat_lon=True, full=False, rim=0, custom_features=False):
         self.cfg = cfg
         self.full = full
         self.rim = rim
@@ -25,7 +25,7 @@ class TemporalDatasetNewMod(TorchDataset):
         self.target_coarsen = int(self.mld_res / self.feature_res)
         self.feature_coarsen = int(12*self.feature_res)
 
-        if custom_features is not None:
+        if custom_features:
             self.features = custom_features
         else:
             self.features = cfg['data']['features']

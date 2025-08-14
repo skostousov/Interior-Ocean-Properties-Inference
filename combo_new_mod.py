@@ -46,8 +46,9 @@ def update_values(info_path, key_values):
         for key, val in info.items():
             f.write(f"{key}:: {val}\n")
 
-def plot_grids(test_dataloader, model, device):
+def plot_grids(test_dataloader, model, device, dir):
     # test_idx = test_dataloader.dataset.dataset.indices
+
     test_idx = test_dataloader.dataset.indices
 
 
@@ -55,7 +56,15 @@ def plot_grids(test_dataloader, model, device):
 
 
     test_temps = list(set([data.grid_and_centre_coords_and_temp_unit[i][-1] for i in test_idx]))
+
     print(len(test_temps))
+
+    if os.path.exists(dir / "mld_labels.pt") and os.path.exists(dir / "mld_preds.pt"):
+        mld_labels = torch.load(dir / "mld_labels.pt")
+        mld_preds = torch.load(dir / "mld_preds.pt")
+        mld_labels = mld_labels.numpy()
+        mld_preds = mld_preds.numpy()
+        return mld_labels, mld_preds, test_temps
 
     mld_labels = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
     mld_preds = np.zeros((len(test_temps), data.feature_map.shape[-2], data.feature_map.shape[-1]))
@@ -73,6 +82,9 @@ def plot_grids(test_dataloader, model, device):
         print(f"Processing lat {lat}, lon {lon}, temp {month_idx}")
         mld_labels[month_pos, extra_info[0][0]:extra_info[0][0]+data.grid_size, extra_info[0][1]:extra_info[0][1]+data.grid_size] = y.item() * (data.std_label) + data.mean_label
         mld_preds[month_pos, extra_info[0][0]:extra_info[0][0]+data.grid_size, extra_info[0][1]:extra_info[0][1]+data.grid_size] = preds.item() * (data.std_label) + data.mean_label
+
+    torch.save(torch.tensor(mld_labels), dir/"mld_labels.pt")
+    torch.save(torch.tensor(mld_preds), dir/"mld_preds.pt")
 
     return mld_labels, mld_preds, test_temps
 
@@ -123,7 +135,7 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
         rmse = np.sqrt(np.mean((pred_map - label_map)**2))
         total_rmse += rmse
         total_mae += mae
-        ax[i, 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}" + " RMSE: " + f"{rmse:.2f}")
+        ax[i, 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.2f}" + " RMSE: " + f"{rmse:.2f}")
         ax[i, 1].set_xlabel('Longitude Index')
         ax[i, 1].set_ylabel('Latitude Index')
         fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i, 1])
@@ -146,7 +158,7 @@ def general_plot(mld_labels, mld_preds, test_temps, season, model_name, save_dir
         ax[i].set_ylabel('Latitude Index')
         fig.colorbar(im_0, label='MLD MAE (m)', ax=ax[i])
     plt.suptitle(f"{model_name} \n Difference Results")
-    plt.subplots_adjust(hspace=0.3)
+    plt.subplots_adjust(hspace=0.8)
     plt.show()
     fig.savefig(save_dir / "results_diff.png", dpi=300)
 
@@ -193,35 +205,34 @@ def display_general_plot(mld_labels, mld_preds, test_temps, season, model_name, 
         if not vmax:
             vmax = np.max([np.max(pred_map), np.max(label_map)])
         im_0 = ax[i//2, col_start + 0].imshow(label_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
-        ax[i//2, col_start + 0].set_title('Target Map for Time Step ' + str(t))
-        ax[i//2, col_start + 0].set_xlabel('Longitude Index')
-        ax[i//2, col_start + 0].set_ylabel('Latitude Index')
+        ax[i//2, col_start + 0].set_title(f'TARGET Map | t: {str(t)}', fontsize=24, pad=20)
+        ax[i//2, col_start + 0].set_xlabel('Longitude Index', fontsize=17)
+        ax[i//2, col_start + 0].set_ylabel('Latitude Index', fontsize=17)
         # fig.colorbar(im_0, label='Actual MLD (m)', ax=ax[i//2, col_start + 0])
         im_1 = ax[i//2, col_start + 1].imshow(pred_map, origin='lower', vmin=0, vmax=vmax, cmap='viridis')
         mae = mae_loss(torch.tensor(label_map), torch.tensor(pred_map)).item()
         rmse = np.sqrt(np.mean((pred_map - label_map)**2))
         total_rmse += rmse
         total_mae += mae
-        ax[i//2, col_start + 1].set_title('Prediction Map for Time Step ' + str(t) + " MAE: " + f"{mae:.7f}" + " RMSE: " + f"{rmse:.2f}")
-        ax[i//2, col_start + 1].set_xlabel('Longitude Index')
-        ax[i//2, col_start + 1].set_ylabel('Latitude Index')
+        ax[i//2, col_start + 1].set_title(f'PREDICTION Map | t: {str(t)}\nMAE: {mae:.2f} RMSE: {rmse:.2f}', fontsize=24, pad=20)
+        ax[i//2, col_start + 1].set_xlabel('Longitude Index', fontsize=17)
+        ax[i//2, col_start + 1].set_ylabel('Latitude Index', fontsize=17)
         # fig.colorbar(im_1, label="Predicted MLD (m)", ax=ax[i//2, col_start + 1])
     # fig.colorbar(im_0, label='MLD (m)', ax=ax, location='right', shrink=0.6)
-    fig.subplots_adjust(right=0.7)
-    cbar_ax = fig.add_axes([0.88, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
-    fig.colorbar(im_0, cax=cbar_ax, label='MLD (m)')
-
+    # fig.subplots_adjust(right=0.7)
+    # cbar_ax = fig.add_axes([0.88, 0.15, 0.02, 0.7])  # [left, bottom, width, height]
+    cbar = fig.colorbar(im_0, ax=ax, location='right', fraction=0.04, pad=0.1, label='MLD (m)')
+    cbar.ax.tick_params(labelsize=20)
+    cbar.set_label(label='MLD (m)', fontsize=26)
     total_rmse = total_rmse / num_to_plot
     total_mae = total_mae / num_to_plot
-    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {mass_rmse:.2f} | MAE: {mass_mae:.2f} | R2: {mass_r2:.2f}")
-    plt.subplots_adjust(hspace=0.5)
-    plt.tight_layout()
+    plt.suptitle(f"Season: {season}\n{model_name} \n \n RMSE: {mass_rmse:.2f} | MAE: {mass_mae:.2f} | R2: {mass_r2:.2f}", fontsize=34)
+    # plt.subplots_adjust(hspace=0.5, wspace=0.1)  
+    # plt.tight_layout()
     plt.savefig(save_dir / f"results_to_display_rmse:{mass_rmse:.2f}_mae:{mass_mae:.2f}_r2:{mass_r2:.2f}.png", dpi=600)
 
 def plot_full(test_dataloader, model, device):
     test_idx = test_dataloader.dataset.dataset.indices
-
-
     # test_temps = list(set([data.indices[i] for i in test_idx]))
     test_temps = list(set(test_dataloader.dataset.indices))
 
@@ -242,7 +253,7 @@ def plot_full(test_dataloader, model, device):
         preds = preds.detach()
         mld_labels[i] = y * (data.std_label) + data.mean_label
         mld_preds[i] = preds * (data.std_label) + data.mean_label
-    
+
     return mld_labels, mld_preds, test_temps
 
 def train_loop(model, train_dataloader, optimizer, loss_fn, device):
