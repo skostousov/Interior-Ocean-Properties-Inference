@@ -344,7 +344,7 @@ def main(args):
 
     batch_size = args.batch_size
     epochs = 100
-    early_stopping_thresh = 50
+    early_stopping_thresh = 3
     model = models[args.model][0](data[0][0].shape[0], out_channels=1, grid_size=data.grid_size, **models[args.model][1])
 
     def initialize_weights(m):
