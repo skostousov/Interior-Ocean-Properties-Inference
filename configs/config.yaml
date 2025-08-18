@@ -1,4 +1,4 @@
-mode: WaterOnlyDailySlightlyLarger
+mode: WaterOnlyDailyLarge
 data_dir_relative_to_project_root: data
 datafile: 1993-10-11-1993-10-12.nc
 model_save_dest: saved_models

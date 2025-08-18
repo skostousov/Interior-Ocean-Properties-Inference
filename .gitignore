@@ -1,8 +1,9 @@
-data/*
-!data/
-data/argo/*
-!data/argo/
-!data/argo/alternate_dataset.py
+data/
+# data/*
+# !data/
+# data/argo/*
+# !data/argo/
+# !data/argo/alternate_dataset.py
 sample_ds.ns
 src/__pycache__/
 src/utils/__pycache__/
@@ -35,3 +36,6 @@ lower_res_model_results
 gan_model_results
 fetched_hp_tuning_results
 fetched_gan_results
+FULL
+FULL_DA_CNN
+poetry.lock

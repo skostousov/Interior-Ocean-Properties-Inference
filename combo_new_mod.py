@@ -27,6 +27,7 @@ from utils.datasettemporal_new_mod import TestSubsetRegressionNewMod as TestSubs
 from utils.datasettemporal_new_mod import TemporalDatasetNewMod as TemporalDataset
 import scipy.ndimage as ndimage
 from models.UNetfullimageoutput import UNet
+from models.ResNet import ResNetImageToImage
 
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
@@ -312,6 +313,7 @@ def main(args):
         "downscaledUNetSE": (downscaledUNetSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16), "dropout": getattr(args, "dropout", 0.0)}),
         "downscaledUNet": (downscaledUNet, {"first_out": getattr(args, "first_out", 64)}),
         "EBAM_CNN": (EBAM_CNN, {"num_heads": getattr(args, "num_heads", 4)}),
+        "ResNet": (ResNetImageToImage, {"n_blocks": 6, "base_channels": 64, "norm": "in", "final_activation": None})
     }
 
     cfg = RELEVANT_CONFIG
@@ -522,6 +524,7 @@ if __name__ == "__main__":
     m6 = subs.add_parser('downscaledUNetSE', help='Train downscaled UNetSE model')
     m7 = subs.add_parser('downscaledUNet', help='Train downscaled UNet model')
     m8 = subs.add_parser('EBAM_CNN', help='Train EBAM_CNN model')
+    m9 = subs.add_parser('ResNet', help='Train ResNet model')
     m1.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of UNetRegression')
     m2.add_argument('--reduction', type=int, default=16, help='Reduction factor for UNetRegression')
     m2.add_argument('--base_filters', type=int, default=64, help='Base filters for UNetRegressionSE')
@@ -536,6 +539,10 @@ if __name__ == "__main__":
     m6.add_argument('--dropout', type=float, default=0.0, help='Dropout rate for downscaled UNetSE')
     m7.add_argument('--first_out', type=int, default=64, help='Number of filters in the first layer of downscaled UNet')
     m8.add_argument('--num_heads', type=int, default=4, help='Number of attention heads for EBAM_CNN')
+    m9.add_argument('--n_blocks', type=int, default=6, help='Number of residual blocks for ResNet')
+    m9.add_argument('--base_channels', type=int, default=64, help='Base channels for ResNet')
+    m9.add_argument('--norm', type=str, default='in', choices=['in', 'bn'], help='Normalization type for ResNet')
+    m9.add_argument('--final_activation', type=str, default=None, choices=[None, 'relu', 'sigmoid'], help='Final activation function for ResNet')
     parser.add_argument('--num_epochs', default = 1, type=int, help="number of epochs to train for")
     parser.add_argument('--lr', default = 1e-4, type=float)
     parser.add_argument('--batch_size', default=64, type=int)

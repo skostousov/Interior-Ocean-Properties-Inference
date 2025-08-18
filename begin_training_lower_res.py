@@ -19,7 +19,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 import matplotlib.pyplot as plt
 import numpy as np
 import sys, importlib
-from data.argo.alternate_dataset import myDataset, TestSubset
+from src.utils.alternate_dataset import myDataset, TestSubset
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
 torch.backends.cudnn.benchmark = True

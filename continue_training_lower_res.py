@@ -3,7 +3,7 @@ import torch
 from torch.utils.tensorboard import SummaryWriter
 from torch import nn
 from pathlib import Path
-from data.argo.alternate_dataset import myDataset, TestSubset
+from src.utils.alternate_dataset import myDataset, TestSubset
 from torch.utils.data import Subset, DataLoader
 from utils.transforms import RescaledRotationTransform
 from utils.config import PROJECT_ROOT
