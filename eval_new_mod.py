@@ -49,7 +49,10 @@ def main(args):
     mld_res = float(info["mld_res"])
     feature_res = float(info["feature_res"])
 
-    data = TemporalDataset(filepath=data_file, mld_res=mld_res, feature_res=feature_res, season=season, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim)
+    custom_features = eval(info.get("features", False))
+    print(custom_features)
+
+    data = TemporalDataset(filepath=data_file, mld_res=mld_res, feature_res=feature_res, season=season, groupby=groupby, lat_lon=lat_lon, full=full, rim=rim, custom_features=custom_features)
 
     test_idx = test_indices(test_indices_file)
     test_data = TestSubsetRegression(data, test_idx)

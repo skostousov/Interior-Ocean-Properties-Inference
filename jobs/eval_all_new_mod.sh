@@ -23,13 +23,14 @@
 
 #!/bin/bash
 ROOT_DIR="/scratch/n/ngrisoua/kostouso/OceanPropInfSatImgScratch/OceanPropInfSatImg"
-LOW_RES_MODELS_DIR="$ROOT_DIR/new_mod_model_results"
+LOW_RES_MODELS_DIR="$ROOT_DIR/new_mod_model_results/WaterOnlyMonthlyExtendedSeasonality/autumn"
 
 # Find all training_info.txt files up to 2 levels deep
-find "$LOW_RES_MODELS_DIR" -mindepth 2 -maxdepth 4 -type f -name "training_info.txt" | while read -r txt_file; do
+find "$LOW_RES_MODELS_DIR" -mindepth 1 -maxdepth 4 -type f -name "training_info.txt" | while read -r txt_file; do
     # Get the folder containing training_info.txt
     subfolder_path="$(dirname "$txt_file")"
     relative_path="${subfolder_path#$ROOT_DIR/}"
+    echo $subfolder_path
 
     # Check if the file does NOT contain "rmse" AND test_indices.pt exists in the same folder
     if ! grep -q "r2" "$txt_file" && [[ -f "$subfolder_path/test_indices.pt" ]]; then

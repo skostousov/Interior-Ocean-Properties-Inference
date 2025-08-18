@@ -503,7 +503,7 @@ def main(args):
     if full:
         mld_labels, mld_preds, test_temps = plot_full(test_dataloader, model, device)
     else:
-        mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device)
+        mld_labels, mld_preds, test_temps = plot_grids(test_dataloader, model, device, save_dir)
 
     total_mae, total_rmse, r2 = general_plot(mld_labels, mld_preds, test_temps, season, model.name(), save_dir, num_to_plot=num_to_plot)
     display_general_plot(mld_labels, mld_preds, test_temps, season, model.name(), save_dir, num_to_plot=num_to_plot)
