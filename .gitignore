@@ -31,7 +31,6 @@ fetched_results/
 local_ray_results/
 *.png
 *.pt
-models/
 new_mod_model_results
 lower_res_model_results
 gan_model_results

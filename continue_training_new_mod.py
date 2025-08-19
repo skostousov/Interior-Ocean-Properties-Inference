@@ -62,7 +62,14 @@ def main(args):
         else:
             data_aug = None
 
-        data = TemporalDataset(filepath=project_root / info['data_file'], transform=data_aug, season=info["season"], mld_res=float(info['mld_res']), feature_res=float(info['feature_res']))
+        groupby = info["groupby"]
+        lat_lon = info["lat_lon"]
+        full = info["full"]
+        rim = int(info.get("rim", 0))
+        custom_features = eval(info.get("features", False))
+
+
+        data = TemporalDataset(filepath=project_root / info['data_file'], transform=data_aug, season=info["season"], mld_res=float(info['mld_res']), feature_res=float(info['feature_res']), groupby=groupby, lat_lon=lat_lon, full=full, rim=rim, custom_features=custom_features)
 
 
         batch_size = int(info['batch_size']) 
