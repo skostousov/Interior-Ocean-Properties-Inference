@@ -313,8 +313,8 @@ def main(args):
         "downscaledUNetSE": (downscaledUNetSE, {"base_filters": getattr(args, "base_filters", 64), "reduction": getattr(args, "reduction", 16), "dropout": getattr(args, "dropout", 0.0)}),
         "downscaledUNet": (downscaledUNet, {"first_out": getattr(args, "first_out", 64)}),
         "EBAM_CNN": (EBAM_CNN, {"num_heads": getattr(args, "num_heads", 4)}),
-        "ResNetFull": (ResNetImageToImage, {"n_blocks": 6, "base_channels": 64, "norm": "in", "final_activation": None}),
-        "ResNetValue": (ResNetImageToValue, {"n_blocks": 6, "base_channels": 64, "norm": "in", "final_activation": None})
+        "ResNetFull": (ResNetImageToImage, {"n_blocks": getattr(args, "n_blocks", 6), "base_channels": getattr(args, "base_channels", 64), "norm": getattr(args, "norm", "in"), "final_activation": getattr(args, "final_activation", None)}),
+        "ResNetValue": (ResNetImageToValue, {"n_blocks": getattr(args, "n_blocks", 6), "base_channels": getattr(args, "base_channels", 64), "norm": getattr(args, "norm", "in"), "final_activation": getattr(args, "final_activation", None)})
     }
 
     cfg = RELEVANT_CONFIG
