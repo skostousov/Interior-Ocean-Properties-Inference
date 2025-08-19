@@ -18,6 +18,6 @@ export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSat
 # mld_res=0.25
 # loss=MSE
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_DA_CNN_new_mod.py" --season $1 --mld_res $2 --loss $3
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hp_tuning_python_scripts/hptuning_DA_CNN_new_mod.py" --season $1 --mld_res $2 --loss $3
 
 echo "hp_tuning executed"

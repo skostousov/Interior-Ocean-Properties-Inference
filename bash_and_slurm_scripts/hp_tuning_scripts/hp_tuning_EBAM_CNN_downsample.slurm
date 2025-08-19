@@ -13,6 +13,6 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_EBAM_CNN_downsample.py"
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hp_tuning_python_scripts/hptuning_EBAM_CNN_downsample.py"
 
 echo "hp_tuning executed"

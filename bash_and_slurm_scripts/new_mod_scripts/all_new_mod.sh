@@ -54,7 +54,7 @@ for season in "${seasons[@]}"; do
                   for red in "${reduction[@]}"; do
                     for d in "${dropout2[@]}"; do
                       for l in "${loss[@]}"; do
-                        sbatch jobs/combo_new_mod.slurm "$num_epochs" "$season" "$la_lo" "$groupby" "$model" "$filepath" "$b" "$m" "$flf" "$red" "$l" "$r" "$custom_features" "$d"
+                        sbatch bash_and_slurm_scripts/new_mod_scripts/combo_new_mod.slurm "$num_epochs" "$season" "$la_lo" "$groupby" "$model" "$filepath" "$b" "$m" "$flf" "$red" "$l" "$r" "$custom_features" "$d"
                       done
                     done
                   done

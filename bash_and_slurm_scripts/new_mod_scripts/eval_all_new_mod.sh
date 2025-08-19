@@ -35,7 +35,7 @@ find "$LOW_RES_MODELS_DIR" -mindepth 1 -maxdepth 4 -type f -name "training_info.
     # Check if the file does NOT contain "rmse" AND test_indices.pt exists in the same folder
     if ! grep -q "r2" "$txt_file" && [[ -f "$subfolder_path/test_indices.pt" ]]; then
         echo "Submitting evaluation job for subfolder: $relative_path"
-        sbatch jobs/eval_new_mod.slurm "$relative_path"
+        sbatch bash_and_slurm_scripts/new_mod_scripts/eval_new_mod.slurm "$relative_path"
         sleep 2
     else
         echo "Skipping $relative_path (contains 'r2' or missing test_indices.pt)"

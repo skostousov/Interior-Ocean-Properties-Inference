@@ -14,6 +14,6 @@ export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
 
 export PYTHONPATH=$PYTHONPATH:$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/src
 
-python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hptuning_UNETSE_new_mod.py" --season $1 --mld_res $2 --loss $3
+python -u "$SCRATCH/OceanPropInfSatImgScratch/OceanPropInfSatImg/hp_tuning_python_scripts/hptuning_UNETSE_new_mod.py" --season $1 --mld_res $2 --loss $3
 
 echo "hp_tuning executed"

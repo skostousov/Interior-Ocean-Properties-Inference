@@ -15,7 +15,7 @@ for season in "${seasons[@]}"; do
   for coarsen in "${coarsens[@]}"; do
     for batch_size in "${batch_sizes[@]}"; do
       for loss in "${losses[@]}"; do
-        sbatch jobs/combo_low_res.slurm $loss $num_epochs $coarsen $lr $batch_size $season $base_filters $reduction
+        sbatch bash_and_slurm_scripts/low_res_scripts/combo_low_res.slurm $loss $num_epochs $coarsen $lr $batch_size $season $base_filters $reduction
       done
     done
   done
