@@ -14,7 +14,7 @@ cfg = RELEVANT_CONFIG
 project_root = PROJECT_ROOT
 
 class TemporalDatasetNewMod(TorchDataset):
-    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, weird_param_not_sure_what_it_does = True, include_mld_in_input = False, groupby="days", lat_lon=True, full=False, rim=0, custom_features=False):
+    def __init__(self, transform = None, target_transform = None, normalize=True, filepath=None, grid_size = cfg['data']['grid_size'], season=None, mld_res=1/12, feature_res=1/12, weird_param_dont_remember_why_i_included_it = True, include_mld_in_input = False, groupby="days", lat_lon=True, full=False, rim=0, custom_features=False):
         self.cfg = cfg
         self.full = full
         self.rim = rim
@@ -35,10 +35,8 @@ class TemporalDatasetNewMod(TorchDataset):
         self.submode_cfg = cfg['data'][self.submode]
         self.target_transform = target_transform
         self.filepath=filepath
-        if weird_param_not_sure_what_it_does:
+        if weird_param_dont_remember_why_i_included_it:
             self.grid_size = int(self.mld_res / self.feature_res)
-            # self.grid_size = self.grid_size // self.feature_coarsen
-
         else:
             self.grid_size = int(grid_size)        
         self.season_months = {
