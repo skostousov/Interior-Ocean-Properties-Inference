@@ -35,7 +35,7 @@ class ResNetImageToImage(nn.Module):
         for _ in range(n_blocks):
             layers.append(ResidualBlock(base_channels, norm=norm))
         layers += [
-            nn.Conv2d(base_channels, out_channels, kernel_size=3, padding=1, bias=True)
+            nn.Conv2d(base_channels, out_channels, kernel_size=3, padding=1, bias=True),
         ]
         if final_activation is not None:
             layers.append(final_activation)
