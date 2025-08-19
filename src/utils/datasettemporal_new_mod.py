@@ -212,70 +212,70 @@ class TemporalDatasetNewMod(TorchDataset):
         label = self.annotation_scaler.inverse_transform(label)
         return label
 
-    def generate_mean_and_std(self, temp_unit_indices):
-        X = self.feature_map[temp_unit_indices]
-        mu = X.mean(axis=(0, 2, 3))
-        std = X.std(axis=(0, 2, 3))
-        return mu, std
-    def generate_mean_and_std_partial(self, temp_unit_indices):
-        n_pix = 0
-        mean  = None
-        M2    = None   # sum of squared diffs
+    # def generate_mean_and_std(self, temp_unit_indices):
+    #     X = self.feature_map[temp_unit_indices]
+    #     mu = X.mean(axis=(0, 2, 3))
+    #     std = X.std(axis=(0, 2, 3))
+    #     return mu, std
+    # def generate_mean_and_std_partial(self, temp_unit_indices):
+    #     n_pix = 0
+    #     mean  = None
+    #     M2    = None   # sum of squared diffs
 
-        for t in temp_unit_indices:
-            # feature_map[t] has shape (C, H, W)
-            X = np.asarray(self.feature_map[t], dtype=np.float64)
-            C, H, W = X.shape
-            X = X.reshape(C, -1)               # now (C, H*W)
+    #     for t in temp_unit_indices:
+    #         # feature_map[t] has shape (C, H, W)
+    #         X = np.asarray(self.feature_map[t], dtype=np.float64)
+    #         C, H, W = X.shape
+    #         X = X.reshape(C, -1)               # now (C, H*W)
             
-            batch_mean = X.mean(axis=1)        # (C,)
-            batch_var  = X.var(axis=1)         # (C,)
-            batch_n    = X.shape[1]            # H*W pixels per channel
+    #         batch_mean = X.mean(axis=1)        # (C,)
+    #         batch_var  = X.var(axis=1)         # (C,)
+    #         batch_n    = X.shape[1]            # H*W pixels per channel
 
-            if mean is None:
-                # first batch: init accumulators
-                mean  = batch_mean
-                M2    = batch_var * batch_n
-                n_pix = batch_n
-            else:
-                # Welford update
-                delta = batch_mean - mean
-                total = n_pix + batch_n
+    #         if mean is None:
+    #             # first batch: init accumulators
+    #             mean  = batch_mean
+    #             M2    = batch_var * batch_n
+    #             n_pix = batch_n
+    #         else:
+    #             # Welford update
+    #             delta = batch_mean - mean
+    #             total = n_pix + batch_n
 
-                mean += delta * (batch_n / total)
-                M2   += batch_var * batch_n + (delta**2) * (n_pix * batch_n / total)
-                n_pix  = total
+    #             mean += delta * (batch_n / total)
+    #             M2   += batch_var * batch_n + (delta**2) * (n_pix * batch_n / total)
+    #             n_pix  = total
 
-        std = np.sqrt(M2 / n_pix)
-        return mean.astype(np.float32), std.astype(np.float32)
-    def generate_mean_and_std_labels(self, temp_unit_indices):
-        n_pix = 0
-        mean  = None
-        M2    = None
-        for t in temp_unit_indices:
-            # feature_map[t] has shape (C, H, W)
-            X = np.asarray(self.annotations_map[t], dtype=np.float64)
-            C, H, W = X.shape
-            X = X.reshape(C, -1)               # now (C, H*W)
+    #     std = np.sqrt(M2 / n_pix)
+    #     return mean.astype(np.float32), std.astype(np.float32)
+    # def generate_mean_and_std_labels(self, temp_unit_indices):
+    #     n_pix = 0
+    #     mean  = None
+    #     M2    = None
+    #     for t in temp_unit_indices:
+    #         # feature_map[t] has shape (C, H, W)
+    #         X = np.asarray(self.annotations_map[t], dtype=np.float64)
+    #         C, H, W = X.shape
+    #         X = X.reshape(C, -1)               # now (C, H*W)
                 
-            batch_mean = X.mean(axis=1)
-            batch_var  = X.var(axis=1)         # (C,)
-            batch_n    = X.shape[1]            # H*W pixels per channel
-            if mean is None:
-                    # first batch: init accumulators
-                    mean  = batch_mean
-                    M2    = batch_var * batch_n
-                    n_pix = batch_n
-            else:
-                    # Welford update
-                    delta = batch_mean - mean
-                    total = n_pix + batch_n
+    #         batch_mean = X.mean(axis=1)
+    #         batch_var  = X.var(axis=1)         # (C,)
+    #         batch_n    = X.shape[1]            # H*W pixels per channel
+    #         if mean is None:
+    #                 # first batch: init accumulators
+    #                 mean  = batch_mean
+    #                 M2    = batch_var * batch_n
+    #                 n_pix = batch_n
+    #         else:
+    #                 # Welford update
+    #                 delta = batch_mean - mean
+    #                 total = n_pix + batch_n
 
-                    mean += delta * (batch_n / total)
-                    M2   += batch_var * batch_n + (delta**2) * (n_pix * batch_n / total)
-                    n_pix  = total
-        std = np.sqrt(M2 / n_pix)
-        return mean.astype(np.float32), std.astype(np.float32)
+    #                 mean += delta * (batch_n / total)
+    #                 M2   += batch_var * batch_n + (delta**2) * (n_pix * batch_n / total)
+    #                 n_pix  = total
+    #     std = np.sqrt(M2 / n_pix)
+    #     return mean.astype(np.float32), std.astype(np.float32)
         
     def __getitem__(self, index):
         if not self.full:
