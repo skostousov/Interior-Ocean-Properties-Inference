@@ -43,3 +43,4 @@ poetry.lock
 *.pyc
 *.pkl
 *.json
+.ipynb_checkpoints
