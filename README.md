@@ -33,11 +33,9 @@ All models are located in *src/models*. Their trained products with weights are 
 
 Hyperparameter tuning scripts for specific models are located in the project root in the *hp_tuning_python_scripts* folder.
 
-### Other Information
+### Report & Other Information
 
 The lower resolution argo interpolated data is managed through the low_res* files, but the datasets need to be downloaded manually. These dataset links are included in the attached MLD report.
-
-### Report and Methodology Specifications
 
 A comprehensive report of methodology, procedure, and results can be accessed here:
 https://docs.google.com/document/d/1cNGMUg1uLSHYB-cL7Wk8OSOa3vPrmSKIFzGW3OxckbU/edit?usp=sharing
