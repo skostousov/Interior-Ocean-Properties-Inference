@@ -39,3 +39,7 @@ fetched_gan_results
 FULL
 FULL_DA_CNN
 poetry.lock
+*__pycache__*
+*.pyc
+*.pkl
+*.json
