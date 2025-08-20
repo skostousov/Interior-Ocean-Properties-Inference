@@ -11,11 +11,11 @@
 # )
 
 filepath=data/WaterOnlyMonthly/WaterOnlyMonthlyExtendedSeasonality.nc
-num_epochs=30
+num_epochs=50
 lat_lon=(True)
 # seasons=("all" "autumn" "spring" "winter" "summer")
 # seasons=("all" "autumn" "spring" "winter" "summer")
-seasons=("autumn")
+seasons=("winter" "autumn")
 # seasons=("all")
 groupbys=("months")
 # models=("UNetRegressionSE" "downscaledUNetSE")
@@ -31,15 +31,16 @@ batch_size=(256)
 # models=("UNetFull", GANGenerator)
 # models=("GANGenerator")
 # full=False
-# mld_res=(1 0.5 0.333333333333333333333333333)
-mld_res=(0.0833333333333333333333333333333333333333333333333333)
+mld_res=(1 0.5 0.333333333333333333333333333333333333)
+# mld_res=(0.0833333333333333333333333333333333333333333333333333)
 flfs=(16 32)
 # final_activations=("relu" "sigmoid")
-norms=("in" "bn")
+# norms=("in" "bn")
+norms=("in")
 rim=(2 3 4)
 loss=(MSE)
 # dropout=(0.0)
-n_blocks=(4 5 6)
+n_blocks=(5 6)
 custom_features="so thetao uo vo zos mlotst"
 
 
