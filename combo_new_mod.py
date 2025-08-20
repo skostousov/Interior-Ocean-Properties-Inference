@@ -28,6 +28,8 @@ from utils.datasettemporal_new_mod import TemporalDatasetNewMod as TemporalDatas
 import scipy.ndimage as ndimage
 from models.UNetfullimageoutput import UNet
 from models.ResNet import ResNetImageToImage, ResNetImageToValue
+from torchmetrics.image.ssim import StructuralSimilarityIndexMeasure
+
 
 
 sys.modules.setdefault("numpy._core", importlib.import_module("numpy.core"))
@@ -360,9 +362,15 @@ def main(args):
     optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=1e-5)
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
-    loss_dict = {'L1' : nn.L1Loss, 'MSE' : nn.MSELoss}
+    loss_dict = {'L1' : nn.L1Loss, 'MSE' : nn.MSELoss, 'SSIM' : StructuralSimilarityIndexMeasure, 'Huber' : nn.SmoothL1Loss, }
+
 
     loss_fn = loss_dict[args.loss]()
+
+    if args.loss == 'SSIM':
+        loss_fn = StructuralSimilarityIndexMeasure(data_range=2.0)
+
+    loss_fn = loss_fn.to(device)
 
     # test_indices_path = Path((cfg['data'][submode]["test_indices"]).replace('.pt', f'{str(season)}'+'.pt'))
     
@@ -555,7 +563,7 @@ if __name__ == "__main__":
     parser.add_argument('--season', default='all', type=str)
     parser.add_argument('--mld_res', default=1, type=float, help='Resolution of MLD data')
     parser.add_argument('--feature_res', default=1/12, type=float, help='Resolution of feature data')
-    parser.add_argument('--loss', default='MSE', type=str, choices=['MSE', 'L1'], help='Loss function to use for training')
+    parser.add_argument('--loss', default='MSE', type=str, choices=['MSE', 'L1', 'Huber', 'SSIM'], help='Loss function to use for training')
     parser.add_argument('--filepath', type=str, default = "data/WaterOnlyDailySmall/WaterOnlyDailyExtendedSeasonalitySmall.nc")
     parser.add_argument('--groupby', default='months', type=str, choices=['days', 'months', 'years'], help="Group by days, months, or years")
     parser.add_argument('--lat_lon', default=True, type=bool)
